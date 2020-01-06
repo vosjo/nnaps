@@ -77,16 +77,9 @@ class BPS_predictor():
       X = X.reshape(X.shape[:-1]).T
       
       Y = self.model.predict(X)
-      
-      print (Y)
-      print ("")
-      print (self.Yregressors+self.Yclassifiers)
-      print ("")
-      
+
       res = {}
       for Y_, name in zip(Y, self.Yregressors+self.Yclassifiers):
-         print(name)
-         print(Y_)
          res[name] = self.processors[name].inverse_transform(Y_)[:,0]
       
       return pd.DataFrame(data=res)

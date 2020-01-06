@@ -145,15 +145,23 @@ class TestBPSPredictor(unittest.TestCase):
       #self.assertTrue(False)
 
 
-   #def test_predict(self):
+   def test_predict(self):
+
+      # FIXME: for now only check that the predict function returns the correct format, don't check actual predictions
       
-      #data = pd.read_csv('tests/BesanconGalactic_summary.txt').iloc[0:10]
+      data = pd.read_csv(base_path / 'BesanconGalactic_summary.txt').iloc[0:10]
       
-      #predictor = predictors.BPS_predictor(saved_model='tests/test_model.h5')
+      predictor = predictors.BPS_predictor(saved_model=base_path / 'test_model.h5')
       
-      #res = predictor.predict(data=data)
-      
-      #print (res)
-      
-      #self.assertTrue(False)
-      
+      res = predictor.predict(data=data)
+
+      # check that the dimensions are correct
+      self.assertEqual(res.shape[0], 10, msg="expected 10 predicted rows, got: {}.\n".format(res.shape[0]) +
+                                             " all data:\n{}".format(res))
+      self.assertEqual(res.shape[1], 4, msg="expected 4 predicted columns, got: {}.\n".format(res.shape[1]) +
+                                            " all data:\n{}".format(res))
+
+      # check the columns:
+      for ypar in 'Pfinal    qfinal product   binary_type'.split():
+         self.assertTrue(ypar in res.columns, msg="Expected {} in columns, only".format(ypar)+
+                                                  " got: {}.\nall data:\n{}".format(list(res.columns), res))
