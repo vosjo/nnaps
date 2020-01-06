@@ -1,0 +1,7 @@
+
+*.pyc
+tests/*
+gridfit.py
+model_old.py
+sdB_test/*
+test.py

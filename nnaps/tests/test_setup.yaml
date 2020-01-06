@@ -1,0 +1,13 @@
+datafile: '/home/joris/Python/nnaps/nnaps/tests/BesanconGalactic_summary.txt'
+outputfile: 'BesanconGalactic_model.h5'
+input:
+   - M1
+   - qinit
+   - Pinit
+   - FeHinit
+regressors:
+   - Pfinal
+   - qfinal
+classifiers:
+   - product
+   - binary_type
