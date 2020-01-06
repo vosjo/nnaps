@@ -1,6 +1,6 @@
 datafile: '/home/joris/Python/nnaps/nnaps/tests/BesanconGalactic_summary.txt'
 outputfile: 'BesanconGalactic_model.h5'
-input:
+features:
    - M1
    - qinit
    - Pinit

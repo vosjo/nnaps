@@ -12,10 +12,13 @@ from nnaps import fileio, plotting
 
 class BPS_predictor():
 
-   def __init__(self, setup_file=None, saved_model=None):
+   def __init__(self, setup = None, setup_file=None, saved_model=None):
 
-      if not setup_file is None:
-         self.make_from_setup(setup_file)
+      if not setup is None:
+         self.make_from_setup(setup)
+
+      elif not setup_file is None:
+         self.make_from_setup_file(setup_file)
 
       elif not saved_model is None:
          self.load_model(saved_model)
@@ -152,15 +155,24 @@ class BPS_predictor():
 
       self.model.compile(optimizer=self.optimizer, loss=loss, metrics=['accuracy', 'mae'])
 
-   def make_from_setup(self, filename):
+   def make_from_setup(self, setup):
 
-      setupfile = open(filename)
-      self.setup = yaml.safe_load(setupfile)
-      setupfile.close()
+      self.setup = setup
 
-      self.Xpars = list(self.setup['input'])
-      self.Yregressors = list(self.setup['regressors'])
-      self.Yclassifiers = list(self.setup['classifiers'])
+      if type(self.setup['features']) is list:
+         self.Xpars = self.setup['features']
+      else:
+         self.Xpars = self.setup['features'].keys()
+
+      if type(self.setup['regressors']) is list:
+         self.Yregressors = self.setup['regressors']
+      else:
+         self.Yregressors = self.setup['regressors'].keys()
+
+      if type(self.setup['classifiers']) is list:
+         self.Yclassifiers = self.setup['classifiers']
+      else:
+         self.Yclassifiers = self.setup['classifiers'].keys()
 
       self.data = pd.read_csv(self.setup['datafile'])
 
@@ -168,6 +180,14 @@ class BPS_predictor():
 
       self._make_preprocessors_from_setup()
       self._make_model_from_setup()
+
+   def make_from_setup_file(self, filename):
+
+      setupfile = open(filename)
+      setup = yaml.safe_load(setupfile)
+      setupfile.close()
+
+      self.make_from_setup(setup)
 
    def save_model(self, filename):
       """
