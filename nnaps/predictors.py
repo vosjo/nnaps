@@ -7,12 +7,19 @@ from sklearn import preprocessing
 from keras.layers import Dense, Input, Dropout
 from keras.models import Model
 
-from nnaps import fileio, plotting
+from nnaps import fileio, defaults, plotting
 
 
 class BPS_predictor():
 
     def __init__(self, setup=None, setup_file=None, saved_model=None):
+
+        self.history = None
+        self.setup = None
+
+        self.Xpars = []
+        self.Yregressors = []
+        self.Yclassifiers = []
 
         if not setup is None:
             self.make_from_setup(setup)
@@ -23,7 +30,6 @@ class BPS_predictor():
         elif not saved_model is None:
             self.load_model(saved_model)
 
-        self.history = None
 
     # { Learning and predicting
 
@@ -53,14 +59,29 @@ class BPS_predictor():
             self.history = self.history.append(history_df)
 
     def train(self, data=None, epochs=100, batch_size=128, validation_split=0.2):
+        """
+        Train the model
+
+        :param data:
+        :param epochs:
+        :param batch_size:
+        :param validation_split:
+        :return: Nothing
+        """
 
         if data is None:
             data = self.data
 
         X = np.array([self.processors[x].transform(data[[x]]) for x in self.Xpars])
-        Y = [self.processors[x].transform(data[[x]]) for x in self.Yregressors + self.Yclassifiers]
-
         X = X.reshape(X.shape[:-1]).T
+
+        Y = []
+        for x in self.Yregressors + self.Yclassifiers:
+            # check if Y data needs to be transformed before fitting.
+            if self.processors[x] is not None:
+                Y.append(self.processors[x].transform(data[[x]]))
+            else:
+                Y.append(data[[x]])
 
         history = self.model.fit(X, Y, epochs=epochs, batch_size=batch_size, shuffle=True,
                                  validation_split=validation_split)
@@ -68,6 +89,12 @@ class BPS_predictor():
         self._append_to_history(history.history)
 
     def predict(self, data=None):
+        """
+        Make predictions based on a trained model
+
+        :param data:
+        :return: predicted values for data
+        """
 
         if data is None:
             pass
@@ -79,7 +106,10 @@ class BPS_predictor():
 
         res = {}
         for Y_, name in zip(Y, self.Yregressors + self.Yclassifiers):
-            res[name] = self.processors[name].inverse_transform(Y_)[:, 0]
+            if self.processors[name] is not None:
+                res[name] = self.processors[name].inverse_transform(Y_)[:, 0]
+            else:
+                res[name] = Y_
 
         return pd.DataFrame(data=res)
 
@@ -91,7 +121,7 @@ class BPS_predictor():
 
     def plot_training_history(self):
 
-        plotting.plot_training_history()
+        plotting.plot_training_history_html(self.history)
 
     # }
 
@@ -101,33 +131,41 @@ class BPS_predictor():
 
     def _make_preprocessors_from_setup(self):
         """
-      Make the preprocessors from the setup file
-      this is required to run before the make_model_from_setup step.
-      """
+        Make the preprocessors from the setup file
+        this is required to run before the make_model_from_setup step.
+        """
 
         processors = {}
 
+        print (self.setup)
+
         for pname in self.Xpars:
-            p = preprocessing.StandardScaler()
-            p.fit(self.data[[pname]])
+            p = self.setup['features'][pname]['processor']
+            if p is not None:
+                p = p()
+                p.fit(self.data[[pname]])
             processors[pname] = p
 
         for pname in self.Yregressors:
-            p = preprocessing.RobustScaler()
-            p.fit(self.data[[pname]])
+            p = self.setup['regressors'][pname]['processor']
+            if p is not None:
+                p = p()
+                p.fit(self.data[[pname]])
             processors[pname] = p
 
         for pname in self.Yclassifiers:
-            p = preprocessing.OneHotEncoder()
-            p.fit(self.data[[pname]])
+            p = self.setup['classifiers'][pname]['processor']
+            if p is not None:
+                p = p()
+                p.fit(self.data[[pname]])
             processors[pname] = p
 
         self.processors = processors
 
     def _make_model_from_setup(self):
         """
-      Make a model based on a setupfile
-      """
+        Make a model based on a setupfile
+        """
 
         inputs = Input(shape=(len(self.Xpars),))
         dense1 = Dense(100, activation='relu', name='FC_1')(inputs)
@@ -157,22 +195,11 @@ class BPS_predictor():
 
     def make_from_setup(self, setup):
 
-        self.setup = setup
+        self.setup = defaults.add_defaults_to_setup(setup)
 
-        if type(self.setup['features']) is list:
-            self.Xpars = self.setup['features']
-        else:
-            self.Xpars = self.setup['features'].keys()
-
-        if type(self.setup['regressors']) is list:
-            self.Yregressors = self.setup['regressors']
-        else:
-            self.Yregressors = self.setup['regressors'].keys()
-
-        if type(self.setup['classifiers']) is list:
-            self.Yclassifiers = self.setup['classifiers']
-        else:
-            self.Yclassifiers = self.setup['classifiers'].keys()
+        self.Xpars = list(self.setup['features'].keys())
+        self.Yregressors = list(self.setup['regressors'].keys())
+        self.Yclassifiers = list(self.setup['classifiers'].keys())
 
         self.data = pd.read_csv(self.setup['datafile'])
 

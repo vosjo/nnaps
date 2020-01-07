@@ -1,6 +1,7 @@
 import os
 
 import pandas as pd
+import numpy as np
 
 import unittest
 
@@ -35,41 +36,34 @@ class TestBPSPredictor(unittest.TestCase):
         for par in Xpars_:
             self.assertTrue(par in pp, msg="{} does not have a preprocessor".format(par))
             self.assertTrue(pp[par].__class__ == preprocessing.StandardScaler,
-                            msg="{} does not have the correct preprocessor. expected {}, got {}".format(par,
-                                                                                                        preprocessing.StandardScaler,
-                                                                                                        pp[
-                                                                                                            par].__class__))
+                            msg="{} does not have the correct preprocessor.".format(par) +
+                                " expected {}, got {}".format(preprocessing.StandardScaler, pp[par].__class__))
 
         for par in Yregressors_:
             self.assertTrue(par in pp, msg="{} does not have a preprocessor".format(par))
-            self.assertTrue(pp[par].__class__ == preprocessing.RobustScaler,
-                            msg="{} does not have the correct preprocessor. expected {}, got {}".format(par,
-                                                                                                        preprocessing.RobustScaler,
-                                                                                                        pp[
-                                                                                                            par].__class__))
+            self.assertEqual(pp[par], None, msg="{} does not have the correct preprocessor.".format(par) +
+                                                " expected None, got {}".format(pp[par].__class__))
 
         for par in Yclassifiers_:
             self.assertTrue(par in pp, msg="{} does not have a preprocessor".format(par))
             self.assertTrue(pp[par].__class__ == preprocessing.OneHotEncoder,
-                            msg="{} does not have the correct preprocessor. expected {}, got {}".format(par,
-                                                                                                        preprocessing.OneHotEncoder,
-                                                                                                        pp[
-                                                                                                            par].__class__))
+                            msg="{} does not have the correct preprocessor.".format(par) +
+                                " expected {}, got {}".format(preprocessing.OneHotEncoder,pp[par].__class__))
 
         # test making the model
         mod = predictor.model
 
         self.assertEqual(len(mod.layers), 11,
-                         msg="Model does not have correct number of layers, expected {}, got {}".format(11, len(
-                             mod.layers)))
+                         msg="Model does not have correct number of layers, expected" +
+                             " {}, got {}".format(11, len(mod.layers)))
 
         self.assertEqual(mod.input.shape[1], len(Xpars_),
-                         msg="Model input does not have correct shape, expected {}, got {}".format(len(Xpars_),
-                                                                                                   mod.input.shape[1]))
+                         msg="Model input does not have correct shape, expected " +
+                            "{}, got {}".format(len(Xpars_),mod.input.shape[1]))
 
         self.assertEqual(len(mod.output), len(Yregressors_) + len(Yclassifiers_),
-                         msg="Model does not have correct number of outputs, expected {}, got {}".format(
-                             len(Yregressors_) + len(Yclassifiers_), len(mod.output)))
+                         msg="Model does not have correct number of outputs, expected" +
+                             " {}, got {}".format(len(Yregressors_) + len(Yclassifiers_), len(mod.output)))
 
     def test_make_from_saved_model(self):
 
@@ -159,19 +153,23 @@ class TestBPSPredictor(unittest.TestCase):
                         msg="\nExpected dataframe: \n{}\nGot dataframe: \n {}".format(history_expected.to_string(),
                                                                                       history.to_string()))
 
-    # def test_train_model(self):
+    def test_train_model(self):
 
-    # predictor = predictors.BPS_predictor(setup_file='tests/test_setup.yaml')
+        # WARNING: test only checks that some kind of training happened by asserting that the weights are different
 
-    # predictor.data = predictor.data.iloc[0:200]
+        predictor = predictors.BPS_predictor(setup_file=base_path / 'test_setup.yaml')
 
-    # predictor.train(epochs=2, batch_size=50, validation_split=0.25)
+        weights = predictor.model.layers[1].get_weights()[0]
 
-    # predictor.train(epochs=2, batch_size=50, validation_split=0.25)
+        predictor.data = predictor.data.iloc[0:200]
 
-    # print (predictor.history)
+        predictor.train(epochs=2, batch_size=50, validation_split=0.25)
 
-    # self.assertTrue(False)
+        weights_new = predictor.model.layers[1].get_weights()[0]
+
+        with self.assertRaises(AssertionError):
+            np.testing.assert_almost_equal(weights, weights_new)
+
 
     def test_predict(self):
 

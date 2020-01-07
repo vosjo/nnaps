@@ -1,6 +1,15 @@
-default_scaler = 'StandardScaler'
-default_encoder = 'OneHotEncoder'
+from sklearn import preprocessing
 
+default_scaler = preprocessing.StandardScaler
+default_encoder = preprocessing.OneHotEncoder
+
+default_model = [{'layer':'Dense', 'args':[100], 'kwargs': dict(activation='relu', name='FC_1')},
+                 {'layer':'Dropout', 'args':[0.1], 'kwargs': dict(name='DO_1')},
+                 {'layer':'Dense', 'args':[50], 'kwargs': dict(activation='relu', name='FC_2')},
+                 {'layer':'Dropout', 'args':[0.1], 'kwargs': dict(name='DO_2')},
+                 {'layer':'Dense', 'args':[25], 'kwargs': dict(activation='relu', name='FC_3')},
+                 {'layer':'Dropout', 'args':[0.1], 'kwargs': dict(name='DO_3')},
+                 ]
 
 def add_defaults_to_setup(setup):
 
