@@ -52,7 +52,7 @@ class TestDefaultsGenerator(unittest.TestCase):
                  'regressors': ['Pfinal', 'qfinal'],
 
                  'classifiers': {'binary_type': {'processor': None},
-                                 'product': {'processor': 'OneHotEncoder'},},
+                                 'product': None,},
                  }
 
         setup_new = defaults.add_defaults_to_setup(setup)

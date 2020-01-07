@@ -55,9 +55,14 @@ def add_defaults_to_setup(setup):
 
         else:
             for f in setup_dict[key].keys():
-                if def_key not in setup_dict[key][f]:
+                if setup_dict[key][f] is None:
+                    # if there is no settings dictionary, just add the default
+                    setup_dict[key][f] = default_dict
+                elif def_key not in setup_dict[key][f]:
+                    # if there is a settings dictionary, but it doesn't have the default, add it.
                     setup_dict[key][f][def_key] = def_val
                 else:
+                    # else, keep the user provided value
                     setup_dict[key][f][def_key] = get_processor_class(setup_dict[key][f][def_key])
 
         return setup_dict

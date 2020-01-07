@@ -118,11 +118,83 @@ def make_scatter_grid_plot(data, parameters):
 
     return gridplot(grid_plots)
 
+def make_scaled_feature_plot(data, parameters, scalers):
+    plot_width, plot_height = 300, 300
 
-def plot_training_data_html(data, Xpars, filename=None):
+    org_plots = []
+    for xpar in parameters:
+
+        # make a histogram
+        p = bpl.figure(plot_width=plot_width, plot_height=plot_height, title='original')
+
+        hist, edges = histogram(data[xpar], bins='knuth')
+        p.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
+               fill_color="navy", line_color="white", alpha=0.5)
+
+        p.xaxis.axis_label = xpar
+        p.title.align = 'center'
+
+        org_plots.append(p)
+
+    scl_plots = []
+    for xpar in parameters:
+        # make a histogram
+        if xpar in scalers:
+            p = bpl.figure(plot_width=plot_width, plot_height=plot_height,
+                           title='scaled: {}'.format(scalers[xpar].__name__))
+
+            scaler = scalers[xpar]()
+            scaled_data = scaler.fit_transform(data[[xpar]])
+
+            hist, edges = histogram(scaled_data, bins='knuth')
+            p.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
+                   fill_color="green", line_color="white", alpha=0.5)
+
+            p.xaxis.axis_label = xpar
+            p.title.align = 'center'
+
+        else:
+            p = bpl.figure(plot_width=plot_width, plot_height=plot_height,
+                           title='No Scaler')
+            p.title.align = 'center'
+
+        scl_plots.append(p)
+
+    return gridplot([org_plots, scl_plots])
+
+def plot_training_data_html(data, Xpars, regressors, classifiers, processors, filename=None):
     # make the figure
     bpl.output_file(filename, title='Training data')
 
-    gp = make_scatter_grid_plot(data, Xpars)
+    grid = []
 
-    bpl.save(gp)
+    div = Div(text="""<h1>Training data report</h1>""", width=1200,
+               height=60)
+    grid.append([div])
+
+    # scatter grid of the features
+    div = Div(text="""<h2>Feature distribution</h2>""", width=1200,
+              height=40)
+    grid.append([div])
+
+    scatter_grid = make_scatter_grid_plot(data, Xpars)
+    grid.append([scatter_grid])
+
+    # scaling plot of features
+    div = Div(text="""<h2>Feature scaling</h2>""", width=1200,
+              height=40)
+    grid.append([div])
+
+    scaled_plot = make_scaled_feature_plot(data, Xpars, processors)
+    grid.append([scaled_plot])
+
+    # distribution of the regressors
+    div = Div(text="""<h2>Regressor distribution</h2>""", width=1200,
+              height=40)
+    grid.append([div])
+
+    scaled_plot = make_scaled_feature_plot(data, regressors, processors)
+    grid.append([scaled_plot])
+
+    figure = layout(grid)
+    bpl.save(figure)

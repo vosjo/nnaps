@@ -84,7 +84,7 @@ class BPS_predictor():
                 Y.append(data[[x]])
 
         history = self.model.fit(X, Y, epochs=epochs, batch_size=batch_size, shuffle=True,
-                                 validation_split=validation_split)
+                                 validation_split=validation_split, verbose=2)
 
         self._append_to_history(history.history)
 
@@ -166,24 +166,33 @@ class BPS_predictor():
         """
         Make a model based on a setupfile
         """
+        # TODO: still needs to add support for extra regressor and classifier layers after the main body of the model
+
+        def get_layer(layer):
+            if layer['layer'] == 'Dense':
+                return Dense(*layer['args'], **layer['kwargs'])
+            elif layer['layer'] == 'Dropout':
+                return Dropout(*layer['args'], **layer['kwargs'])
+
+        model_setup = self.setup['model']
 
         inputs = Input(shape=(len(self.Xpars),))
-        dense1 = Dense(100, activation='relu', name='FC_1')(inputs)
-        do1 = Dropout(0.1, name='DO_1')(dense1)
-        dense2 = Dense(50, activation='relu', name='FC_2')(do1)
-        do2 = Dropout(0.1, name='DO_2')(dense2)
-        dense3 = Dense(25, activation='relu', name='FC_3')(do2)
-        do3 = Dropout(0.1, name='DO_3')(dense3)
+        prev_layer = inputs
+
+        # run over all requested layers and connect them
+        for layer in model_setup:
+            new_layer = get_layer(layer)(prev_layer)
+            prev_layer = new_layer
 
         outputs = []
 
         for name in self.Yregressors:
-            out = Dense(1, name=name)(do3)
+            out = Dense(1, name=name)(prev_layer)
             outputs.append(out)
 
         for name in self.Yclassifiers:
             num_unique = len(self.processors[name].categories_[0])
-            out = Dense(num_unique, activation='softmax', name=name)(do3)
+            out = Dense(num_unique, activation='softmax', name=name)(prev_layer)
             outputs.append(out)
 
         self.model = Model(inputs, outputs)
