@@ -268,6 +268,15 @@ def processors2dict(processors):
             p = dict(preprocessor='RobustScaler',
                      kwargs={'scale_': processor.scale_, 'center_': processor.center_})
 
+        elif processor.__class__ == preprocessing.MinMaxScaler:
+            p = dict(preprocessor='MinMaxScaler',
+                     kwargs={'scale_': processor.scale_, 'min_': processor.min_, 'data_min_': processor.data_min_,
+                             'data_max_': processor.data_max_, 'data_range_': processor.data_range_})
+
+        elif processor.__class__ == preprocessing.MaxAbsScaler:
+            p = dict(preprocessor='MaxAbsScaler',
+                     kwargs={'max_abs_': processor.max_abs_, 'scale_': processor.scale_})
+
         else:
             p = None
 
@@ -284,28 +293,29 @@ def dict2processors(processor_dict):
     for name, processor_data in processor_dict.items():
 
         if processor_data['preprocessor'] == 'OneHotEncoder':
-            processor_data = processor_data['kwargs']
             p = preprocessing.OneHotEncoder()
-            categories_, dtype_ = processor_data['categories_'], processor_data['categories_dtype'][0]
-            p.categories_ = [np.array(np.array(processor_data['categories_'], dtype='U'), dtype=dtype_)]
-            p.drop_idx_ = processor_data['drop_idx_']
-            p._legacy_mode = processor_data['_legacy_mode']
+            # convert the categories_ attribute to the correct data type
+            categories_ = processor_data['kwargs'].pop('categories_')
+            dtype_ = processor_data['kwargs'].pop('categories_dtype')[0]
+            processor_data['kwargs']['categories_'] = [np.array(np.array(categories_, dtype='U'), dtype=dtype_)]
 
         elif processor_data['preprocessor'] == 'StandardScaler':
-            processor_data = processor_data['kwargs']
             p = preprocessing.StandardScaler()
-            p.scale_ = processor_data['scale_']
-            p.mean_ = processor_data['mean_']
-            p.var_ = processor_data['var_']
 
         elif processor_data['preprocessor'] == 'RobustScaler':
-            processor_data = processor_data['kwargs']
             p = preprocessing.RobustScaler()
-            p.scale_ = processor_data['scale_']
-            p.center_ = processor_data['center_']
+
+        elif processor_data['preprocessor'] == 'MinMaxScaler':
+            p = preprocessing.MinMaxScaler()
+
+        elif processor_data['preprocessor'] == 'MaxAbsScaler':
+            p = preprocessing.MaxAbsScaler()
 
         else:
             p = None
+
+        for key, value in processor_data['kwargs'].items():
+            setattr(p, key, value)
 
         processors[name] = p
 

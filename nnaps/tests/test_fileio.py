@@ -18,61 +18,67 @@ from keras.models import Model
 class TestProcessorConversion(unittest.TestCase):
 
     def setUP(self):
-        self.data = np.random.normal(10, 3, shape=1000)
+        pass
 
-    def test_standardScaler(self):
-        data = np.random.normal(10, 3, size=10)
-        data = np.array([data]).T
+    def scaler2dict2scaler_test(self, scaler, data):
 
-        std_scale = preprocessing.StandardScaler()
-        std_scale.fit(data)
+        scaler.fit(data)
 
-        processors = {'std_scale': std_scale}
+        processors = {'processor': scaler}
 
         processor_dict = fileio.processors2dict(processors)
 
         processors_new = fileio.dict2processors(processor_dict)
 
-        std_scale_new = processors_new['std_scale']
+        new_scaler = processors_new['processor']
 
-        scaled_data = std_scale.transform(data)
-        scaled_data_new = std_scale_new.transform(data)
+        scaled_data = scaler.transform(data)
+        new_scaled_data = new_scaler.transform(data)
+        inv_scaled_data = new_scaler.inverse_transform(scaled_data)
 
-        self.assertTrue(np.all(scaled_data == scaled_data_new),
-                        msg="converted scaler does not transform the same as original scaler")
+        np.testing.assert_array_equal(scaled_data, new_scaled_data,
+                                      err_msg="loaded scaler does not transform the same as original scaler")
 
-        scaled_data = std_scale.transform(data)
-        inv_data = std_scale_new.inverse_transform(scaled_data)
+        np.testing.assert_almost_equal(data, inv_scaled_data, err_msg="data transformed by original and inverse" +
+                                                    " transformed by loaded scaler does not equal original data.")
 
-        np.testing.assert_almost_equal(data, inv_data, err_msg="data transformed by original and inverse transformed" +
-                                                               " by loaded scaler does not equal original data.")
+
+    def test_standardScaler(self):
+        data = np.random.normal(10, 3, size=10)
+        data = np.array([data]).T
+
+        std_scaler = preprocessing.StandardScaler()
+
+        self.scaler2dict2scaler_test(std_scaler, data)
+
 
     def test_robustScaler(self):
         data = np.random.normal(10, 3, size=100)
         data = np.array([data]).T
 
-        rob_scale = preprocessing.RobustScaler()
-        rob_scale.fit(data)
+        rob_scaler = preprocessing.RobustScaler()
 
-        processors = {'rob_scale': rob_scale}
+        self.scaler2dict2scaler_test(rob_scaler, data)
 
-        processor_dict = fileio.processors2dict(processors)
 
-        processors = fileio.dict2processors(processor_dict)
 
-        rob_scale_new = processors['rob_scale']
+    def test_minMaxScaler(self):
+        data = np.random.normal(10, 3, size=100)
+        data = np.array([data]).T
 
-        scaled_data = rob_scale.transform(data)
-        scaled_data_new = rob_scale_new.transform(data)
+        minmax_scaler = preprocessing.MinMaxScaler()
 
-        self.assertTrue(np.all(scaled_data == scaled_data_new),
-                        msg="loaded scaler does not transform the same as original scaler")
+        self.scaler2dict2scaler_test(minmax_scaler, data)
 
-        scaled_data = rob_scale.transform(data)
-        inv_data = rob_scale_new.inverse_transform(scaled_data)
 
-        np.testing.assert_almost_equal(data, inv_data, err_msg="data transformed by original and inverse transformed" +
-                                                               " by loaded scaler does not equal original data.")
+    def test_maxAbsScaler(self):
+        data = np.random.normal(10, 3, size=100)
+        data = np.array([data]).T
+
+        maxabs_scaler = preprocessing.MaxAbsScaler()
+
+        self.scaler2dict2scaler_test(maxabs_scaler, data)
+
 
     def test_oneHotEncoder(self):
         data_int = np.random.randint(0, 3, size=10)
@@ -88,6 +94,7 @@ class TestProcessorConversion(unittest.TestCase):
         data = np.array([data]).T
 
         encoder = preprocessing.OneHotEncoder()
+
         encoder.fit(data)
 
         processors = {'encoder': encoder}
@@ -131,6 +138,13 @@ class TestSafeLoadModel(unittest.TestCase):
                         # Robust Scaler
                         'center_': np.array([9.99513811]),
                         'scale2_': np.array([3.99362846]),
+                        # MinMax Scaler
+                        'min_': np.array([-0.09978182]),
+                        'data_min_': np.array([1.69929507]),
+                        'data_max_': np.array([18.72940234]),
+                        'data_range_': np.array([17.03010727]),
+                        # MaxAbs Scaler
+                        'max_abs_': np.array([18.72940234]),
                     })
 
         try:
