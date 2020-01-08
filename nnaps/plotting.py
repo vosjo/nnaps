@@ -185,40 +185,84 @@ def make_scaled_feature_plot(data, parameters, scalers):
 
     return gridplot([org_plots, scl_plots])
 
+def make_training_test_set_plot(train_data, test_data, features, regressors, classifiers):
+    plot_width, plot_height = 300, 300
 
-def plot_training_data_html(data, Xpars, regressors, classifiers, processors, filename=None):
+    def make_double_histogram(train_data, test_data):
+        p = bpl.figure(plot_width=plot_width, plot_height=plot_height, title=par)
+
+        hist, edges = histogram(train_data, bins='knuth')
+        hist = hist / len(train_data)
+        p.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
+               fill_color="blue", line_color="white", alpha=0.5, legend_label='train')
+
+        hist, edges = histogram(test_data, bins=edges)
+        hist = hist / len(test_data)
+        p.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
+               fill_color="green", line_color="white", alpha=0.5, legend_label='test')
+
+        p.title.align = 'center'
+
+        return p
+
+    div = Div(text="""<h3>Features</h3>""", width=1200, height=40)
+    grid = [[div]]
+
+    plots = []
+    for par in features:
+        p = make_double_histogram(train_data[[par]], test_data[[par]])
+        plots.append([p])
+    grid.append(plots)
+
+
+    div = Div(text="""<h3>Regressors</h3>""", width=1200, height=40)
+    grid.append([[div]])
+
+    plots = []
+    for par in regressors:
+        p = make_double_histogram(train_data[[par]], test_data[[par]])
+        plots.append([p])
+    grid.append(plots)
+
+    return layout(grid)
+
+
+def plot_training_data_html(train_data, test_data, Xpars, regressors, classifiers, processors, filename=None):
     # make the figure
     bpl.output_file(filename, title='Training data')
 
     grid = []
 
-    div = Div(text="""<h1>Training data report</h1>""", width=1200,
-              height=60)
+    div = Div(text="""<h1>Training data report</h1>""", width=1200, height=60)
     grid.append([div])
 
     # scatter grid of the features
-    div = Div(text="""<h2>Feature distribution</h2>""", width=1200,
-              height=40)
+    div = Div(text="""<h2>Feature distribution</h2>""", width=1200, height=40)
     grid.append([div])
 
-    scatter_grid = make_scatter_grid_plot(data, Xpars)
+    scatter_grid = make_scatter_grid_plot(train_data, Xpars)
     grid.append([scatter_grid])
 
     # scaling plot of features
-    div = Div(text="""<h2>Feature scaling</h2>""", width=1200,
-              height=40)
+    div = Div(text="""<h2>Feature scaling</h2>""", width=1200, height=40)
     grid.append([div])
 
-    scaled_plot = make_scaled_feature_plot(data, Xpars, processors)
+    scaled_plot = make_scaled_feature_plot(train_data, Xpars, processors)
     grid.append([scaled_plot])
 
     # distribution of the regressors
-    div = Div(text="""<h2>Regressor distribution</h2>""", width=1200,
-              height=40)
+    div = Div(text="""<h2>Regressor distribution</h2>""", width=1200, height=40)
     grid.append([div])
 
-    scaled_plot = make_scaled_feature_plot(data, regressors, processors)
+    scaled_plot = make_scaled_feature_plot(train_data, regressors, processors)
     grid.append([scaled_plot])
+
+    # comparison training vs test set
+    div = Div(text="""<h2>Training - Test set comparison</h2>""", width=1200, height=40)
+    grid.append([div])
+
+    plot = make_training_test_set_plot(train_data, test_data, Xpars, regressors, classifiers)
+    grid.append([plot])
 
     figure = layout(grid)
     bpl.save(figure)
