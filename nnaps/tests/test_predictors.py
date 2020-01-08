@@ -11,12 +11,14 @@ from nnaps import predictors
 
 from pathlib import Path
 
+np.random.seed(42)
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 base_path = Path(__file__).parent
 
 
-class TestBPSPredictor(unittest.TestCase):
+class TestBPSPredictorSetup(unittest.TestCase):
 
     def test_make_from_setup(self):
 
@@ -114,6 +116,64 @@ class TestBPSPredictor(unittest.TestCase):
                          msg="Model does not have correct number of outputs, expected {}, got {}".format(
                              len(Yregressors_) + len(Yclassifiers_), len(mod.output)))
 
+
+class TestBPSPredictorTrainingPredicting(unittest.TestCase):
+
+    def test_process_features(self):
+
+        data = np.random.normal(10, 3, size=100)
+        df = pd.DataFrame(data={'M1':data, 'qinit':data})
+
+        p = preprocessing.StandardScaler()
+        p.fit(df[['M1']])
+
+        processors = dict(M1=p,
+                         qinit = p,)
+
+        predictor = predictors.BPS_predictor()
+
+        predictor.processors = processors
+        predictor.Xpars = ['M1', 'qinit']
+
+        X = predictor._process_features(df)
+
+        # check that the output shape is correct
+        self.assertEqual(X.shape, (100,2))
+
+        # check that all arrays are transformed
+        self.assertAlmostEqual(np.mean(X[:,0]), 0)
+        self.assertAlmostEqual(np.std(X[:,0]), 1)
+        self.assertAlmostEqual(np.mean(X[:,1]), 0)
+        self.assertAlmostEqual(np.std(X[:,0]), 1)
+
+    def test_process_targets(self):
+        data = np.random.normal(10, 3, size=100)
+        df = pd.DataFrame(data={'M1final': data, 'qfinal': data})
+
+        p = preprocessing.StandardScaler()
+        p.fit(df[['M1final']])
+
+        processors = dict(M1final=p,
+                          qfinal = None,)
+
+        predictor = predictors.BPS_predictor()
+
+        predictor.processors = processors
+        predictor.Yregressors = ['M1final', 'qfinal']
+
+        Y = predictor._process_targets(df)
+
+        # check that the output is a list
+        self.assertEqual(type(Y), list)
+
+        # check that both parameters are included
+        self.assertEqual(len(Y), 2)
+
+        # check that one array is transformed and the other not
+        self.assertAlmostEqual(np.mean(Y[0]), 0)
+        self.assertAlmostEqual(np.std(Y[0]), 1)
+        np.testing.assert_array_equal(Y[1], df[['qfinal']].values)
+
     def test_append_to_history(self):
 
         predictor = predictors.BPS_predictor()
@@ -157,7 +217,7 @@ class TestBPSPredictor(unittest.TestCase):
 
         predictor.train_data = predictor.train_data.iloc[0:200]
 
-        predictor.train(epochs=2, batch_size=50, validation_split=0.25)
+        predictor.train(epochs=2, batch_size=50)
 
         weights_new = predictor.model.layers[1].get_weights()[0]
 

@@ -61,40 +61,59 @@ class BPS_predictor():
             history_df['training_run'] = np.max(self.history['training_run']) + 1
             self.history = self.history.append(history_df)
 
+    def _process_features(self, data):
+        """
+        Private method. Should NOT be called by user.
+
+        Takes the features from the data frame and runs the required preprocessors on them.
+        Assumes that features are always scaled.
+
+        FIXME: allow for features to be not scaled.
+
+        :param data:
+        :return:
+        """
+        X = np.array([self.processors[x].transform(data[[x]]) for x in self.Xpars])
+        X = X.reshape(X.shape[:-1]).T
+        return X
+
+    def _process_targets(self, data):
+        """
+        Private method. Should NOT be called by user.
+
+        Takes the targets from the data frame and runs the required preprocessors on them.
+        If no preprocessors are set, the original data is returned.
+
+        :param data:
+        :return:
+        """
+        Y = []
+        for y in self.Yregressors + self.Yclassifiers:
+            # check if Y data needs to be transformed before fitting.
+            if self.processors[y] is not None:
+                Y.append(self.processors[y].transform(data[[y]]))
+            else:
+                Y.append(data[[y]].values)
+        return Y
+
     def train(self, data=None, epochs=100, batch_size=128):
         """
         Train the model
 
-        :param data:
-        :param epochs:
-        :param batch_size:
-        :param validation_split:
+        :param data: data to be used for training (pandas DataFrame). Should contain features and targets
+        :param epochs: Number of epochs (complete training set coverage) to run.
+        :param batch_size: Number of mini-batches to subdivide each epoch in.
         :return: Nothing
         """
 
         if data is None:
             data = self.train_data
 
-        def proces_features(data):
-            X = np.array([self.processors[x].transform(data[[x]]) for x in self.Xpars])
-            X = X.reshape(X.shape[:-1]).T
-            return X
+        X = self._process_features(data)
+        X_val = self._process_features(self.test_data)
 
-        def process_values(data):
-            Y = []
-            for y in self.Yregressors + self.Yclassifiers:
-                # check if Y data needs to be transformed before fitting.
-                if self.processors[y] is not None:
-                    Y.append(self.processors[y].transform(data[[y]]))
-                else:
-                    Y.append(data[[y]])
-            return Y
-
-        X = proces_features(data)
-        X_val = proces_features(self.test_data)
-
-        Y = process_values(data)
-        Y_val = process_values(self.test_data)
+        Y = self._process_targets(data)
+        Y_val = self._process_targets(self.test_data)
 
         history = self.model.fit(X, Y, epochs=epochs, batch_size=batch_size, shuffle=True,
                                  validation_data=(X_val, Y_val), verbose=2)
@@ -103,17 +122,16 @@ class BPS_predictor():
 
     def predict(self, data=None):
         """
-        Make predictions based on a trained model
+        Make predictions based on a trained model.
 
-        :param data:
-        :return: predicted values for data
+        :param data: the features that you want to use in the prediction. (pandas DataFrame)
+        :return: predicted targets for features
         """
 
         if data is None:
             pass
 
-        X = np.array([self.processors[x].transform(data[[x]]) for x in self.Xpars])
-        X = X.reshape(X.shape[:-1]).T
+        X = self._process_features(data)
 
         Y = self.model.predict(X)
 
@@ -130,11 +148,17 @@ class BPS_predictor():
 
     # ----------------------------------------------------------------------
 
-    # { Plotting
+    # { Reporting
 
-    def plot_training_history(self):
+    def make_training_history_report(self, filename):
 
-        plotting.plot_training_history_html(self.history)
+        plotting.plot_training_history_html(self.history, targets=self.Yregressors + self.Yclassifiers,
+                                            filename=filename)
+
+    def make_training_data_report(self, filename):
+
+        plotting.plot_training_data_html(self.train_data, self.test_data, self.Xpars,
+                                         self.Yregressors, self.Yclassifiers, self.processors, filename=filename)
 
     # }
 
