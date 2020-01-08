@@ -82,4 +82,7 @@ def add_defaults_to_setup(setup):
     if not 'classifier_model' in setup:
         setup['classifier_model'] = default_classifier_model
 
+    setup['random_state'] = 42
+    setup['train_test_split'] = 0.2
+
     return setup

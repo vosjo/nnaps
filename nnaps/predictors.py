@@ -4,6 +4,9 @@ import pandas as pd
 import numpy as np
 
 from sklearn import preprocessing
+from sklearn import utils
+from sklearn.model_selection import train_test_split
+
 from keras.layers import Dense, Input, Dropout
 from keras.models import Model
 
@@ -58,7 +61,7 @@ class BPS_predictor():
             history_df['training_run'] = np.max(self.history['training_run']) + 1
             self.history = self.history.append(history_df)
 
-    def train(self, data=None, epochs=100, batch_size=128, validation_split=0.2):
+    def train(self, data=None, epochs=100, batch_size=128):
         """
         Train the model
 
@@ -70,21 +73,31 @@ class BPS_predictor():
         """
 
         if data is None:
-            data = self.data
+            data = self.train_data
 
-        X = np.array([self.processors[x].transform(data[[x]]) for x in self.Xpars])
-        X = X.reshape(X.shape[:-1]).T
+        def proces_features(data):
+            X = np.array([self.processors[x].transform(data[[x]]) for x in self.Xpars])
+            X = X.reshape(X.shape[:-1]).T
+            return X
 
-        Y = []
-        for x in self.Yregressors + self.Yclassifiers:
-            # check if Y data needs to be transformed before fitting.
-            if self.processors[x] is not None:
-                Y.append(self.processors[x].transform(data[[x]]))
-            else:
-                Y.append(data[[x]])
+        def process_values(data):
+            Y = []
+            for y in self.Yregressors + self.Yclassifiers:
+                # check if Y data needs to be transformed before fitting.
+                if self.processors[y] is not None:
+                    Y.append(self.processors[y].transform(data[[y]]))
+                else:
+                    Y.append(data[[y]])
+            return Y
+
+        X = proces_features(data)
+        X_val = proces_features(self.test_data)
+
+        Y = process_values(data)
+        Y_val = process_values(self.test_data)
 
         history = self.model.fit(X, Y, epochs=epochs, batch_size=batch_size, shuffle=True,
-                                 validation_split=validation_split, verbose=2)
+                                 validation_data=(X_val, Y_val), verbose=2)
 
         self._append_to_history(history.history)
 
@@ -129,35 +142,55 @@ class BPS_predictor():
 
     # { Input and output
 
+    def _prepare_data(self):
+        """
+        Private method. Should NOT be called by user.
+
+        Reads the data from the path given in the setup ('datafile'),
+        randomly shuffles the data, and then divides it into a train and test set using the 'train_test_split'
+        fraction given in the setup. If a 'random_state' is defined in the setup, this will be used in both
+        the shuffle and the train-test split.
+
+        :return: nothing
+        """
+
+        data = pd.read_csv(self.setup['datafile'])
+        data = utils.shuffle(data, random_state=self.setup['random_state'])
+        data_train, data_test = train_test_split(data, test_size=self.setup['train_test_split'],
+                                                random_state=self.setup['random_state'])
+
+        self.train_data =  data_train
+        self.test_data = data_test
+
     def _make_preprocessors_from_setup(self):
         """
         Make the preprocessors from the setup file
         this is required to run before the make_model_from_setup step.
+
+        processors are fitted on the training data only.
         """
 
         processors = {}
-
-        print (self.setup)
 
         for pname in self.Xpars:
             p = self.setup['features'][pname]['processor']
             if p is not None:
                 p = p()
-                p.fit(self.data[[pname]])
+                p.fit(self.train_data[[pname]])
             processors[pname] = p
 
         for pname in self.Yregressors:
             p = self.setup['regressors'][pname]['processor']
             if p is not None:
                 p = p()
-                p.fit(self.data[[pname]])
+                p.fit(self.train_data[[pname]])
             processors[pname] = p
 
         for pname in self.Yclassifiers:
             p = self.setup['classifiers'][pname]['processor']
             if p is not None:
                 p = p()
-                p.fit(self.data[[pname]])
+                p.fit(self.train_data[[pname]])
             processors[pname] = p
 
         self.processors = processors
@@ -200,7 +233,7 @@ class BPS_predictor():
         loss = ['mean_squared_error' for name in self.Yregressors] + \
                ['categorical_crossentropy' for name in self.Yclassifiers]
 
-        self.model.compile(optimizer=self.optimizer, loss=loss, metrics=['accuracy', 'mae'])
+        self.model.compile(optimizer='adam', loss=loss, metrics=['accuracy', 'mae'])
 
     def make_from_setup(self, setup):
 
@@ -210,10 +243,8 @@ class BPS_predictor():
         self.Yregressors = list(self.setup['regressors'].keys())
         self.Yclassifiers = list(self.setup['classifiers'].keys())
 
-        self.data = pd.read_csv(self.setup['datafile'])
 
-        self.optimizer = self.setup.get('optimizer', 'adam')
-
+        self._prepare_data()
         self._make_preprocessors_from_setup()
         self._make_model_from_setup()
 
