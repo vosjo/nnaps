@@ -9,6 +9,8 @@ from sklearn import preprocessing
 
 
 def plot_training_history_html(history, targets=None, filename=None):
+    plot_width, plot_height = 600, 300
+
     # sort targets in mae and accuracy evaluated variables: regressors and classifiers
     mae_targets, accuracy_targets = [], []
     for target in targets:
@@ -17,6 +19,31 @@ def plot_training_history_html(history, targets=None, filename=None):
         if target + '_accuracy' in history.columns:
             accuracy_targets.append(target)
 
+    def plot_metric_and_loss(history, target, metric='mae'):
+        ykey = target + '_' + metric
+
+        p1 = bpl.figure(plot_height=plot_height, plot_width=plot_width, title=target)
+        p1.line(history['epoch'], history[ykey], legend_label='training')
+        if 'val_' + ykey in history.columns:
+            p1.line(history['epoch'], history['val_' + ykey], color='orange', legend_label='validation')
+
+        # p1.xaxis.axis_label = 'Epoch'
+        p1.yaxis.axis_label = 'MAE' if metric == 'mae' else 'Accuracy'
+        p1.legend.location = "top_right" if metric == 'mae' else "bottom_right"
+        p1.title.align = 'center'
+        p1.title.text_font_size = '14pt'
+
+        ykey = target + '_loss'
+        p2 = bpl.figure(plot_height=plot_height, plot_width=plot_width)
+        p2.line(history['epoch'], history[ykey])
+        if 'val_' + ykey in history.columns:
+            p2.line(history['epoch'], history['val_' + ykey], color='orange')
+
+        p2.xaxis.axis_label = 'Epoch'
+        p2.yaxis.axis_label = 'Loss'
+
+        return gridplot([[p1], [p2]], toolbar_location='right')
+
     # make the figure
     bpl.output_file(filename, title='Training history')
 
@@ -24,29 +51,25 @@ def plot_training_history_html(history, targets=None, filename=None):
 
     section_plots = [[title_div]]
 
-    for target in mae_targets + accuracy_targets:
+    section_div = Div(text="""<h2>Regressors</h2>""", width=400, height=40)
+    section_plots.append([section_div])
 
-        section_div = Div(text="""<h2>{}</h2>""".format(target), width=400, height=40)
-        section_plots.append([section_div])
+    mae_plots = []
+    for target in mae_targets:
+        p = plot_metric_and_loss(history, target, metric='mae')
+        mae_plots.append(p)
 
-        ykey = target + '_mae' if target in mae_targets else target + '_accuracy'
+    section_plots.append(mae_plots)
 
-        p = bpl.figure(plot_height=500, plot_width=600, title='metric')
-        p.line(history['epoch'], history[ykey], legend_label='training')
+    section_div = Div(text="""<h2>Classifiers</h2>""", width=400, height=40)
+    section_plots.append([section_div])
 
-        if 'val_' + ykey in history.columns:
-            p.line(history['epoch'], history['val_' + ykey], color='orange', legend_label='validation')
+    acc_plots = []
+    for target in accuracy_targets:
+        p = plot_metric_and_loss(history, target, metric='accuracy')
+        acc_plots.append(p)
 
-        p.xaxis.axis_label = 'Epoch'
-
-        if target in mae_targets:
-            p.yaxis.axis_label = 'MAE'
-            p.legend.location = "top_right"
-        else:
-            p.yaxis.axis_label = 'Accuracy'
-            p.legend.location = "bottom_right"
-
-        section_plots.append([p])
+    section_plots.append(acc_plots)
 
     p = layout(section_plots)
 
@@ -118,12 +141,12 @@ def make_scatter_grid_plot(data, parameters):
 
     return gridplot(grid_plots)
 
+
 def make_scaled_feature_plot(data, parameters, scalers):
     plot_width, plot_height = 300, 300
 
     org_plots = []
     for xpar in parameters:
-
         # make a histogram
         p = bpl.figure(plot_width=plot_width, plot_height=plot_height, title='original')
 
@@ -162,6 +185,7 @@ def make_scaled_feature_plot(data, parameters, scalers):
 
     return gridplot([org_plots, scl_plots])
 
+
 def plot_training_data_html(data, Xpars, regressors, classifiers, processors, filename=None):
     # make the figure
     bpl.output_file(filename, title='Training data')
@@ -169,7 +193,7 @@ def plot_training_data_html(data, Xpars, regressors, classifiers, processors, fi
     grid = []
 
     div = Div(text="""<h1>Training data report</h1>""", width=1200,
-               height=60)
+              height=60)
     grid.append([div])
 
     # scatter grid of the features
