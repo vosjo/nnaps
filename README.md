@@ -42,6 +42,20 @@ A regressor has to he a continuous numerical value. For a categorical numerical 
 **classifiers**: a list of the categorical targets for the model. These are the Y parameters that are not numerical, 
 or the not continuous. 
 
+The entire process of fitting the data and predicting the targets of new data can be as simple as:
+
+```python
+from nnaps import predictors
+    
+predictor = predictors.BPS_predictor(setup_file='setup.yaml')
+    
+predictor.fit(epochs=100)
+
+new_predictions = predictor.predict(new_data)
+```
+
+Let's go over all steps in a bit more detail:
+
 #### The data
 
 Lets check the data. In this example we will use the test data provided in the test directory of the NNaPS package. 
