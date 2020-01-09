@@ -9,7 +9,7 @@ new models, as long as their starting parameters are in the same range as those 
 
 Lets look at an example:
 
-
+![wide sdB example](https://raw.githubusercontent.com/vosjo/nnaps/master/docs/wide_sdB_period_q_example.png)
 
 The orbital period and mass ratio distribution of wide hot subdwarf binaries shows a very strong correlation. We want 
 to study this correlation and predict the P-q distribution of wide sdB binaries in the galaxy. Using MESA, 2000 models 
@@ -23,18 +23,20 @@ NNAPS requires a setup file or setup dictionary telling it what to do. The minim
 of features and targets together with the path to the training data. Using the test data sample, the simplest model 
 setup file in yaml format is the following:
 
-    datafile: 'tests/BesanconGalactic_summary.txt'
-    features:
-       - M1
-       - qinit
-       - Pinit
-       - FeHinit
-    regressors:
-       - Pfinal
-       - qfinal
-    classifiers:
-       - product
-       - binary_type
+```yaml
+datafile: 'tests/BesanconGalactic_summary.txt'
+features:
+   - M1
+   - qinit
+   - Pinit
+   - FeHinit
+regressors:
+   - Pfinal
+   - qfinal
+classifiers:
+   - product
+   - binary_type
+```
 
 **datafile**: path to the file containing the training data.  This file is read with the pandas.read_csv() function, 
 and should be structured in an appropriate way.  
@@ -78,5 +80,49 @@ predictor.load_model('model.h5')
 
 
 ## Advanced use
+
+It is possible to define many more setting in the setup file. A complete setupfile would look like:
+
+```yaml
+datafile: 'tests/BesanconGalactic_summary.txt'
+
+features:
+   M1:
+      processor: StandardScaler
+   qinit:
+      processor: StandardScaler
+   Pinit:
+      processor: StandardScaler
+   FeHinit:
+      processor: StandardScaler
+regressors:
+   Pfinal:
+      processor: RobustScaler
+   qfinal:
+      processor: MinMaxScaler
+classifiers:
+   product: 
+      processor: OneHotEcoder
+   binary_type:
+      processor: OneHotEcoder
+
+random_state: 42
+train_test_split: 0.2
+
+model:
+   - {'layer':'Dense',   'args':[100], 'kwargs': {'activation':'relu', 'name':'FC_1'} }
+   - {'layer':'Dropout', 'args':[0.1], 'kwargs': {'name':'DO_1'} }
+   - {'layer':'Dense',   'args':[75],  'kwargs': {'activation':'relu', 'name':'FC_2'} }
+   - {'layer':'Dropout', 'args':[0.1], 'kwargs': {'name':'DO_2'} }
+   - {'layer':'Dense',   'args':[50],  'kwargs': {'activation':'relu', 'name':'FC_3'} }
+   - {'layer':'Dropout', 'args':[0.1], 'kwargs': {'name':'DO_3'} }
+
+optimizer: 'adam'
+batch_size: 128
+```
+
+## Reports
+TODO 
+
 
 
