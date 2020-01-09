@@ -1,7 +1,8 @@
 
 *.pyc
-tests/*
-gridfit.py
-model_old.py
-sdB_test/*
-test.py
+.directory
+nnaps/tests/fitting_test.py
+nnaps/tests/test_history.csv
+nnaps/tests/test_setup2.yaml
+nnaps/tests/test_training_data.html
+nnaps/tests/test_training_history.html
