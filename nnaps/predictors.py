@@ -20,9 +20,9 @@ class BPS_predictor():
         self.history = None
         self.setup = None
 
-        self.Xpars = []
-        self.Yregressors = []
-        self.Yclassifiers = []
+        self.features = []
+        self.regressors = []
+        self.classifiers = []
 
         if not setup is None:
             self.make_from_setup(setup)
@@ -39,12 +39,12 @@ class BPS_predictor():
     def _append_to_history(self, history):
 
         # convert the history object to a dataframe
-        keys = [c + '_mae' for c in self.Yregressors]
-        keys += ['val_' + c + '_mae' for c in self.Yregressors]
-        keys += [c + '_accuracy' for c in self.Yclassifiers]
-        keys += ['val_' + c + '_accuracy' for c in self.Yclassifiers]
-        keys += [c + '_loss' for c in self.Yclassifiers + self.Yregressors]
-        keys += ['val_' + c + '_loss' for c in self.Yclassifiers + self.Yregressors]
+        keys = [c + '_mae' for c in self.regressors]
+        keys += ['val_' + c + '_mae' for c in self.regressors]
+        keys += [c + '_accuracy' for c in self.classifiers]
+        keys += ['val_' + c + '_accuracy' for c in self.classifiers]
+        keys += [c + '_loss' for c in self.classifiers + self.regressors]
+        keys += ['val_' + c + '_loss' for c in self.classifiers + self.regressors]
 
         data = {k: history[k] for k in keys}
 
@@ -73,30 +73,42 @@ class BPS_predictor():
         :param data:
         :return:
         """
-        X = np.array([self.processors[x].transform(data[[x]]) for x in self.Xpars])
+        X = np.array([self.processors[x].transform(data[[x]]) for x in self.features])
         X = X.reshape(X.shape[:-1]).T
         return X
 
-    def _process_targets(self, data):
+    def _process_targets(self, data, inverse=False):
         """
         Private method. Should NOT be called by user.
 
         Takes the targets from the data frame and runs the required preprocessors on them.
         If no preprocessors are set, the original data is returned.
 
-        :param data:
-        :return:
+
+        :param data: target data to be tranformed,
+        :param inverse: if true, do the inverse_transform.
+        :return: if inverse: a dataframe, else: a numpy array
         """
-        Y = []
-        for y in self.Yregressors + self.Yclassifiers:
-            # check if Y data needs to be transformed before fitting.
-            if self.processors[y] is not None:
-                Y.append(self.processors[y].transform(data[[y]]))
-            else:
-                Y.append(data[[y]].values)
+        if not inverse:
+            Y = []
+            for y in self.regressors + self.classifiers:
+                # check if Y data needs to be transformed before fitting.
+                if self.processors[y] is not None:
+                    Y.append(self.processors[y].transform(data[[y]]))
+                else:
+                    Y.append(data[[y]].values)
+        else:
+            Y = {}
+            for Y_, name in zip(data, self.regressors + self.classifiers):
+                if self.processors[name] is not None:
+                    Y[name] = self.processors[name].inverse_transform(Y_)[:, 0]
+                else:
+                    Y[name] = Y_
+            Y = pd.DataFrame(Y)
+
         return Y
 
-    def train(self, data=None, epochs=100, batch_size=128):
+    def fit(self, data=None, epochs=100, batch_size=128):
         """
         Train the model
 
@@ -136,7 +148,7 @@ class BPS_predictor():
         Y = self.model.predict(X)
 
         res = {}
-        for Y_, name in zip(Y, self.Yregressors + self.Yclassifiers):
+        for Y_, name in zip(Y, self.regressors + self.classifiers):
             if self.processors[name] is not None:
                 res[name] = self.processors[name].inverse_transform(Y_)[:, 0]
             else:
@@ -152,13 +164,13 @@ class BPS_predictor():
 
     def make_training_history_report(self, filename):
 
-        plotting.plot_training_history_html(self.history, targets=self.Yregressors + self.Yclassifiers,
+        plotting.plot_training_history_html(self.history, targets=self.regressors + self.classifiers,
                                             filename=filename)
 
     def make_training_data_report(self, filename):
 
-        plotting.plot_training_data_html(self.train_data, self.test_data, self.Xpars,
-                                         self.Yregressors, self.Yclassifiers, self.processors, filename=filename)
+        plotting.plot_training_data_html(self.train_data, self.test_data, self.features,
+                                         self.regressors, self.classifiers, self.processors, filename=filename)
 
     # }
 
@@ -196,21 +208,21 @@ class BPS_predictor():
 
         processors = {}
 
-        for pname in self.Xpars:
+        for pname in self.features:
             p = self.setup['features'][pname]['processor']
             if p is not None:
                 p = p()
                 p.fit(self.train_data[[pname]])
             processors[pname] = p
 
-        for pname in self.Yregressors:
+        for pname in self.regressors:
             p = self.setup['regressors'][pname]['processor']
             if p is not None:
                 p = p()
                 p.fit(self.train_data[[pname]])
             processors[pname] = p
 
-        for pname in self.Yclassifiers:
+        for pname in self.classifiers:
             p = self.setup['classifiers'][pname]['processor']
             if p is not None:
                 p = p()
@@ -233,7 +245,7 @@ class BPS_predictor():
 
         model_setup = self.setup['model']
 
-        inputs = Input(shape=(len(self.Xpars),))
+        inputs = Input(shape=(len(self.features),))
         prev_layer = inputs
 
         # run over all requested layers and connect them
@@ -243,19 +255,19 @@ class BPS_predictor():
 
         outputs = []
 
-        for name in self.Yregressors:
+        for name in self.regressors:
             out = Dense(1, name=name)(prev_layer)
             outputs.append(out)
 
-        for name in self.Yclassifiers:
+        for name in self.classifiers:
             num_unique = len(self.processors[name].categories_[0])
             out = Dense(num_unique, activation='softmax', name=name)(prev_layer)
             outputs.append(out)
 
         self.model = Model(inputs, outputs)
 
-        loss = ['mean_squared_error' for name in self.Yregressors] + \
-               ['categorical_crossentropy' for name in self.Yclassifiers]
+        loss = ['mean_squared_error' for name in self.regressors] + \
+               ['categorical_crossentropy' for name in self.classifiers]
 
         self.model.compile(optimizer='adam', loss=loss, metrics=['accuracy', 'mae'])
 
@@ -263,9 +275,9 @@ class BPS_predictor():
 
         self.setup = defaults.add_defaults_to_setup(setup)
 
-        self.Xpars = list(self.setup['features'].keys())
-        self.Yregressors = list(self.setup['regressors'].keys())
-        self.Yclassifiers = list(self.setup['classifiers'].keys())
+        self.features = list(self.setup['features'].keys())
+        self.regressors = list(self.setup['regressors'].keys())
+        self.classifiers = list(self.setup['classifiers'].keys())
 
 
         self._prepare_data()
@@ -285,9 +297,9 @@ class BPS_predictor():
       Save a trained model to hdf5 file for later use
       """
 
-        setup = {'Xpars': self.Xpars,
-                 'Yregressors': self.Yregressors,
-                 'Yclassifiers': self.Yclassifiers}
+        setup = {'Xpars': self.features,
+                 'Yregressors': self.regressors,
+                 'Yclassifiers': self.classifiers}
 
         fileio.safe_model(self.model, self.processors, setup, filename)
 
@@ -300,9 +312,9 @@ class BPS_predictor():
         self.model = model
         self.processors = processors
 
-        self.Xpars = setup['Xpars']
-        self.Yregressors = setup['Yregressors']
-        self.Yclassifiers = setup['Yclassifiers']
+        self.features = setup['Xpars']
+        self.regressors = setup['Yregressors']
+        self.classifiers = setup['Yclassifiers']
 
     def save_training_history(self, filename):
         """

@@ -28,9 +28,9 @@ class TestBPSPredictorSetup(unittest.TestCase):
         Yclassifiers_ = ['product', 'binary_type']
 
         # test reading the X and Y variables
-        self.assertTrue(all([a in predictor.Xpars for a in Xpars_]))
-        self.assertTrue(all([a in predictor.Yregressors for a in Yregressors_]))
-        self.assertTrue(all([a in predictor.Yclassifiers for a in Yclassifiers_]))
+        self.assertTrue(all([a in predictor.features for a in Xpars_]))
+        self.assertTrue(all([a in predictor.regressors for a in Yregressors_]))
+        self.assertTrue(all([a in predictor.classifiers for a in Yclassifiers_]))
 
         # test making the preprocessors
         pp = predictor.processors
@@ -76,9 +76,9 @@ class TestBPSPredictorSetup(unittest.TestCase):
         Yclassifiers_ = ['product', 'binary_type']
 
         # test reading the X and Y variables
-        self.assertTrue(all([a in predictor.Xpars for a in Xpars_]))
-        self.assertTrue(all([a in predictor.Yregressors for a in Yregressors_]))
-        self.assertTrue(all([a in predictor.Yclassifiers for a in Yclassifiers_]))
+        self.assertTrue(all([a in predictor.features for a in Xpars_]))
+        self.assertTrue(all([a in predictor.regressors for a in Yregressors_]))
+        self.assertTrue(all([a in predictor.classifiers for a in Yclassifiers_]))
 
         # test making the preprocessors
         pp = predictor.processors
@@ -133,7 +133,7 @@ class TestBPSPredictorTrainingPredicting(unittest.TestCase):
         predictor = predictors.BPS_predictor()
 
         predictor.processors = processors
-        predictor.Xpars = ['M1', 'qinit']
+        predictor.features = ['M1', 'qinit']
 
         X = predictor._process_features(df)
 
@@ -159,7 +159,7 @@ class TestBPSPredictorTrainingPredicting(unittest.TestCase):
         predictor = predictors.BPS_predictor()
 
         predictor.processors = processors
-        predictor.Yregressors = ['M1final', 'qfinal']
+        predictor.regressors = ['M1final', 'qfinal']
 
         Y = predictor._process_targets(df)
 
@@ -178,8 +178,8 @@ class TestBPSPredictorTrainingPredicting(unittest.TestCase):
 
         predictor = predictors.BPS_predictor()
 
-        predictor.Yregressors = ['M1final']
-        predictor.Yclassifiers = []
+        predictor.regressors = ['M1final']
+        predictor.classifiers = []
 
         data = {'M1final_mae': [0.3, 0.2], 'val_M1final_mae': [0.31, 0.21], 'M1final_loss': [1.5, 1.3],
                 'val_M1final_loss': [1.6, 1.4], 'training_run': [1, 1]}
@@ -217,7 +217,7 @@ class TestBPSPredictorTrainingPredicting(unittest.TestCase):
 
         predictor.train_data = predictor.train_data.iloc[0:200]
 
-        predictor.train(epochs=2, batch_size=50)
+        predictor.fit(epochs=2, batch_size=50)
 
         weights_new = predictor.model.layers[1].get_weights()[0]
 

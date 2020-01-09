@@ -54,7 +54,7 @@ from nnaps import predictors
     
 predictor = predictors.BPS_predictor(setup_file='test_setup.yaml')
     
-predictor.train(epochs=100)
+predictor.fit(epochs=100)
 ```    
 
 create the predictor using a setupfile, and then train it on the provided data. The number of epochs is the number of
