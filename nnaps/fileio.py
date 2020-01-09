@@ -2,6 +2,13 @@ import h5py
 
 from sklearn import preprocessing
 
+import numpy as np
+import tables
+import warnings
+import sys
+import six
+import yaml
+
 # saveing to hdf5: https://gist.github.com/lukedeo/d1899f011ae41b26fb6e
 
 
@@ -10,11 +17,7 @@ hacked out deepdish.io style keras NN saving functionality
 [credit] deepdish
 '''
 
-import numpy as np
-import tables
-import warnings
-import sys
-import six
+
 
 from keras.models import model_from_json, model_from_yaml
 
@@ -292,7 +295,11 @@ def dict2processors(processor_dict):
 
     for name, processor_data in processor_dict.items():
 
-        if processor_data['preprocessor'] == 'OneHotEncoder':
+        if processor_data is None:
+            # For this parameter, there is no preprocessor defined.
+            p = None
+
+        elif processor_data['preprocessor'] == 'OneHotEncoder':
             p = preprocessing.OneHotEncoder()
             # convert the categories_ attribute to the correct data type
             categories_ = processor_data['kwargs'].pop('categories_')
@@ -314,23 +321,38 @@ def dict2processors(processor_dict):
         else:
             p = None
 
-        for key, value in processor_data['kwargs'].items():
-            setattr(p, key, value)
+        if p is not None:
+            for key, value in processor_data['kwargs'].items():
+                setattr(p, key, value)
 
         processors[name] = p
 
     return processors
 
 
-def safe_model(model, processors, setup, filename):
+def safe_model(model, processors, features, regressors, classifiers, setup, filename, history=None):
     processor_dict = processors2dict(processors)
 
+    # the setup dictionary is stored in yaml format, but all preprocessing info is removed.
+    setup.pop('features', None)
+    setup.pop('regressors', None)
+    setup.pop('classifiers', None)
+    setup = yaml.dump(setup)
+
+    # features, regressors and classifiers have to be stored directly and their order is important.
+    # the setup in yaml format does NOT keep the order.
     data = {
         'preprocessors': processor_dict,
         'setup': setup,
         'config': model.to_yaml(),
-        'weights': model.get_weights()
+        'weights': model.get_weights(),
+        'features': features,
+        'regressors': regressors,
+        'classifiers': classifiers,
     }
+
+    if history is not None:
+        data['history'] = history
 
     save(filename, data, compress=True)
 
@@ -345,6 +367,15 @@ def load_model(filename):
 
     processors = dict2processors(data['preprocessors'])
 
-    setup = data.get('setup', None)
+    features = data.get('features', [])
+    regressors = data.get('regressors', [])
+    classifiers = data.get('classifiers', [])
 
-    return model, processors, setup
+    # load the setup and if necessary convert from yaml to a dictionary
+    setup = data.get('setup', None)
+    if setup is not None:
+        setup = yaml.safe_load(setup)
+
+    history = data.get('history', None)
+
+    return model, processors, features, regressors, classifiers, setup, history

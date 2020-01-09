@@ -283,16 +283,11 @@ class TestSafeLoadModel(unittest.TestCase):
         model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mae'])
         # history = model.fit(X, y, epochs=1, batch_size=20, shuffle=True)
 
-        setup = {'Xpars': ['M1', 'qinit', 'Pinit'],
-                 'Yregressors': ['qfinal', 'Pfinal'],
-                 'Yclassifiers': ['binary_type', 'product']}
-
         try:
-            fileio.safe_model(model, {}, setup, 'test.h5')
-            model_new, processors_new, setup_new = fileio.load_model('test.h5')
+            fileio.safe_model(model, {}, [], [], [], {}, 'test.h5')
+            model_new, _, _, _, _, _, _ = fileio.load_model('test.h5')
         finally:
             os.remove('test.h5')
 
         self.assertTrue(model.to_json() == model_new.to_json())
 
-        self.assertEqual(setup, setup_new)

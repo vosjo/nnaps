@@ -17,6 +17,7 @@ class BPS_predictor():
 
     def __init__(self, setup=None, setup_file=None, saved_model=None):
 
+        self.processors = None
         self.history = None
         self.setup = None
 
@@ -103,7 +104,7 @@ class BPS_predictor():
                 if self.processors[name] is not None:
                     Y[name] = self.processors[name].inverse_transform(Y_)[:, 0]
                 else:
-                    Y[name] = Y_
+                    Y[name] = Y_[:, 0]
             Y = pd.DataFrame(Y)
 
         return Y
@@ -147,14 +148,9 @@ class BPS_predictor():
 
         Y = self.model.predict(X)
 
-        res = {}
-        for Y_, name in zip(Y, self.regressors + self.classifiers):
-            if self.processors[name] is not None:
-                res[name] = self.processors[name].inverse_transform(Y_)[:, 0]
-            else:
-                res[name] = Y_
+        res = self._process_targets(Y, inverse=True)
 
-        return pd.DataFrame(data=res)
+        return res
 
     # }
 
@@ -279,7 +275,6 @@ class BPS_predictor():
         self.regressors = list(self.setup['regressors'].keys())
         self.classifiers = list(self.setup['classifiers'].keys())
 
-
         self._prepare_data()
         self._make_preprocessors_from_setup()
         self._make_model_from_setup()
@@ -292,34 +287,36 @@ class BPS_predictor():
 
         self.make_from_setup(setup)
 
-    def save_model(self, filename):
+    def save_model(self, filename, include_history=False):
         """
-      Save a trained model to hdf5 file for later use
-      """
+        Save a trained model to hdf5 file for later use
+        """
+        history = self.history if include_history else None
 
-        setup = {'Xpars': self.features,
-                 'Yregressors': self.regressors,
-                 'Yclassifiers': self.classifiers}
-
-        fileio.safe_model(self.model, self.processors, setup, filename)
+        fileio.safe_model(self.model, self.processors, self.features, self.regressors, self.classifiers,
+                          self.setup, filename, history=history)
 
     def load_model(self, filename):
         """
-      Load a model saved to hdf5 format
-      """
+        Load a model saved to hdf5 format
+        """
 
-        model, processors, setup = fileio.load_model(filename)
+        model, processors, features, regressors, classifiers, setup, history = fileio.load_model(filename)
         self.model = model
         self.processors = processors
+        self.history = history
 
-        self.features = setup['Xpars']
-        self.regressors = setup['Yregressors']
-        self.classifiers = setup['Yclassifiers']
+        # TODO: not sure if the add_defaults_to_setup should be run automatically
+        self.setup = setup
+
+        self.features = features
+        self.regressors = regressors
+        self.classifiers = classifiers
 
     def save_training_history(self, filename):
         """
-      Save the traning history to csv file
-      """
+        Save the training history to csv file
+        """
         self.history.to_csv(filename)
 
     # }
