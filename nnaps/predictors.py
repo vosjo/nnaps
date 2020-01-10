@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 
 from sklearn import preprocessing
-from sklearn import utils
+from sklearn import utils, metrics
 from sklearn.model_selection import train_test_split
 
 from keras.layers import Dense, Input, Dropout
@@ -133,6 +133,17 @@ class BPS_predictor():
 
         self._append_to_history(history.history)
 
+        train_score = self.score(data)
+        test_score = self.score(self.test_data)
+
+        # print the scores
+        print("Training results\n{:12s}  {}   {}".format('target', 'training score', 'test score'))
+        print("-----------------------------------------")
+        for par in self.regressors:
+            print( "{:12s}:  {:7.3f}      {:7.3f}".format(par, train_score[par], test_score[par]) )
+        for par in self.classifiers:
+            print( "{:12s}:  {:6.1f}%      {:6.1f}%".format(par, train_score[par]*100., test_score[par]*100.) )
+
     def predict(self, data=None):
         """
         Make predictions based on a trained model.
@@ -151,6 +162,24 @@ class BPS_predictor():
         res = self._process_targets(Y, inverse=True)
 
         return res
+
+    def score(self, data=None, regressor_metric='mean_absolute_error', classifier_metric='accuracy'):
+
+        if data is None:
+            data = self.train_data
+
+        res = self.predict(data)
+
+        scores = {}
+        for par in self.regressors:
+            score = metrics.mean_absolute_error(data[par], res[par])
+            scores[par] = score
+
+        for par in self.classifiers:
+            score = metrics.accuracy_score(data[par], res[par])
+            scores[par] = score
+
+        return scores
 
     # }
 
