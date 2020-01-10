@@ -17,6 +17,16 @@ covering the observed parameter range were calculated (blue circles in the left 
 were used to train a model and predict the P-q distribution of ~1\,000\,000 binaries (right figure). With this new
 BPS model we can now further explore the P-q distribution of different sub populations in our galaxy.
 
+## Instalation instructions
+
+The simplest way to install NNaPS is using pip from the terminal. This will install NNaPS in the local folder.
+
+    pip install -e git+https://github.com/vosjo/nnaps.git#egg=nnaps
+
+To uninstall NNaPS, run:
+
+    pip uninstall nnaps
+
 ## Simplest use
 
 NNaPS requires a setup file or setup dictionary telling it what to do. The minimaly necessary setup includes a list 
