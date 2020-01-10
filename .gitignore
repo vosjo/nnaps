@@ -2,7 +2,14 @@
 *.pyc
 *.ipynb
 .directory
-.idea/*
+/.idea
+
+# Setuptools distribution folder.
+/dist/
+
+# Python egg metadata, regenerated from source files by setuptools.
+/*.egg-info
+
 nnaps/tests/fitting_test.py
 nnaps/tests/test_history.csv
 nnaps/tests/test_setup2.yaml
