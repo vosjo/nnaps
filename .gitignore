@@ -1,5 +1,6 @@
 
 *.pyc
+*.ipynb
 .directory
 nnaps/tests/fitting_test.py
 nnaps/tests/test_history.csv

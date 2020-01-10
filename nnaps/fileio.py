@@ -1,13 +1,11 @@
-import h5py
-
-from sklearn import preprocessing
-
 import numpy as np
 import tables
 import warnings
-import sys
 import six
 import yaml
+
+from sklearn import preprocessing
+from keras.models import model_from_json, model_from_yaml
 
 # saveing to hdf5: https://gist.github.com/lukedeo/d1899f011ae41b26fb6e
 
@@ -19,7 +17,7 @@ hacked out deepdish.io style keras NN saving functionality
 
 
 
-from keras.models import model_from_json, model_from_yaml
+
 
 # Types that should be saved as pytables attribute
 ATTR_TYPES = (int, float, bool, six.string_types,
