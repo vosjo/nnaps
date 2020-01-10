@@ -2,6 +2,7 @@
 *.pyc
 *.ipynb
 .directory
+.idea/*
 nnaps/tests/fitting_test.py
 nnaps/tests/test_history.csv
 nnaps/tests/test_setup2.yaml
