@@ -21,7 +21,7 @@ BPS model we can now further explore the P-q distribution of different sub popul
 
 The simplest way to install NNaPS is using pip from the terminal. This will install NNaPS in the local folder.
 
-    pip install -e git+https://github.com/vosjo/nnaps.git#egg=nnaps
+    pip install git+https://github.com/vosjo/nnaps.git#egg=nnaps
 
 To uninstall NNaPS, run:
 
@@ -137,7 +137,7 @@ After training the predictor, you can check how well it managed to fit the train
 the predictor set part of the training data separate to test how well it's predictions are. This is the validation
 set. By checking how well the predictor works for this data, you can get an idea of the expected error on new data.
 
-You can save th training report to html file as follows:
+You can save the training report to html file as follows:
 
 ```python
 predictor.make_training_history_report('report.html')
@@ -177,8 +177,16 @@ The trained model can be saved to hdf5 format and loaded again for later use:
 
 ```python  
 predictor.save_model('model.h5')
+```
 
+Loading a saved models can be done in two ways:
+
+```python
+# load into an existing predictor object
 predictor.load_model('model.h5')
+
+# or create a new predictor object from the saved model
+predictors.BPS_predictor(saved_model='model.h5')
 ``` 
 
 
