@@ -258,8 +258,7 @@ def processors2dict(processors):
             p = dict(preprocessor='OneHotEncoder',
                      kwargs={'categories_': categories_,
                              'categories_dtype': dtype_,
-                             'drop_idx_': processor.drop_idx_,
-                             '_legacy_mode': processor._legacy_mode})
+                             'drop_idx_': processor.drop_idx_})
 
         elif processor.__class__ == preprocessing.StandardScaler:
             p = dict(preprocessor='StandardScaler',
