@@ -15,6 +15,7 @@ hacked out deepdish.io style keras NN saving functionality
 [credit] deepdish
 '''
 
+# TODO: replace current saving of preprocessors by saving a pickeled version of them.
 
 
 

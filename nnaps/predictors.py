@@ -136,16 +136,7 @@ class BPS_predictor():
 
         self._append_to_history(history.history)
 
-        train_score = self.score(data)
-        test_score = self.score(self.test_data)
-
-        # print the scores
-        print("Training results\n{:12s}  {}   {}".format('target', 'training score', 'test score'))
-        print("-----------------------------------------")
-        for par in self.regressors:
-            print( "{:12s}:  {:7.3f}      {:7.3f}".format(par, train_score[par], test_score[par]) )
-        for par in self.classifiers:
-            print( "{:12s}:  {:6.1f}%      {:6.1f}%".format(par, train_score[par]*100., test_score[par]*100.) )
+        self.print_score(training_data=data)
 
     def predict(self, data=None):
         """
@@ -200,6 +191,31 @@ class BPS_predictor():
         plotting.plot_training_data_html(self.train_data, self.test_data, self.features,
                                          self.regressors, self.classifiers, self.processors, filename=filename)
 
+    def print_score(self, training_data=None, test_data=None):
+        """
+        prints the scores of the current model on the training and test data.
+
+        :param training_data: training data set to score, if None the stored one is used.
+        :param test_data: set data set to score, is None the stored one is used.
+        :return: None
+        """
+
+        if training_data is None:
+            training_data = self.training_data
+        if test_data is None:
+            test_data = self.test_data
+
+        train_score = self.score(training_data)
+        test_score = self.score(test_data)
+
+        # print the scores
+        print("Training results\n{:12s}  {}   {}".format('target', 'training score', 'test score'))
+        print("-----------------------------------------")
+        for par in self.regressors:
+            print("{:12s}:  {:7.3f}      {:7.3f}".format(par, train_score[par], test_score[par]))
+        for par in self.classifiers:
+            print("{:12s}:  {:6.1f}%      {:6.1f}%".format(par, train_score[par] * 100., test_score[par] * 100.))
+
     # }
 
     # ----------------------------------------------------------------------
@@ -241,21 +257,21 @@ class BPS_predictor():
         for pname in self.features:
             p = self.setup['features'][pname]['processor']
             if p is not None:
-                p = p()
+                p = defaults.get_processor_class(p)
                 p.fit(self.train_data[[pname]])
             processors[pname] = p
 
         for pname in self.regressors:
             p = self.setup['regressors'][pname]['processor']
             if p is not None:
-                p = p()
+                p = defaults.get_processor_class(p)
                 p.fit(self.train_data[[pname]])
             processors[pname] = p
 
         for pname in self.classifiers:
             p = self.setup['classifiers'][pname]['processor']
             if p is not None:
-                p = p()
+                p = defaults.get_processor_class(p)
                 p.fit(self.train_data[[pname]])
             processors[pname] = p
 
@@ -263,7 +279,7 @@ class BPS_predictor():
 
     def _make_model_from_setup(self):
         """
-        Make a model based on a setupfile
+        Make a model based on information given in the setup
         """
         # TODO: still needs to add support for extra regressor and classifier layers after the main body of the model
 
@@ -296,10 +312,11 @@ class BPS_predictor():
 
         self.model = Model(inputs, outputs)
 
-        loss = ['mean_squared_error' for name in self.regressors] + \
-               ['categorical_crossentropy' for name in self.classifiers]
+        loss = [self.setup['regressors'][name]['loss'] for name in self.regressors] + \
+               [self.setup['classifiers'][name]['loss'] for name in self.classifiers]
 
-        self.model.compile(optimizer='adam', loss=loss, metrics=['accuracy', 'mae'])
+        opt = defaults.get_optimizer(self.setup['optimizer'], optimizer_kwargs=self.setup['optimizer_kwargs'])
+        self.model.compile(optimizer=opt, loss=loss, metrics=['accuracy', 'mae'])
 
     def make_from_setup(self, setup):
 
