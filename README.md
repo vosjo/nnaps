@@ -208,14 +208,18 @@ features:
       processor: StandardScaler
 regressors:
    Pfinal:
-      processor: RobustScaler
+      processor: None
+      loss: mean_absolute_percentage_error
    qfinal:
-      processor: MinMaxScaler
+      processor: None
+      loss: mean_squared_error
 classifiers:
    product: 
       processor: OneHotEcoder
+      loss: categorical_crossentropy
    binary_type:
       processor: OneHotEcoder
+      loss: categorical_crossentropy
 
 random_state: 42
 train_test_split: 0.2
@@ -229,6 +233,7 @@ model:
    - {'layer':'Dropout', 'args':[0.1], 'kwargs': {'name':'DO_3'} }
 
 optimizer: 'adam'
+optimizer_kwargs: {'learning_rate':0.001, 'beta_1':0.9, 'beta_2':0.999}
 batch_size: 128
 ```
 
