@@ -1,9 +1,9 @@
 import os
+import pytest
 
 import pandas as pd
 import numpy as np
 
-import unittest
 
 from sklearn import preprocessing
 
@@ -18,7 +18,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 base_path = Path(__file__).parent
 
 
-class TestBPSPredictorSetup(unittest.TestCase):
+class TestBPSPredictorSetup:
 
     def test_make_from_setup(self):
 
@@ -28,44 +28,44 @@ class TestBPSPredictorSetup(unittest.TestCase):
         Yclassifiers_ = ['product', 'binary_type']
 
         # test reading the X and Y variables
-        self.assertTrue(all([a in predictor.features for a in Xpars_]))
-        self.assertTrue(all([a in predictor.regressors for a in Yregressors_]))
-        self.assertTrue(all([a in predictor.classifiers for a in Yclassifiers_]))
+        assert all([a in predictor.features for a in Xpars_])
+        assert all([a in predictor.regressors for a in Yregressors_])
+        assert all([a in predictor.classifiers for a in Yclassifiers_])
 
         # test making the preprocessors
         pp = predictor.processors
 
         for par in Xpars_:
-            self.assertTrue(par in pp, msg="{} does not have a preprocessor".format(par))
-            self.assertTrue(pp[par].__class__ == preprocessing.StandardScaler,
-                            msg="{} does not have the correct preprocessor.".format(par) +
-                                " expected {}, got {}".format(preprocessing.StandardScaler, pp[par].__class__))
+            assert par in pp, "{} does not have a preprocessor".format(par)
+            assert pp[par].__class__ == preprocessing.StandardScaler, \
+                            "{} does not have the correct preprocessor.".format(par) + \
+                            " expected {}, got {}".format(preprocessing.StandardScaler, pp[par].__class__)
 
         for par in Yregressors_:
-            self.assertTrue(par in pp, msg="{} does not have a preprocessor".format(par))
-            self.assertEqual(pp[par], None, msg="{} does not have the correct preprocessor.".format(par) +
-                                                " expected None, got {}".format(pp[par].__class__))
+            assert par in pp, "{} does not have a preprocessor".format(par)
+            assert pp[par] == None, "{} does not have the correct preprocessor.".format(par) + \
+                                                " expected None, got {}".format(pp[par].__class__)
 
         for par in Yclassifiers_:
-            self.assertTrue(par in pp, msg="{} does not have a preprocessor".format(par))
-            self.assertTrue(pp[par].__class__ == preprocessing.OneHotEncoder,
-                            msg="{} does not have the correct preprocessor.".format(par) +
-                                " expected {}, got {}".format(preprocessing.OneHotEncoder,pp[par].__class__))
+            assert par in pp, "{} does not have a preprocessor".format(par)
+            assert pp[par].__class__ == preprocessing.OneHotEncoder, \
+                            "{} does not have the correct preprocessor.".format(par) + \
+                            " expected {}, got {}".format(preprocessing.OneHotEncoder,pp[par].__class__)
 
         # test making the model
         mod = predictor.model
 
-        self.assertEqual(len(mod.layers), 11,
-                         msg="Model does not have correct number of layers, expected" +
-                             " {}, got {}".format(11, len(mod.layers)))
+        assert len(mod.layers) == 11, \
+                         "Model does not have correct number of layers, expected" + \
+                         " {}, got {}".format(11, len(mod.layers))
 
-        self.assertEqual(mod.input.shape[1], len(Xpars_),
-                         msg="Model input does not have correct shape, expected " +
-                            "{}, got {}".format(len(Xpars_),mod.input.shape[1]))
+        assert mod.input.shape[1] == len(Xpars_), \
+                         "Model input does not have correct shape, expected " + \
+                         "{}, got {}".format(len(Xpars_),mod.input.shape[1])
 
-        self.assertEqual(len(mod.output), len(Yregressors_) + len(Yclassifiers_),
-                         msg="Model does not have correct number of outputs, expected" +
-                             " {}, got {}".format(len(Yregressors_) + len(Yclassifiers_), len(mod.output)))
+        assert len(mod.output) == len(Yregressors_) + len(Yclassifiers_), \
+                         "Model does not have correct number of outputs, expected" + \
+                         " {}, got {}".format(len(Yregressors_) + len(Yclassifiers_), len(mod.output))
 
     def test_make_from_saved_model(self):
 
@@ -76,48 +76,51 @@ class TestBPSPredictorSetup(unittest.TestCase):
         Yclassifiers_ = ['product', 'binary_type']
 
         # test reading the X and Y variables
-        self.assertTrue(all([a in predictor.features for a in Xpars_]))
-        self.assertTrue(all([a in predictor.regressors for a in Yregressors_]))
-        self.assertTrue(all([a in predictor.classifiers for a in Yclassifiers_]))
+        assert all([a in predictor.features for a in Xpars_])
+        assert all([a in predictor.regressors for a in Yregressors_])
+        assert all([a in predictor.classifiers for a in Yclassifiers_])
 
         # test making the preprocessors
         pp = predictor.processors
 
         for par in Xpars_:
-            self.assertTrue(par in pp, msg="{} does not have a preprocessor".format(par))
-            self.assertTrue(pp[par].__class__ == preprocessing.StandardScaler,
-                            msg="{} does not have the correct preprocessor. ".format(par) +
-                                "expected {}, got {}".format(preprocessing.StandardScaler, pp[par].__class__))
+            assert par in pp, "{} does not have a preprocessor".format(par)
+            assert pp[par].__class__ == preprocessing.StandardScaler, \
+                            "{} does not have the correct preprocessor. ".format(par) + \
+                            "expected {}, got {}".format(preprocessing.StandardScaler, pp[par].__class__)
 
         # for par in Yregressors_:
-        #     self.assertTrue(par in pp, msg="{} does not have a preprocessor".format(par))
-        #     self.assertTrue(pp[par].__class__ == preprocessing.RobustScaler,
+        #     assert par in pp, msg="{} does not have a preprocessor".format(par))
+        #     assert pp[par].__class__ == preprocessing.RobustScaler,
         #                     msg="{} does not have the correct preprocessor. ".format(par) +
         #                         "expected {}, got {}".format(preprocessing.RobustScaler, pp[par].__class__))
 
         for par in Yclassifiers_:
-            self.assertTrue(par in pp, msg="{} does not have a preprocessor".format(par))
-            self.assertTrue(pp[par].__class__ == preprocessing.OneHotEncoder,
-                            msg="{} does not have the correct preprocessor. ".format(par) +
-                                "expected {}, got {}".format(preprocessing.OneHotEncoder, pp[par].__class__))
+            assert par in pp, "{} does not have a preprocessor".format(par)
+            assert pp[par].__class__ == preprocessing.OneHotEncoder, \
+                            "{} does not have the correct preprocessor. ".format(par) + \
+                            "expected {}, got {}".format(preprocessing.OneHotEncoder, pp[par].__class__)
 
         # test making the model
         mod = predictor.model
 
-        self.assertEqual(len(mod.layers), 11,
-                         msg="Model does not have correct number of layers, expected {}, got {}".format(11, len(
-                             mod.layers)))
+        assert len(mod.layers) == 11, \
+            "Model does not have correct number of layers, expected {}, got {}".format(11, len(mod.layers))
 
-        self.assertEqual(mod.input.shape[1], len(Xpars_),
-                         msg="Model input does not have correct shape, expected {}, got {}".format(len(Xpars_),
-                                                                                                   mod.input.shape[1]))
+        assert mod.input.shape[1] == len(Xpars_), \
+            "Model input does not have correct shape, expected {}, got {}".format(len(Xpars_), mod.input.shape[1])
 
-        self.assertEqual(len(mod.output), len(Yregressors_) + len(Yclassifiers_),
-                         msg="Model does not have correct number of outputs, expected {}, got {}".format(
-                             len(Yregressors_) + len(Yclassifiers_), len(mod.output)))
+        assert len(mod.output) == len(Yregressors_) + len(Yclassifiers_), \
+            "Model does not have correct number of outputs, expected {}, got {}".format(len(Yregressors_) +
+                                                                                        len(Yclassifiers_),
+                                                                                        len(mod.output))
+
+        # test that the training data is loaded again
+        assert predictor.train_data is not None
+        assert predictor.test_data is not None
 
 
-class TestBPSPredictorTrainingPredicting(unittest.TestCase):
+class TestBPSPredictorTrainingPredicting:
 
     def test_process_features(self):
 
@@ -138,13 +141,13 @@ class TestBPSPredictorTrainingPredicting(unittest.TestCase):
         X = predictor._process_features(df)
 
         # check that the output shape is correct
-        self.assertEqual(X.shape, (100,2))
+        assert X.shape == (100,2)
 
         # check that all arrays are transformed
-        self.assertAlmostEqual(np.mean(X[:,0]), 0)
-        self.assertAlmostEqual(np.std(X[:,0]), 1)
-        self.assertAlmostEqual(np.mean(X[:,1]), 0)
-        self.assertAlmostEqual(np.std(X[:,0]), 1)
+        np.testing.assert_almost_equal(np.mean(X[:,0]), 0)
+        np.testing.assert_almost_equal(np.std(X[:,0]), 1)
+        np.testing.assert_almost_equal(np.mean(X[:,1]), 0)
+        np.testing.assert_almost_equal(np.std(X[:,0]), 1)
 
     def test_process_targets(self):
         data = np.random.normal(10, 3, size=100)
@@ -164,14 +167,14 @@ class TestBPSPredictorTrainingPredicting(unittest.TestCase):
         Y = predictor._process_targets(df)
 
         # check that the output is a list
-        self.assertEqual(type(Y), list)
+        assert type(Y) == list
 
         # check that both parameters are included
-        self.assertEqual(len(Y), 2)
+        assert len(Y) == 2
 
         # check that one array is transformed and the other not
-        self.assertAlmostEqual(np.mean(Y[0]), 0)
-        self.assertAlmostEqual(np.std(Y[0]), 1)
+        np.testing.assert_almost_equal(np.mean(Y[0]), 0)
+        np.testing.assert_almost_equal(np.std(Y[0]), 1)
         np.testing.assert_array_equal(Y[1], df[['qfinal']].values)
 
     def test_append_to_history(self):
@@ -203,9 +206,9 @@ class TestBPSPredictorTrainingPredicting(unittest.TestCase):
 
         history = predictor.history
 
-        self.assertTrue(history.equals(history_expected),
-                        msg="\nExpected dataframe: \n{}\nGot dataframe: \n {}".format(history_expected.to_string(),
-                                                                                      history.to_string()))
+        assert history.equals(history_expected), \
+            "\nExpected dataframe: \n{}\nGot dataframe: \n {}".format(history_expected.to_string(),
+                                                                      history.to_string())
 
     def test_train_model(self):
 
@@ -221,7 +224,7 @@ class TestBPSPredictorTrainingPredicting(unittest.TestCase):
 
         weights_new = predictor.model.layers[1].get_weights()[0]
 
-        with self.assertRaises(AssertionError):
+        with pytest.raises(AssertionError):
             np.testing.assert_almost_equal(weights, weights_new)
 
 
@@ -236,12 +239,12 @@ class TestBPSPredictorTrainingPredicting(unittest.TestCase):
         res = predictor.predict(data=data)
 
         # check that the dimensions are correct
-        self.assertEqual(res.shape[0], 10, msg="expected 10 predicted rows, got: {}.\n".format(res.shape[0]) +
-                                               " all data:\n{}".format(res))
-        self.assertEqual(res.shape[1], 4, msg="expected 4 predicted columns, got: {}.\n".format(res.shape[1]) +
-                                              " all data:\n{}".format(res))
+        assert res.shape[0] == 10, "expected 10 predicted rows, got: {}.\n".format(res.shape[0]) +\
+                                   " all data:\n{}".format(res)
+        assert res.shape[1] == 4, "expected 4 predicted columns, got: {}.\n".format(res.shape[1]) + \
+                                  " all data:\n{}".format(res)
 
         # check the columns:
         for ypar in 'Pfinal    qfinal product   binary_type'.split():
-            self.assertTrue(ypar in res.columns, msg="Expected {} in columns, only".format(ypar) +
-                                                     " got: {}.\nall data:\n{}".format(list(res.columns), res))
+            assert ypar in res.columns, "Expected {} in columns, only".format(ypar) + \
+                                         " got: {}.\nall data:\n{}".format(list(res.columns), res)

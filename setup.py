@@ -27,6 +27,8 @@ setuptools.setup(
     url="https://github.com/vosjo/nnaps",
     packages=setuptools.find_packages(),
     install_requires=install_requires,
+    test_suite='pytest.collector',
+    tests_require=['pytest'],
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Programming Language :: Python :: 3",

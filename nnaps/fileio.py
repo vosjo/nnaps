@@ -286,7 +286,7 @@ def processors2dict(processors):
 
 
 def dict2processors(processor_dict):
-    # TODO: saving of categories_ for OneHot encoder should be adressed. Problem with saving unicode in hdf5.
+    # TODO: saving of categories_ for OneHot encoder should be addressed. Problem with saving unicode in hdf5.
 
     processors = {}
 

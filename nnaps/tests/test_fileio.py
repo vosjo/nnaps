@@ -1,11 +1,9 @@
 import os
+import pytest
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import numpy as np
-import pandas as pd
-
-import unittest
 
 from nnaps import fileio
 
@@ -15,10 +13,7 @@ from keras.layers import Dense, Input
 from keras.models import Model
 
 
-class TestProcessorConversion(unittest.TestCase):
-
-    def setUP(self):
-        pass
+class TestProcessorConversion:
 
     def scaler2dict2scaler_test(self, scaler, data):
 
@@ -108,10 +103,10 @@ class TestProcessorConversion(unittest.TestCase):
         scaled_data = encoder.transform(data)
         scaled_data_new = encoder_new.transform(data)
 
-        self.assertTrue(np.all(scaled_data.nonzero()[0] == scaled_data_new.nonzero()[0]),
-                        msg="loaded encoder does not transform the same as original encoder")
-        self.assertTrue(np.all(scaled_data.nonzero()[1] == scaled_data_new.nonzero()[1]),
-                        msg="loaded encoder does not transform the same as original encoder")
+        assert np.all(scaled_data.nonzero()[0] == scaled_data_new.nonzero()[0]),\
+               "loaded encoder does not transform the same as original encoder"
+        assert np.all(scaled_data.nonzero()[1] == scaled_data_new.nonzero()[1]), \
+               "loaded encoder does not transform the same as original encoder"
 
         scaled_data = encoder.transform(data)
         inv_data = encoder_new.inverse_transform(scaled_data)
@@ -120,7 +115,7 @@ class TestProcessorConversion(unittest.TestCase):
                                                         " loaded encoder does not equal original data.")
 
 
-class TestSafeLoadModel(unittest.TestCase):
+class TestSafeLoadModel:
 
     def test_saveLoad_processors(self):
 
@@ -157,17 +152,17 @@ class TestSafeLoadModel(unittest.TestCase):
         keys = list(data['kwargs'].keys())
         keys.remove('categories_')
         for key in keys:
-            self.assertEqual(data['kwargs'][key], data_new['kwargs'][key])
+            assert data['kwargs'][key] == data_new['kwargs'][key]
 
-        self.assertEqual(data_new['kwargs']['categories_'][0].dtype, '|S5',
-                         msg="hdf5 saving check when dealing with arrays of strings:\n" +
-                             "When saving a numpy array with strings, the returned type should be '|S..'\n" +
-                             "got dtype: {}".format(data_new['kwargs']['categories_'][0].dtype))
+        assert data_new['kwargs']['categories_'][0].dtype == '|S5', \
+            "hdf5 saving check when dealing with arrays of strings:\n" + \
+            "When saving a numpy array with strings, the returned type should be '|S..'\n" + \
+             "got dtype: {}".format(data_new['kwargs']['categories_'][0].dtype)
 
         np.testing.assert_equal(data['kwargs']['categories_'][0],
                                 np.array(data_new['kwargs']['categories_'][0], dtype='<U5'))
 
-    def test_SaveLoad_OneHotEncoder_dtype_char(self):
+    def test_saveload_onehotencoder_dtype_char(self):
 
         data_int = np.random.randint(0, 3, size=10)
 
@@ -202,10 +197,10 @@ class TestSafeLoadModel(unittest.TestCase):
         scaled_data = encoder.transform(data)
         scaled_data_new = encoder_new.transform(data)
 
-        self.assertTrue(np.all(scaled_data.nonzero()[0] == scaled_data_new.nonzero()[0]),
-                        msg="loaded encoder does not transform the same as original encoder")
-        self.assertTrue(np.all(scaled_data.nonzero()[1] == scaled_data_new.nonzero()[1]),
-                        msg="loaded encoder does not transform the same as original encoder")
+        assert np.all(scaled_data.nonzero()[0] == scaled_data_new.nonzero()[0]), \
+            "loaded encoder does not transform the same as original encoder"
+        assert np.all(scaled_data.nonzero()[1] == scaled_data_new.nonzero()[1]), \
+            "loaded encoder does not transform the same as original encoder"
 
         scaled_data = encoder.transform(data)
         inv_data = encoder_new.inverse_transform(scaled_data)
@@ -214,7 +209,7 @@ class TestSafeLoadModel(unittest.TestCase):
                                 err_msg="data transformed by original and inverse transformed by loaded encoder" +
                                         " does not equal original data.")
 
-    def test_SaveLoad_OneHotEncoder_dtype_object(self):
+    def test_saveload_onehotencoder_dtype_object(self):
 
         data_int = np.random.randint(0, 3, size=10)
 
@@ -249,10 +244,10 @@ class TestSafeLoadModel(unittest.TestCase):
         scaled_data = encoder.transform(data)
         scaled_data_new = encoder_new.transform(data)
 
-        self.assertTrue(np.all(scaled_data.nonzero()[0] == scaled_data_new.nonzero()[0]),
-                        msg="loaded encoder does not transform the same as original encoder")
-        self.assertTrue(np.all(scaled_data.nonzero()[1] == scaled_data_new.nonzero()[1]),
-                        msg="loaded encoder does not transform the same as original encoder")
+        assert np.all(scaled_data.nonzero()[0] == scaled_data_new.nonzero()[0]), \
+            "loaded encoder does not transform the same as original encoder"
+        assert np.all(scaled_data.nonzero()[1] == scaled_data_new.nonzero()[1]), \
+            "loaded encoder does not transform the same as original encoder"
 
         scaled_data = encoder.transform(data)
         inv_data = encoder_new.inverse_transform(scaled_data)
@@ -261,7 +256,7 @@ class TestSafeLoadModel(unittest.TestCase):
                                 err_msg="data transformed by original and inverse transformed by loaded encoder" +
                                         " does not equal original data.")
 
-    def test_saveLoad_model(self):
+    def test_saveload_model(self):
 
         # make and train a very small model
         inputs = Input(shape=(2,))
@@ -289,5 +284,5 @@ class TestSafeLoadModel(unittest.TestCase):
         finally:
             os.remove('test.h5')
 
-        self.assertTrue(model.to_json() == model_new.to_json())
+        assert model.to_json() == model_new.to_json()
 

@@ -25,6 +25,9 @@ class BPS_predictor():
         self.regressors = []
         self.classifiers = []
 
+        self.train_data = None
+        self.test_data = None
+
         if not setup is None:
             self.make_from_setup(setup)
 
@@ -225,6 +228,8 @@ class BPS_predictor():
 
     def _make_preprocessors_from_setup(self):
         """
+        Private method. Should NOT be called by user.
+
         Make the preprocessors from the setup file
         this is required to run before the make_model_from_setup step.
 
@@ -341,6 +346,9 @@ class BPS_predictor():
         self.features = features
         self.regressors = regressors
         self.classifiers = classifiers
+
+        # load the data and split it in a training - test set.
+        self._prepare_data()
 
     def save_training_history(self, filename):
         """
