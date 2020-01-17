@@ -3,14 +3,15 @@ import pytest
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
+import pandas as pd
 import numpy as np
 
 from nnaps import fileio
 
 from sklearn import preprocessing
 
-from keras.layers import Dense, Input
-from keras.models import Model
+from keras.layers import Dense, Input, Activation
+from keras.models import Model, Sequential
 
 
 class TestProcessorConversion:
@@ -286,3 +287,29 @@ class TestSafeLoadModel:
 
         assert model.to_json() == model_new.to_json()
 
+    def test_saveload_history(self):
+
+        # the save function NEEDS a model to work
+        model = Sequential([
+            Dense(32, input_shape=(5,)),
+            Activation('relu'),
+            Dense(10),
+            Activation('softmax'),
+        ])
+
+        data = {'M1final_mae': [0.3, 0.2], 'val_M1final_mae': [0.31, 0.21], 'M1final_loss': [1.5, 1.3],
+                'val_M1final_loss': [1.6, 1.4], 'training_run': [1, 1]}
+        history = pd.DataFrame(data=data)
+        history.index.name = 'epoch'
+
+        try:
+            fileio.safe_model(model, {}, [], [], [], {}, 'test.h5', history=history)
+            _, _, _, _, _, _, history_new = fileio.load_model('test.h5')
+        finally:
+            os.remove('test.h5')
+
+        np.testing.assert_array_equal(history.columns, history_new.columns)
+
+        np.testing.assert_array_equal(history.values, history_new.values)
+
+        assert history_new.index.name == 'epoch'

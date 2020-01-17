@@ -201,7 +201,7 @@ class BPS_predictor():
         """
 
         if training_data is None:
-            training_data = self.training_data
+            training_data = self.train_data
         if test_data is None:
             test_data = self.test_data
 

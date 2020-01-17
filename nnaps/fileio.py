@@ -4,6 +4,8 @@ import warnings
 import six
 import yaml
 
+import pandas as pd
+
 from sklearn import preprocessing
 from keras.models import model_from_json, model_from_yaml
 
@@ -332,9 +334,9 @@ def safe_model(model, processors, features, regressors, classifiers, setup, file
     processor_dict = processors2dict(processors)
 
     # the setup dictionary is stored in yaml format, but all preprocessing info is removed.
-    setup.pop('features', None)
-    setup.pop('regressors', None)
-    setup.pop('classifiers', None)
+    # setup.pop('features', None)
+    # setup.pop('regressors', None)
+    # setup.pop('classifiers', None)
     setup = yaml.dump(setup)
 
     # features, regressors and classifiers have to be stored directly and their order is important.
@@ -350,7 +352,8 @@ def safe_model(model, processors, features, regressors, classifiers, setup, file
     }
 
     if history is not None:
-        data['history'] = history
+        data['history_columns'] = list(history.columns)
+        data['history'] = history.values
 
     save(filename, data, compress=True)
 
@@ -374,6 +377,18 @@ def load_model(filename):
     if setup is not None:
         setup = yaml.safe_load(setup)
 
-    history = data.get('history', None)
+    if 'history' in data:
+        values = data['history']
+        columns = data['history_columns']
+
+        d = {}
+        for i, column in enumerate(columns):
+            d[column] = values[:,i]
+
+        history = pd.DataFrame(data=d)
+        history.index.name = 'epoch'
+    else:
+        history = None
+
 
     return model, processors, features, regressors, classifiers, setup, history
