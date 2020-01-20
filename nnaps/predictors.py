@@ -9,6 +9,7 @@ from sklearn.model_selection import train_test_split
 
 from keras.layers import Dense, Input, Dropout
 from keras.models import Model
+from keras.callbacks.callbacks import EarlyStopping, ReduceLROnPlateau
 
 from nnaps import fileio, defaults, plotting
 
@@ -112,18 +113,25 @@ class BPS_predictor():
 
         return Y
 
-    def fit(self, data=None, epochs=100, batch_size=128):
+    def fit(self, data=None, epochs=100, batch_size=128, early_stopping=None, reduce_lr=None):
         """
         Train the model
 
         :param data: data to be used for training (pandas DataFrame). Should contain features and targets
         :param epochs: Number of epochs (complete training set coverage) to run.
         :param batch_size: Number of mini-batches to subdivide each epoch in.
+        :param early_stopping: stop training when validation set has reached the minimum loss
+        :param reduce_lr: reduce the learning rate when a plateau is reached in the loss curves
         :return: Nothing
         """
 
         if data is None:
             data = self.train_data
+
+        if early_stopping is None:
+            early_stopping = self.setup['early_stopping']
+        if reduce_lr is None:
+            reduce_lr = self.setup['reduce_lr']
 
         X = self._process_features(data)
         X_val = self._process_features(self.test_data)
@@ -131,8 +139,18 @@ class BPS_predictor():
         Y = self._process_targets(data)
         Y_val = self._process_targets(self.test_data)
 
+        callbacks = []
+        if early_stopping:
+            es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=20)
+            callbacks = [es]
+
+        if reduce_lr:
+            # TODO: set minimum learning rate based on starting learning rate.
+            reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=5, min_lr=0.00001, verbose=1)
+            callbacks.append(reduce_lr)
+
         history = self.model.fit(X, Y, epochs=epochs, batch_size=batch_size, shuffle=True,
-                                 validation_data=(X_val, Y_val), verbose=2)
+                                 validation_data=(X_val, Y_val), verbose=2, callbacks=callbacks)
 
         self._append_to_history(history.history)
 
