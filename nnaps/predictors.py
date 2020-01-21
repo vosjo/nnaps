@@ -65,7 +65,7 @@ class BPS_predictor():
         else:
             history_df.index += len(self.history)
             history_df['training_run'] = np.max(self.history['training_run']) + 1
-            self.history = self.history.append(history_df)
+            self.history = self.history.append(history_df, sort=False)
 
     def _process_features(self, data):
         """
@@ -147,7 +147,8 @@ class BPS_predictor():
 
         if reduce_lr:
             # TODO: set minimum learning rate based on starting learning rate.
-            reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=5, min_lr=0.00001, verbose=1)
+            reduce_lr = ReduceLROnPlateau(monitor='val_loss', mode='min', factor=0.2, patience=5, min_lr=0.00001,
+                                          verbose=1)
             callbacks.append(reduce_lr)
 
         history = self.model.fit(X, Y, epochs=epochs, batch_size=batch_size, shuffle=True,
@@ -335,8 +336,11 @@ class BPS_predictor():
         loss = [self.setup['regressors'][name]['loss'] for name in self.regressors] + \
                [self.setup['classifiers'][name]['loss'] for name in self.classifiers]
 
+        model_metrics = [['mae'] for name in self.regressors] + \
+                        [['accuracy'] for name in self.classifiers]
+
         opt = defaults.get_optimizer(self.setup['optimizer'], optimizer_kwargs=self.setup['optimizer_kwargs'])
-        self.model.compile(optimizer=opt, loss=loss, metrics=['accuracy', 'mae'])
+        self.model.compile(optimizer=opt, loss=loss, metrics=model_metrics)
 
     def make_from_setup(self, setup, data=None):
 
