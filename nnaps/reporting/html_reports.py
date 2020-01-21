@@ -1,15 +1,18 @@
+
 from bokeh import plotting as bpl
-from bokeh import models as mpl
 from bokeh.layouts import gridplot, layout
 from bokeh.models.widgets import Div
 
-from astropy.stats import histogram
-
-from sklearn import preprocessing
+from nnaps.reporting import bokeh_ext
 
 
-def plot_training_history_html(history, targets=None, filename=None):
+def make_training_history_report(predictor, filename=None):
     plot_width, plot_height = 600, 300
+
+    history = predictor.history.copy()
+    history['epoch'] = history.index
+
+    targets = predictor.regressors + predictor.classifiers
 
     # sort targets in mae and accuracy evaluated variables: regressors and classifiers
     mae_targets, accuracy_targets = [], []
@@ -71,75 +74,21 @@ def plot_training_history_html(history, targets=None, filename=None):
 
     section_plots.append(acc_plots)
 
+    cm_plots = []
+    y_true = predictor.train_data[predictor.classifiers]
+    y_pred = predictor.predict(predictor.train_data)[predictor.classifiers]
+    for target in accuracy_targets:
+        p_ = bokeh_ext.confusion_matrix(y_true[target], y_pred[target])
+        p_.title.text = target
+        p_.title.align = 'center'
+        p_.title.text_font_size = '14pt'
+        cm_plots.append([p_])
+
+    section_plots.append(cm_plots)
+
     p = layout(section_plots)
 
     bpl.save(p)
-
-
-def make_scatter_grid_plot(data, parameters):
-    plot_width, plot_height = 300, 300
-
-    data = data[parameters]
-
-    # add scaled data for the hexbin plots
-    scaler = preprocessing.MinMaxScaler()
-    scaled_data = scaler.fit_transform(data)
-
-    for i, p in enumerate(parameters):
-        data[p + 'scaled'] = scaled_data[:, i]
-
-    # new formatters so that hexbin plots show the original range of data on axis instead of [0-1]
-    formatters = {}
-    for p in parameters:
-        vmin, vmax = data[p].min(), data[p].max()
-
-        code = """
-      tick = {vmin} + tick * ({vmax} - {vmin})
-      return tick.toFixed(1)
-      """.format(vmin=vmin, vmax=vmax)
-
-        formatters[p] = mpl.FuncTickFormatter(code=code)
-
-    source = mpl.ColumnDataSource(data)
-
-    grid_plots = []
-    for i, xpar in enumerate(parameters):
-        line_plots = []
-        for j, ypar in enumerate(parameters):
-
-            if i == j:
-                # make a histogram
-                p = bpl.figure(plot_width=plot_width, plot_height=plot_height)
-
-                hist, edges = histogram(data[xpar], bins='knuth')
-                p.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
-                       fill_color="navy", line_color="white", alpha=0.5)
-
-                p.xaxis.axis_label = xpar
-            elif i < j:
-                # make a scatter plot
-                p = bpl.figure(plot_width=plot_width, plot_height=plot_height)
-                p.scatter(xpar, ypar, source=source, alpha=0.5)
-                p.xaxis.axis_label = xpar
-                p.yaxis.axis_label = ypar
-            else:
-                # make a hex plot
-                p = bpl.figure(plot_width=plot_width, plot_height=plot_height)
-
-                r, bins = p.hexbin(data[xpar + 'scaled'], data[ypar + 'scaled'], size=0.05)
-                p.xaxis.axis_label = xpar
-                p.yaxis.axis_label = ypar
-                p.xaxis.formatter = formatters[xpar]
-                p.yaxis.formatter = formatters[ypar]
-
-                p.add_tools(mpl.HoverTool(tooltips=[("count", "@c")], mode="mouse",
-                                          point_policy="follow_mouse", renderers=[r]))
-
-            line_plots.append(p)
-
-        grid_plots.append(line_plots)
-
-    return gridplot(grid_plots)
 
 
 def make_scaled_feature_plot(data, parameters, scalers):
@@ -149,11 +98,7 @@ def make_scaled_feature_plot(data, parameters, scalers):
     for xpar in parameters:
         # make a histogram
         p = bpl.figure(plot_width=plot_width, plot_height=plot_height, title='original')
-
-        hist, edges = histogram(data[xpar], bins='knuth')
-        p.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
-               fill_color="navy", line_color="white", alpha=0.5)
-
+        bokeh_ext.histogram(p, data[xpar])
         p.xaxis.axis_label = xpar
         p.title.align = 'center'
 
@@ -162,16 +107,15 @@ def make_scaled_feature_plot(data, parameters, scalers):
     scl_plots = []
     for xpar in parameters:
         # make a histogram
-        if xpar in scalers:
+        if xpar in scalers and scalers[xpar] is not None:
+
             p = bpl.figure(plot_width=plot_width, plot_height=plot_height,
-                           title='scaled: {}'.format(scalers[xpar].__name__))
+                           title='scaled: {}'.format(scalers[xpar].__class__.__name__))
 
-            scaler = scalers[xpar]()
-            scaled_data = scaler.fit_transform(data[[xpar]])
+            scaler = scalers[xpar]
+            scaled_data = scaler.transform(data[[xpar]])
 
-            hist, edges = histogram(scaled_data, bins='knuth')
-            p.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
-                   fill_color="green", line_color="white", alpha=0.5)
+            bokeh_ext.histogram(p, scaled_data, fill_color="green")
 
             p.xaxis.axis_label = xpar
             p.title.align = 'center'
@@ -191,15 +135,8 @@ def make_training_test_set_plot(train_data, test_data, features, regressors, cla
     def make_double_histogram(train_data, test_data):
         p = bpl.figure(plot_width=plot_width, plot_height=plot_height, title=par)
 
-        hist, edges = histogram(train_data, bins='knuth')
-        hist = hist / len(train_data)
-        p.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
-               fill_color="blue", line_color="white", alpha=0.5, legend_label='train')
-
-        hist, edges = histogram(test_data, bins=edges)
-        hist = hist / len(test_data)
-        p.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
-               fill_color="green", line_color="white", alpha=0.5, legend_label='test')
+        hist, edges = bokeh_ext.histogram(p, train_data, bins='knuth', normalize=True, fill_color="blue", legend_label='train')
+        hist, edges = bokeh_ext.histogram(p, test_data, bins=edges,fill_color="green", legend_label='test')
 
         p.title.align = 'center'
 
@@ -227,8 +164,14 @@ def make_training_test_set_plot(train_data, test_data, features, regressors, cla
     return layout(grid)
 
 
-def plot_training_data_html(train_data, test_data, Xpars, regressors, classifiers, processors, filename=None):
-    # make the figure
+def make_training_data_report(predictor, filename=None):
+
+    train_data = predictor.train_data
+    test_data = predictor.test_data
+    features = predictor.features
+    regressors = predictor.regressors
+    classifiers = predictor.classifiers
+
     bpl.output_file(filename, title='Training data')
 
     grid = []
@@ -240,28 +183,28 @@ def plot_training_data_html(train_data, test_data, Xpars, regressors, classifier
     div = Div(text="""<h2>Feature distribution</h2>""", width=1200, height=40)
     grid.append([div])
 
-    scatter_grid = make_scatter_grid_plot(train_data, Xpars)
+    scatter_grid = bokeh_ext.scatter_grid(train_data, features)
     grid.append([scatter_grid])
 
     # scaling plot of features
     div = Div(text="""<h2>Feature scaling</h2>""", width=1200, height=40)
     grid.append([div])
 
-    scaled_plot = make_scaled_feature_plot(train_data, Xpars, processors)
+    scaled_plot = make_scaled_feature_plot(train_data, features, predictor.processors)
     grid.append([scaled_plot])
 
     # distribution of the regressors
     div = Div(text="""<h2>Regressor distribution</h2>""", width=1200, height=40)
     grid.append([div])
 
-    scaled_plot = make_scaled_feature_plot(train_data, regressors, processors)
+    scaled_plot = make_scaled_feature_plot(train_data, regressors, predictor.processors)
     grid.append([scaled_plot])
 
     # comparison training vs test set
     div = Div(text="""<h2>Training - Test set comparison</h2>""", width=1200, height=40)
     grid.append([div])
 
-    plot = make_training_test_set_plot(train_data, test_data, Xpars, regressors, classifiers)
+    plot = make_training_test_set_plot(train_data, test_data, features, regressors, classifiers)
     grid.append([plot])
 
     figure = layout(grid)

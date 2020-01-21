@@ -11,7 +11,8 @@ from keras.layers import Dense, Input, Dropout
 from keras.models import Model
 from keras.callbacks.callbacks import EarlyStopping, ReduceLROnPlateau
 
-from nnaps import fileio, defaults, plotting
+from nnaps import fileio, defaults
+from nnaps.reporting import html_reports
 
 
 class BPS_predictor():
@@ -201,13 +202,11 @@ class BPS_predictor():
 
     def make_training_history_report(self, filename):
 
-        plotting.plot_training_history_html(self.history, targets=self.regressors + self.classifiers,
-                                            filename=filename)
+        html_reports.make_training_history_report(self, filename=filename)
 
     def make_training_data_report(self, filename):
 
-        plotting.plot_training_data_html(self.train_data, self.test_data, self.features,
-                                         self.regressors, self.classifiers, self.processors, filename=filename)
+        html_reports.make_training_data_report(self, filename=filename)
 
     def print_score(self, training_data=None, test_data=None):
         """

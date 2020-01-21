@@ -157,6 +157,7 @@ def add_defaults_to_setup(setup):
 
     if not 'optimizer' in setup:
         setup['optimizer'] = 'adam'
+    if not 'optimizer_kwargs' in setup:
         setup['optimizer_kwargs'] = None
 
     if not 'early_stopping' in setup: setup['early_stopping'] = True
