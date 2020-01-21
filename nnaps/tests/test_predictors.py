@@ -4,6 +4,7 @@ import pytest
 import pandas as pd
 import numpy as np
 
+import yaml
 
 from sklearn import preprocessing
 
@@ -66,6 +67,28 @@ class TestBPSPredictorSetup:
         assert len(mod.output) == len(Yregressors_) + len(Yclassifiers_), \
                          "Model does not have correct number of outputs, expected" + \
                          " {}, got {}".format(len(Yregressors_) + len(Yclassifiers_), len(mod.output))
+
+    def test_make_from_setup_with_data(self):
+        setup = """
+        features:
+           - M1
+           - qinit
+        regressors:
+           - Pfinal
+        classifiers:
+           - product
+        """
+        setup = yaml.safe_load(setup)
+
+        data = pd.read_csv(base_path / 'BesanconGalactic_summary.txt')
+
+        predictor = predictors.BPS_predictor(setup=setup, data=data)
+
+        assert predictor.train_data is not None
+        assert predictor.test_data is not None
+
+        assert len(predictor.train_data) + len(predictor.test_data) == len(data)
+
 
     def test_make_from_saved_model(self):
 

@@ -17,7 +17,7 @@ from nnaps.reporting import html_reports
 
 class BPS_predictor():
 
-    def __init__(self, setup=None, setup_file=None, saved_model=None):
+    def __init__(self, setup=None, setup_file=None, saved_model=None, data=None):
 
         self.processors = None
         self.history = None
@@ -31,10 +31,10 @@ class BPS_predictor():
         self.test_data = None
 
         if not setup is None:
-            self.make_from_setup(setup)
+            self.make_from_setup(setup, data=data)
 
         elif not setup_file is None:
-            self.make_from_setup_file(setup_file)
+            self.make_from_setup_file(setup_file, data=data)
 
         elif not saved_model is None:
             self.load_model(saved_model)
@@ -239,7 +239,7 @@ class BPS_predictor():
 
     # { Input and output
 
-    def _prepare_data(self):
+    def _prepare_data(self, data=None):
         """
         Private method. Should NOT be called by user.
 
@@ -248,10 +248,13 @@ class BPS_predictor():
         fraction given in the setup. If a 'random_state' is defined in the setup, this will be used in both
         the shuffle and the train-test split.
 
+        :param data: a pandas dataframe can be directly provided to the method. In that case it will not read the
+                     datafile keyword of the setup
         :return: nothing
         """
 
-        data = pd.read_csv(self.setup['datafile'])
+        if data is None:
+            data = pd.read_csv(self.setup['datafile'])
         data = utils.shuffle(data, random_state=self.setup['random_state'])
         data_train, data_test = train_test_split(data, test_size=self.setup['train_test_split'],
                                                 random_state=self.setup['random_state'])
@@ -335,7 +338,7 @@ class BPS_predictor():
         opt = defaults.get_optimizer(self.setup['optimizer'], optimizer_kwargs=self.setup['optimizer_kwargs'])
         self.model.compile(optimizer=opt, loss=loss, metrics=['accuracy', 'mae'])
 
-    def make_from_setup(self, setup):
+    def make_from_setup(self, setup, data=None):
 
         self.setup = defaults.add_defaults_to_setup(setup)
 
@@ -343,17 +346,17 @@ class BPS_predictor():
         self.regressors = list(self.setup['regressors'].keys())
         self.classifiers = list(self.setup['classifiers'].keys())
 
-        self._prepare_data()
+        self._prepare_data(data=data)
         self._make_preprocessors_from_setup()
         self._make_model_from_setup()
 
-    def make_from_setup_file(self, filename):
+    def make_from_setup_file(self, filename, data=None):
 
         setupfile = open(filename)
         setup = yaml.safe_load(setupfile)
         setupfile.close()
 
-        self.make_from_setup(setup)
+        self.make_from_setup(setup, data=data)
 
     def save_model(self, filename, include_history=False):
         """
