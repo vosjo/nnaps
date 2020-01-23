@@ -1,7 +1,9 @@
 
 from bokeh import plotting as bpl
+from bokeh import models as mpl
 from bokeh.layouts import gridplot, layout
 from bokeh.models.widgets import Div
+from bokeh.transform import dodge
 
 from nnaps.reporting import bokeh_ext
 
@@ -117,6 +119,12 @@ def make_scaled_feature_plot(data, parameters, scalers):
 
             bokeh_ext.histogram(p, scaled_data, fill_color="green")
 
+            # add indicators for -1, 0 and 1 to easily judge is distribution is well scaled.
+            for spanval in [-1, 0, +1]:
+                span_ = mpl.Span(location=spanval, dimension='height', line_color='red', line_dash='dashed',
+                                 line_width=1.5)
+                p.add_layout(span_)
+
             p.xaxis.axis_label = xpar
             p.title.align = 'center'
 
@@ -127,7 +135,57 @@ def make_scaled_feature_plot(data, parameters, scalers):
 
         scl_plots.append(p)
 
+    # check if there is at least 1 scaled plot, otherwise only return original distributions
+    if all([xpar not in scalers or scalers[xpar] is None for xpar in parameters]):
+        return gridplot([org_plots])
+
     return gridplot([org_plots, scl_plots])
+
+
+def make_classifier_counts_plot(data, parameters, test_data=None):
+    plot_width, plot_height = 300, 300
+
+    # TODO: deal with the case where xval_test does not contain all of the values in xval or other way around
+
+    count_plots = []
+    for feature in parameters:
+
+        counts = data[feature].value_counts()
+        xval = counts.index.values.astype(str)
+        yval = counts.values
+
+        if test_data is not None:
+            counts = test_data[feature].value_counts()
+            xval_test = counts.index.values.astype(str)
+            yval_test = counts.values / counts.values.sum()
+
+            # normalize the training set data
+            yval = yval / yval.sum()
+
+            source = mpl.ColumnDataSource(data={'x':xval, 'train':yval, 'test':yval_test})
+
+            p = bpl.figure(x_range=xval, plot_width=plot_width, plot_height=plot_height, title=feature)
+
+            p.vbar(x=dodge('x', -0.16, range=p.x_range), top='train', width=0.3, source=source,
+                   color="blue", alpha=0.5, legend_label="train")
+
+            p.vbar(x=dodge('x', +0.16, range=p.x_range), top='test', width=0.3, source=source,
+                   color="green", alpha=0.5, legend_label="test")
+
+            p.x_range.range_padding = 0.1
+        else:
+            p = bpl.figure(x_range=xval, plot_width=plot_width, plot_height=plot_height, title=feature)
+
+            p.vbar(x=xval, top=yval, width=0.9)
+
+        p.xgrid.grid_line_color = None
+        p.y_range.start = 0
+        p.title.align = 'center'
+
+        count_plots.append(p)
+
+    return gridplot([count_plots])
+
 
 def make_training_test_set_plot(train_data, test_data, features, regressors, classifiers):
     plot_width, plot_height = 300, 300
@@ -135,8 +193,10 @@ def make_training_test_set_plot(train_data, test_data, features, regressors, cla
     def make_double_histogram(train_data, test_data):
         p = bpl.figure(plot_width=plot_width, plot_height=plot_height, title=par)
 
-        hist, edges = bokeh_ext.histogram(p, train_data, bins='knuth', normalize=True, fill_color="blue", legend_label='train')
-        hist, edges = bokeh_ext.histogram(p, test_data, bins=edges,fill_color="green", legend_label='test')
+        hist, edges, p = bokeh_ext.histogram(p, train_data, bins='knuth', normalize=True, fill_color="blue",
+                                             legend_label='train')
+        hist, edges, p = bokeh_ext.histogram(p, test_data, bins=edges, normalize=True, fill_color="green",
+                                             legend_label='test')
 
         p.title.align = 'center'
 
@@ -161,7 +221,16 @@ def make_training_test_set_plot(train_data, test_data, features, regressors, cla
         plots.append([p])
     grid.append(plots)
 
+    div = Div(text="""<h3>Classifiers</h3>""", width=1200, height=40)
+    grid.append([[div]])
+
+    plots = make_classifier_counts_plot(train_data, classifiers, test_data=test_data)
+    grid.append(plots)
+
+
     return layout(grid)
+
+
 
 
 def make_training_data_report(predictor, filename=None):
@@ -193,12 +262,22 @@ def make_training_data_report(predictor, filename=None):
     scaled_plot = make_scaled_feature_plot(train_data, features, predictor.processors)
     grid.append([scaled_plot])
 
+    div = Div(text="""<h2>Target distribution</h2>""", width=1200, height=40)
+    grid.append([div])
+
     # distribution of the regressors
-    div = Div(text="""<h2>Regressor distribution</h2>""", width=1200, height=40)
+    div = Div(text="""<h3>Regressors</h3>""", width=1200, height=40)
     grid.append([div])
 
     scaled_plot = make_scaled_feature_plot(train_data, regressors, predictor.processors)
     grid.append([scaled_plot])
+
+    # distribution of the classifiers
+    div = Div(text="""<h3>Classifiers</h3>""", width=1200, height=40)
+    grid.append([div])
+
+    count_plot = make_classifier_counts_plot(train_data, classifiers)
+    grid.append([count_plot])
 
     # comparison training vs test set
     div = Div(text="""<h2>Training - Test set comparison</h2>""", width=1200, height=40)

@@ -11,6 +11,7 @@ from bokeh.layouts import gridplot
 from bokeh.transform import transform
 from bokeh.io import output_file, show
 
+
 def histogram(fig, data, bins='knuth', normalize=False, **kwargs):
 
     quad_kwargs = dict(fill_color="navy", line_color="white", alpha=0.5)
@@ -21,7 +22,7 @@ def histogram(fig, data, bins='knuth', normalize=False, **kwargs):
         hist = hist / len(data)
     fig.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:], **quad_kwargs)
 
-    return hist, edges
+    return hist, edges, fig
 
 
 def confusion_matrix(y_true, y_pred):
@@ -124,7 +125,7 @@ def scatter_grid(data, parameters):
                 # make a histogram
                 p = bpl.figure(plot_width=plot_width, plot_height=plot_height)
 
-                hist, edges = histogram(p, data[xpar], bins='knuth')
+                hist, edges, p = histogram(p, data[xpar], bins='knuth')
                 p.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
                        fill_color="navy", line_color="white", alpha=0.5)
 
