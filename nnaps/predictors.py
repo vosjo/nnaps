@@ -14,8 +14,17 @@ from keras.callbacks.callbacks import EarlyStopping, ReduceLROnPlateau
 from nnaps import fileio, defaults
 from nnaps.reporting import html_reports
 
+class BasePredictor():
 
-class BPS_predictor():
+    def __init__(self):
+        pass
+
+class XGBPredictor(BasePredictor):
+
+    def __init__(self):
+        passs
+
+class FCPredictor(BasePredictor):
 
     def __init__(self, setup=None, setup_file=None, saved_model=None, data=None):
 

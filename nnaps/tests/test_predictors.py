@@ -23,7 +23,7 @@ class TestBPSPredictorSetup:
 
     def test_make_from_setup(self):
 
-        predictor = predictors.BPS_predictor(setup_file=base_path / 'test_setup.yaml')
+        predictor = predictors.FCPredictor(setup_file=base_path / 'test_setup.yaml')
         Xpars_ = ['M1', 'qinit', 'Pinit', 'FeHinit']
         Yregressors_ = ['Pfinal', 'qfinal']
         Yclassifiers_ = ['product', 'binary_type']
@@ -82,7 +82,7 @@ class TestBPSPredictorSetup:
 
         data = pd.read_csv(base_path / 'BesanconGalactic_summary.txt')
 
-        predictor = predictors.BPS_predictor(setup=setup, data=data)
+        predictor = predictors.FCPredictor(setup=setup, data=data)
 
         assert predictor.train_data is not None
         assert predictor.test_data is not None
@@ -92,7 +92,7 @@ class TestBPSPredictorSetup:
 
     def test_make_from_saved_model(self):
 
-        predictor = predictors.BPS_predictor(saved_model=base_path / 'test_model.h5')
+        predictor = predictors.FCPredictor(saved_model=base_path / 'test_model.h5')
 
         Xpars_ = ['M1', 'qinit', 'Pinit', 'FeHinit']
         Yregressors_ = ['Pfinal', 'qfinal']
@@ -156,7 +156,7 @@ class TestBPSPredictorTrainingPredicting:
         processors = dict(M1=p,
                          qinit = p,)
 
-        predictor = predictors.BPS_predictor()
+        predictor = predictors.FCPredictor()
 
         predictor.processors = processors
         predictor.features = ['M1', 'qinit']
@@ -182,7 +182,7 @@ class TestBPSPredictorTrainingPredicting:
         processors = dict(M1final=p,
                           qfinal = None,)
 
-        predictor = predictors.BPS_predictor()
+        predictor = predictors.FCPredictor()
 
         predictor.processors = processors
         predictor.regressors = ['M1final', 'qfinal']
@@ -202,7 +202,7 @@ class TestBPSPredictorTrainingPredicting:
 
     def test_append_to_history(self):
 
-        predictor = predictors.BPS_predictor()
+        predictor = predictors.FCPredictor()
 
         predictor.regressors = ['M1final']
         predictor.classifiers = []
@@ -237,7 +237,7 @@ class TestBPSPredictorTrainingPredicting:
 
         # WARNING: test only checks that some kind of training happened by asserting that the weights are different
 
-        predictor = predictors.BPS_predictor(setup_file=base_path / 'test_setup.yaml')
+        predictor = predictors.FCPredictor(setup_file=base_path / 'test_setup.yaml')
 
         weights = predictor.model.layers[1].get_weights()[0]
 
@@ -257,7 +257,7 @@ class TestBPSPredictorTrainingPredicting:
 
         data = pd.read_csv(base_path / 'BesanconGalactic_summary.txt').iloc[0:10]
 
-        predictor = predictors.BPS_predictor(saved_model=base_path / 'test_model.h5')
+        predictor = predictors.FCPredictor(saved_model=base_path / 'test_model.h5')
 
         res = predictor.predict(data=data)
 

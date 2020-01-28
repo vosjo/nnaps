@@ -17,9 +17,11 @@ class TestIntegration:
 
     def test_integration(self, cleanup_files):
 
-        predictor = predictors.BPS_predictor(setup_file='test_setup.yaml')
+        predictor = predictors.FCPredictor(setup_file='test_setup.yaml')
 
         predictor.fit(epochs=100, batch_size=128)
+
+        predictor.print_score()
 
         y_test_1 = predictor.predict(predictor.test_data)
 
@@ -31,7 +33,7 @@ class TestIntegration:
 
         assert os.path.isfile('integration_training_history.csv')
 
-        predictor = predictors.BPS_predictor(saved_model='integration_test_model.h5')
+        predictor = predictors.FCPredictor(saved_model='integration_test_model.h5')
 
         y_test_2 = predictor.predict(predictor.test_data)
 
