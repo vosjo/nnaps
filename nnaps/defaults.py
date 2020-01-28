@@ -135,11 +135,14 @@ def add_defaults_to_setup(setup):
 
     setup = copy.deepcopy(setup)
 
+    user_scaler = setup.get('default_scaler', default_scaler)
+    user_encoder = setup.get('default_encoder', default_encoder)
+
     # check and update the preprocessors for features and regressors/classifiers
-    setup = update_with_default_dict(setup, 'features', {'processor': default_scaler})
+    setup = update_with_default_dict(setup, 'features', {'processor': user_scaler})
     setup = update_with_default_dict(setup, 'regressors', {'processor': None,
                                                           'loss': default_regressor_loss})
-    setup = update_with_default_dict(setup, 'classifiers', {'processor': default_encoder,
+    setup = update_with_default_dict(setup, 'classifiers', {'processor': user_encoder,
                                                            'loss': default_classifier_loss})
 
     # check and update the model setup

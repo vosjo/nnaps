@@ -93,6 +93,20 @@ def test_get_processor_class():
 
 class TestAddingDefaults:
 
+    def test_set_default_scaler_encoder(self):
+
+        setup = {
+                 'default_scaler': 'MinMaxScaler', 'default_encoder':'OrdinalEncoder',
+                 'features': ['M1', 'qinit', 'Pinit', 'FeHinit'],
+                 'regressors': ['Pfinal', 'qfinal'],
+                 'classifiers': ['product', 'binary_type'],
+                 }
+
+        setup_new = defaults.add_defaults_to_setup(setup)
+
+        assert setup_new['features']['M1']['processor'] == 'MinMaxScaler'
+        assert setup_new['classifiers']['product']['processor'] == 'OrdinalEncoder'
+
     def test_add_processor_defaults_to_setup(self):
 
         #-- case where features, regressors and classifiers are lists
