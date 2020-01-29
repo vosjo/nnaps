@@ -17,19 +17,8 @@ from nnaps.reporting import html_reports
 class BasePredictor():
 
     def __init__(self):
-        pass
-
-class XGBPredictor(BasePredictor):
-
-    def __init__(self):
-        passs
-
-class FCPredictor(BasePredictor):
-
-    def __init__(self, setup=None, setup_file=None, saved_model=None, data=None):
 
         self.processors = None
-        self.history = None
         self.setup = None
 
         self.features = []
@@ -39,42 +28,9 @@ class FCPredictor(BasePredictor):
         self.train_data = None
         self.test_data = None
 
-        if not setup is None:
-            self.make_from_setup(setup, data=data)
-
-        elif not setup_file is None:
-            self.make_from_setup_file(setup_file, data=data)
-
-        elif not saved_model is None:
-            self.load_model(saved_model)
-
+        pass
 
     # { Learning and predicting
-
-    def _append_to_history(self, history):
-
-        # convert the history object to a dataframe
-        keys = [c + '_mae' for c in self.regressors]
-        keys += ['val_' + c + '_mae' for c in self.regressors]
-        keys += [c + '_accuracy' for c in self.classifiers]
-        keys += ['val_' + c + '_accuracy' for c in self.classifiers]
-        keys += [c + '_loss' for c in self.classifiers + self.regressors]
-        keys += ['val_' + c + '_loss' for c in self.classifiers + self.regressors]
-
-        data = {k: history[k] for k in keys}
-
-        history_df = pd.DataFrame(data=data)
-        history_df.index.name = 'epoch'
-
-        # append to existing history file, or set history file
-        if self.history is None:
-            history_df['training_run'] = 1
-            self.history = history_df
-
-        else:
-            history_df.index += len(self.history)
-            history_df['training_run'] = np.max(self.history['training_run']) + 1
-            self.history = self.history.append(history_df, sort=False)
 
     def _process_features(self, data):
         """
@@ -122,6 +78,164 @@ class FCPredictor(BasePredictor):
             Y = pd.DataFrame(Y)
 
         return Y
+
+    #}
+
+    # ----------------------------------------------------------------------
+
+    # { Reporting
+
+    def make_training_history_report(self, filename):
+
+        html_reports.make_training_history_report(self, filename=filename)
+
+    def make_training_data_report(self, filename):
+
+        html_reports.make_training_data_report(self, filename=filename)
+
+    def print_score(self, training_data=None, test_data=None):
+        """
+        prints the scores of the current model on the training and test data.
+
+        :param training_data: training data set to score, if None the stored one is used.
+        :param test_data: set data set to score, is None the stored one is used.
+        :return: None
+        """
+
+        if training_data is None:
+            training_data = self.train_data
+        if test_data is None:
+            test_data = self.test_data
+
+        train_score = self.score(training_data)
+        test_score = self.score(test_data)
+
+        # print the scores
+        print("Training results\n{:12s}  {}   {}".format('target', 'training score', 'test score'))
+        print("-----------------------------------------")
+        for par in self.regressors:
+            print("{:12s}:  {:7.3f}      {:7.3f}".format(par, train_score[par], test_score[par]))
+        for par in self.classifiers:
+            print("{:12s}:  {:6.1f}%      {:6.1f}%".format(par, train_score[par] * 100., test_score[par] * 100.))
+
+    # }
+
+    # ----------------------------------------------------------------------
+
+    # { Input and output
+
+    def _prepare_data(self, data=None):
+        """
+        Private method. Should NOT be called by user.
+
+        Reads the data from the path given in the setup ('datafile'),
+        randomly shuffles the data, and then divides it into a train and test set using the 'train_test_split'
+        fraction given in the setup. If a 'random_state' is defined in the setup, this will be used in both
+        the shuffle and the train-test split.
+
+        :param data: a pandas dataframe can be directly provided to the method. In that case it will not read the
+                     datafile keyword of the setup
+        :return: nothing
+        """
+
+        if data is None:
+            data = pd.read_csv(self.setup['datafile'])
+        data = utils.shuffle(data, random_state=self.setup['random_state'])
+        data_train, data_test = train_test_split(data, test_size=self.setup['train_test_split'],
+                                                 random_state=self.setup['random_state'])
+
+        self.train_data = data_train
+        self.test_data = data_test
+
+    def _make_preprocessors_from_setup(self):
+        """
+        Private method. Should NOT be called by user.
+
+        Make the preprocessors from the setup file
+        this is required to run before the make_model_from_setup step.
+
+        processors are fitted on the training data only.
+        """
+
+        processors = {}
+
+        for pname in self.features:
+            p = self.setup['features'][pname]['processor']
+            if p is not None:
+                p = defaults.get_processor_class(p)
+                p.fit(self.train_data[[pname]])
+            processors[pname] = p
+
+        for pname in self.regressors:
+            p = self.setup['regressors'][pname]['processor']
+            if p is not None:
+                p = defaults.get_processor_class(p)
+                p.fit(self.train_data[[pname]])
+            processors[pname] = p
+
+        for pname in self.classifiers:
+            p = self.setup['classifiers'][pname]['processor']
+            if p is not None:
+                p = defaults.get_processor_class(p)
+                p.fit(self.train_data[[pname]])
+            processors[pname] = p
+
+        self.processors = processors
+
+    #}
+
+class XGBPredictor(BasePredictor):
+
+    def __init__(self):
+        super().__init__()
+
+class FCPredictor(BasePredictor):
+
+    def __init__(self, setup=None, setup_file=None, saved_model=None, data=None):
+
+        super().__init__()
+
+        # to store the fitting history of the FC network
+        self.history = None
+
+        if not setup is None:
+            self.make_from_setup(setup, data=data)
+
+        elif not setup_file is None:
+            self.make_from_setup_file(setup_file, data=data)
+
+        elif not saved_model is None:
+            self.load_model(saved_model)
+
+
+    # { Learning and predicting
+
+    def _append_to_history(self, history):
+
+        # convert the history object to a dataframe
+        keys = [c + '_mae' for c in self.regressors]
+        keys += ['val_' + c + '_mae' for c in self.regressors]
+        keys += [c + '_accuracy' for c in self.classifiers]
+        keys += ['val_' + c + '_accuracy' for c in self.classifiers]
+        keys += [c + '_loss' for c in self.classifiers + self.regressors]
+        keys += ['val_' + c + '_loss' for c in self.classifiers + self.regressors]
+
+        data = {k: history[k] for k in keys}
+
+        history_df = pd.DataFrame(data=data)
+        history_df.index.name = 'epoch'
+
+        # append to existing history file, or set history file
+        if self.history is None:
+            history_df['training_run'] = 1
+            self.history = history_df
+
+        else:
+            history_df.index += len(self.history)
+            history_df['training_run'] = np.max(self.history['training_run']) + 1
+            self.history = self.history.append(history_df, sort=False)
+
+
 
     def fit(self, data=None, epochs=100, batch_size=128, early_stopping=None, reduce_lr=None):
         """
@@ -208,104 +322,7 @@ class FCPredictor(BasePredictor):
 
     # ----------------------------------------------------------------------
 
-    # { Reporting
-
-    def make_training_history_report(self, filename):
-
-        html_reports.make_training_history_report(self, filename=filename)
-
-    def make_training_data_report(self, filename):
-
-        html_reports.make_training_data_report(self, filename=filename)
-
-    def print_score(self, training_data=None, test_data=None):
-        """
-        prints the scores of the current model on the training and test data.
-
-        :param training_data: training data set to score, if None the stored one is used.
-        :param test_data: set data set to score, is None the stored one is used.
-        :return: None
-        """
-
-        if training_data is None:
-            training_data = self.train_data
-        if test_data is None:
-            test_data = self.test_data
-
-        train_score = self.score(training_data)
-        test_score = self.score(test_data)
-
-        # print the scores
-        print("Training results\n{:12s}  {}   {}".format('target', 'training score', 'test score'))
-        print("-----------------------------------------")
-        for par in self.regressors:
-            print("{:12s}:  {:7.3f}      {:7.3f}".format(par, train_score[par], test_score[par]))
-        for par in self.classifiers:
-            print("{:12s}:  {:6.1f}%      {:6.1f}%".format(par, train_score[par] * 100., test_score[par] * 100.))
-
-    # }
-
-    # ----------------------------------------------------------------------
-
     # { Input and output
-
-    def _prepare_data(self, data=None):
-        """
-        Private method. Should NOT be called by user.
-
-        Reads the data from the path given in the setup ('datafile'),
-        randomly shuffles the data, and then divides it into a train and test set using the 'train_test_split'
-        fraction given in the setup. If a 'random_state' is defined in the setup, this will be used in both
-        the shuffle and the train-test split.
-
-        :param data: a pandas dataframe can be directly provided to the method. In that case it will not read the
-                     datafile keyword of the setup
-        :return: nothing
-        """
-
-        if data is None:
-            data = pd.read_csv(self.setup['datafile'])
-        data = utils.shuffle(data, random_state=self.setup['random_state'])
-        data_train, data_test = train_test_split(data, test_size=self.setup['train_test_split'],
-                                                random_state=self.setup['random_state'])
-
-        self.train_data =  data_train
-        self.test_data = data_test
-
-    def _make_preprocessors_from_setup(self):
-        """
-        Private method. Should NOT be called by user.
-
-        Make the preprocessors from the setup file
-        this is required to run before the make_model_from_setup step.
-
-        processors are fitted on the training data only.
-        """
-
-        processors = {}
-
-        for pname in self.features:
-            p = self.setup['features'][pname]['processor']
-            if p is not None:
-                p = defaults.get_processor_class(p)
-                p.fit(self.train_data[[pname]])
-            processors[pname] = p
-
-        for pname in self.regressors:
-            p = self.setup['regressors'][pname]['processor']
-            if p is not None:
-                p = defaults.get_processor_class(p)
-                p.fit(self.train_data[[pname]])
-            processors[pname] = p
-
-        for pname in self.classifiers:
-            p = self.setup['classifiers'][pname]['processor']
-            if p is not None:
-                p = defaults.get_processor_class(p)
-                p.fit(self.train_data[[pname]])
-            processors[pname] = p
-
-        self.processors = processors
 
     def _make_model_from_setup(self):
         """
