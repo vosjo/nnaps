@@ -14,6 +14,8 @@ from keras.callbacks.callbacks import EarlyStopping, ReduceLROnPlateau
 from nnaps import fileio, defaults
 from nnaps.reporting import html_reports
 
+from xgboost import XGBClassifier, XGBRegressor
+
 class BasePredictor():
 
     def __init__(self):
@@ -27,6 +29,8 @@ class BasePredictor():
 
         self.train_data = None
         self.test_data = None
+
+        self.model = None
 
         pass
 
@@ -48,7 +52,7 @@ class BasePredictor():
         X = X.reshape(X.shape[:-1]).T
         return X
 
-    def _process_targets(self, data, inverse=False):
+    def _process_targets(self, data, inverse=False, return_df=False):
         """
         Private method. Should NOT be called by user.
 
@@ -58,26 +62,69 @@ class BasePredictor():
 
         :param data: target data to be tranformed,
         :param inverse: if true, do the inverse_transform.
-        :return: if inverse: a dataframe, else: a numpy array
+        :param return_df: if true, return a dataframe otherwise a numpy array
+        :return: the (inverse)transformed targets as array or dataframe
         """
-        if not inverse:
+
+        if isinstance(data, pd.DataFrame):
+            # convert dataframe to list. This is necessary because a dataframe can not deal with the
+            # output of a softmax classifier
             Y = []
-            for y in self.regressors + self.classifiers:
-                # check if Y data needs to be transformed before fitting.
-                if self.processors[y] is not None:
-                    Y.append(self.processors[y].transform(data[[y]]))
-                else:
-                    Y.append(data[[y]].values)
-        else:
+            for name in self.regressors + self.classifiers:
+                Y.append(data[name].values.reshape(-1, 1))
+            data = Y
+
+        # the processors need a 2D array even though they only deal with one feature
+        # the dataframe constructor needs 1D arrays
+
+        if return_df:
             Y = {}
             for Y_, name in zip(data, self.regressors + self.classifiers):
                 if self.processors[name] is not None:
-                    Y[name] = self.processors[name].inverse_transform(Y_)[:, 0]
+                    if inverse:
+                        Y[name] = self.processors[name].inverse_transform(Y_)[:, 0]
+                    else:
+                        Y[name] = self.processors[name].transform(Y_)[:, 0]
                 else:
                     Y[name] = Y_[:, 0]
             Y = pd.DataFrame(Y)
+        else:
+            Y = []
+            for Y_, name in zip(data, self.regressors + self.classifiers):
+                # check if Y data needs to be transformed before fitting.
+                if self.processors[name] is not None:
+                    if inverse:
+                        Y.append(self.processors[name].inverse_transform(Y_))
+                    else:
+                        Y.append(self.processors[name].transform(Y_))
+                else:
+                    Y.append(Y_)
 
         return Y
+
+    def fit(self, data=None):
+        pass
+
+    def predict(self, data=None):
+        pass
+
+    def score(self, data=None, regressor_metric='mean_absolute_error', classifier_metric='accuracy'):
+
+        if data is None:
+            data = self.train_data
+
+        res = self.predict(data)
+
+        scores = {}
+        for par in self.regressors:
+            score = metrics.mean_absolute_error(data[par], res[par])
+            scores[par] = score
+
+        for par in self.classifiers:
+            score = metrics.accuracy_score(data[par], res[par])
+            scores[par] = score
+
+        return scores
 
     #}
 
@@ -138,8 +185,10 @@ class BasePredictor():
         :return: nothing
         """
 
-        if data is None:
+        if data is None and 'datafile' in self.setup:
             data = pd.read_csv(self.setup['datafile'])
+        elif data is None and 'datafile' not in self.setup:
+            return
         data = utils.shuffle(data, random_state=self.setup['random_state'])
         data_train, data_test = train_test_split(data, test_size=self.setup['train_test_split'],
                                                  random_state=self.setup['random_state'])
@@ -156,6 +205,10 @@ class BasePredictor():
 
         processors are fitted on the training data only.
         """
+
+        # if there is no training data, the processors can't be fitted.
+        if self.train_data is None:
+            return
 
         processors = {}
 
@@ -186,8 +239,106 @@ class BasePredictor():
 
 class XGBPredictor(BasePredictor):
 
-    def __init__(self):
+    def __init__(self, setup=None, setup_file=None, saved_model=None, data=None):
         super().__init__()
+
+        if not setup is None:
+            self.make_from_setup(setup, data=data)
+
+        elif not setup_file is None:
+            self.make_from_setup_file(setup_file, data=data)
+
+        # elif not saved_model is None:
+        #     self.load_model(saved_model)
+
+    # { Learning and predicting
+
+    def fit(self, data=None):
+        """
+        Train the model
+
+        :param data: data to be used for training (pandas DataFrame). Should contain features and targets
+        :return: Nothing
+        """
+
+        if data is None:
+            data = self.train_data
+
+        X = self._process_features(data)
+        X_val = self._process_features(self.test_data)
+
+        Y = self._process_targets(data, return_df=True)
+        Y_val = self._process_targets(self.test_data, return_df=True)
+
+        for name in self.regressors + self.classifiers:
+            self.model[name].fit(X, Y[name].values)
+            print ("fitted model for {}".format(name))
+
+
+        self.print_score(training_data=data)
+
+    def predict(self, data=None):
+        """
+        Make predictions based on a trained model.
+
+        :param data: the features that you want to use in the prediction. (pandas DataFrame)
+        :return: predicted targets for features
+        """
+
+        if data is None:
+            pass
+
+        X = self._process_features(data)
+
+        Y = {}
+        for name in self.regressors+self.classifiers:
+            Y[name] = self.model[name].predict(X)
+        Y = pd.DataFrame(Y)
+
+        res = self._process_targets(Y, inverse=True, return_df=True)
+
+        return res
+
+
+    # }
+
+    # { Input and output
+
+    def _make_model_from_setup(self):
+        """
+        Prepare the regressor and classifier models and store them in the model variable.
+        """
+
+        models = {}
+        for name in self.regressors:
+            models[name] = XGBRegressor()
+
+        for name in self.classifiers:
+            models[name] = XGBClassifier()
+
+        self.model = models
+
+    def make_from_setup(self, setup, data=None):
+
+        self.setup = defaults.add_defaults_to_setup(setup)
+
+        self.features = list(self.setup['features'].keys())
+        self.regressors = list(self.setup['regressors'].keys())
+        self.classifiers = list(self.setup['classifiers'].keys())
+
+        self._prepare_data(data=data)
+        self._make_preprocessors_from_setup()
+        self._make_model_from_setup()
+
+    def make_from_setup_file(self, filename, data=None):
+
+        setupfile = open(filename)
+        setup = yaml.safe_load(setupfile)
+        setupfile.close()
+
+        self.make_from_setup(setup, data=data)
+
+    #}
 
 class FCPredictor(BasePredictor):
 
@@ -261,7 +412,7 @@ class FCPredictor(BasePredictor):
         X_val = self._process_features(self.test_data)
 
         Y = self._process_targets(data)
-        Y_val = self._process_targets(self.test_data)
+        Y_val = self._process_targets(self.test_data, return_df=False)
 
         callbacks = []
         if early_stopping:
@@ -296,27 +447,9 @@ class FCPredictor(BasePredictor):
 
         Y = self.model.predict(X)
 
-        res = self._process_targets(Y, inverse=True)
+        res = self._process_targets(Y, inverse=True, return_df=True)
 
         return res
-
-    def score(self, data=None, regressor_metric='mean_absolute_error', classifier_metric='accuracy'):
-
-        if data is None:
-            data = self.train_data
-
-        res = self.predict(data)
-
-        scores = {}
-        for par in self.regressors:
-            score = metrics.mean_absolute_error(data[par], res[par])
-            scores[par] = score
-
-        for par in self.classifiers:
-            score = metrics.accuracy_score(data[par], res[par])
-            scores[par] = score
-
-        return scores
 
     # }
 

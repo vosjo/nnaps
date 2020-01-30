@@ -23,13 +23,16 @@ default_classifier_model = []
 
 def get_processor_class(processor_name):
 
-    valid_processors = ['OneHotEncoder', 'StandardScaler', 'RobustScaler', 'MinMaxScaler', 'MaxAbsScaler']
+    valid_processors = ['OneHotEncoder', 'OrdinalEncoder', 'StandardScaler', 'RobustScaler', 'MinMaxScaler', 'MaxAbsScaler']
     if not processor_name in valid_processors:
         raise ValueError("Processor {} not recognized as valid Processor.".format(processor_name) +
                          "\nAllowed processors: {}".format(valid_processors))
 
     if processor_name == 'OneHotEncoder':
         return preprocessing.OneHotEncoder()
+
+    if processor_name == 'OrdinalEncoder':
+        return preprocessing.OrdinalEncoder()
 
     elif processor_name == 'StandardScaler':
         return preprocessing.StandardScaler()
