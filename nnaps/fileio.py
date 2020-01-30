@@ -3,6 +3,9 @@ import tables
 import warnings
 import six
 import yaml
+import os
+
+import pickle
 
 import pandas as pd
 
@@ -263,6 +266,14 @@ def processors2dict(processors):
                              'categories_dtype': dtype_,
                              'drop_idx_': processor.drop_idx_})
 
+        elif processor.__class__ == preprocessing.OrdinalEncoder:
+            categories_ = np.array(processor.categories_[0], dtype='S')
+            dtype_ = np.array([processor.categories_[0].dtype], dtype='S')
+
+            p = dict(preprocessor='OrdinalEncoder',
+                     kwargs={'categories_': categories_,
+                             'categories_dtype': dtype_})
+
         elif processor.__class__ == preprocessing.StandardScaler:
             p = dict(preprocessor='StandardScaler',
                      kwargs={'scale_': processor.scale_, 'mean_': processor.mean_, 'var_': processor.var_})
@@ -306,6 +317,13 @@ def dict2processors(processor_dict):
             dtype_ = processor_data['kwargs'].pop('categories_dtype')[0]
             processor_data['kwargs']['categories_'] = [np.array(np.array(categories_, dtype='U'), dtype=dtype_)]
 
+        elif processor_data['preprocessor'] == 'OrdinalEncoder':
+            p = preprocessing.OrdinalEncoder()
+            # convert the categories_ attribute to the correct data type
+            categories_ = processor_data['kwargs'].pop('categories_')
+            dtype_ = processor_data['kwargs'].pop('categories_dtype')[0]
+            processor_data['kwargs']['categories_'] = [np.array(np.array(categories_, dtype='U'), dtype=dtype_)]
+
         elif processor_data['preprocessor'] == 'StandardScaler':
             p = preprocessing.StandardScaler()
 
@@ -330,13 +348,39 @@ def dict2processors(processor_dict):
     return processors
 
 
-def safe_model(model, processors, features, regressors, classifiers, setup, filename, history=None):
-    processor_dict = processors2dict(processors)
+def convert_model(model):
+    import codecs
 
-    # the setup dictionary is stored in yaml format, but all preprocessing info is removed.
-    # setup.pop('features', None)
-    # setup.pop('regressors', None)
-    # setup.pop('classifiers', None)
+    if type(model) == dict:
+        # XGBoost model
+        model_prep = model
+
+    else:
+        # KERAS model
+        model_prep = {
+        'config': model.to_yaml(),
+        'weights': model.get_weights(),
+        }
+
+    return model_prep
+
+
+def safe_model(model, processors, features, regressors, classifiers, setup, filename, history=None,
+               method='hdf5'):
+
+    # ignore user determined extension and replace by correct extention based on method.
+    name, ext = os.path.splitext(filename)
+    if method == 'hdf5':
+        filename = name + '.h5'
+    else:
+        filename = name + '.dat'
+
+    processor_dict = processors2dict(processors)
+    model = convert_model(model)
+
+    # print (type(model))
+    # print('/n', model)
+
     setup = yaml.dump(setup)
 
     # features, regressors and classifiers have to be stored directly and their order is important.
@@ -344,8 +388,7 @@ def safe_model(model, processors, features, regressors, classifiers, setup, file
     data = {
         'preprocessors': processor_dict,
         'setup': setup,
-        'config': model.to_yaml(),
-        'weights': model.get_weights(),
+        'model': model,
         'features': features,
         'regressors': regressors,
         'classifiers': classifiers,
@@ -355,16 +398,26 @@ def safe_model(model, processors, features, regressors, classifiers, setup, file
         data['history_columns'] = list(history.columns)
         data['history'] = history.values
 
-    save(filename, data, compress=True)
+    if method == 'hdf5':
+        save(filename, data, compress=True)
+    else:
+        pickle.dump(data, open(filename, "wb"))
 
 
 def load_model(filename):
-    data = load(filename)
 
-    model = model_from_yaml(data['config'])
+    if os.path.splitext(filename)[1] == '.dat':
+        data = pickle.load(open(filename, "rb"))
+    else:
+        data = load(filename)
 
-    W = data['weights']
-    model.set_weights(W)
+
+    if 'config' in data['model'] and 'weights' in data['model']:
+        model = model_from_yaml(data['model']['config'])
+        W = data['model']['weights']
+        model.set_weights(W)
+    else:
+        model = data['model']
 
     processors = dict2processors(data['preprocessors'])
 
@@ -389,6 +442,5 @@ def load_model(filename):
         history.index.name = 'epoch'
     else:
         history = None
-
 
     return model, processors, features, regressors, classifiers, setup, history

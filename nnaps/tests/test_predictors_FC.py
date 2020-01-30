@@ -92,7 +92,7 @@ class TestBPSPredictorSetup:
 
     def test_make_from_saved_model(self):
 
-        predictor = predictors.FCPredictor(saved_model=base_path / 'test_model.h5')
+        predictor = predictors.FCPredictor(saved_model=base_path / 'test_model_FC.h5')
 
         Xpars_ = ['M1', 'qinit', 'Pinit', 'FeHinit']
         Yregressors_ = ['Pfinal', 'qfinal']
@@ -108,27 +108,17 @@ class TestBPSPredictorSetup:
 
         for par in Xpars_:
             assert par in pp, "{} does not have a preprocessor".format(par)
-            assert pp[par].__class__ == preprocessing.StandardScaler, \
-                            "{} does not have the correct preprocessor. ".format(par) + \
-                            "expected {}, got {}".format(preprocessing.StandardScaler, pp[par].__class__)
-
-        # for par in Yregressors_:
-        #     assert par in pp, msg="{} does not have a preprocessor".format(par))
-        #     assert pp[par].__class__ == preprocessing.RobustScaler,
-        #                     msg="{} does not have the correct preprocessor. ".format(par) +
-        #                         "expected {}, got {}".format(preprocessing.RobustScaler, pp[par].__class__))
+            assert pp[par].__class__ == preprocessing.MinMaxScaler
 
         for par in Yclassifiers_:
             assert par in pp, "{} does not have a preprocessor".format(par)
-            assert pp[par].__class__ == preprocessing.OneHotEncoder, \
-                            "{} does not have the correct preprocessor. ".format(par) + \
-                            "expected {}, got {}".format(preprocessing.OneHotEncoder, pp[par].__class__)
+            assert pp[par].__class__ == preprocessing.OneHotEncoder
 
         # test making the model
         mod = predictor.model
 
-        assert len(mod.layers) == 11, \
-            "Model does not have correct number of layers, expected {}, got {}".format(11, len(mod.layers))
+        assert len(mod.layers) == 8, \
+            "Model does not have correct number of layers, expected {}, got {}".format(8, len(mod.layers))
 
         assert mod.input.shape[1] == len(Xpars_), \
             "Model input does not have correct shape, expected {}, got {}".format(len(Xpars_), mod.input.shape[1])
@@ -257,7 +247,7 @@ class TestBPSPredictorTrainingPredicting:
 
         data = pd.read_csv(base_path / 'BesanconGalactic_summary.txt').iloc[0:10]
 
-        predictor = predictors.FCPredictor(saved_model=base_path / 'test_model.h5')
+        predictor = predictors.FCPredictor(saved_model=base_path / 'test_model_FC.h5')
 
         res = predictor.predict(data=data)
 

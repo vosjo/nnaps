@@ -248,8 +248,8 @@ class XGBPredictor(BasePredictor):
         elif not setup_file is None:
             self.make_from_setup_file(setup_file, data=data)
 
-        # elif not saved_model is None:
-        #     self.load_model(saved_model)
+        elif not saved_model is None:
+            self.load_model(saved_model)
 
     # { Learning and predicting
 
@@ -337,6 +337,32 @@ class XGBPredictor(BasePredictor):
         setupfile.close()
 
         self.make_from_setup(setup, data=data)
+
+    def save_model(self, filename):
+        """
+        Save a trained model to hdf5 file for later use
+        """
+
+        fileio.safe_model(self.model, self.processors, self.features, self.regressors, self.classifiers,
+                          self.setup, filename, history=None, method='pickle')
+
+    def load_model(self, filename):
+        """
+        Load a model saved to hdf5 format
+        """
+
+        model, processors, features, regressors, classifiers, setup, history = fileio.load_model(filename)
+        self.model = model
+        self.processors = processors
+
+        self.setup = setup
+
+        self.features = features
+        self.regressors = regressors
+        self.classifiers = classifiers
+
+        # load the data and split it in a training - test set.
+        self._prepare_data()
 
     #}
 
