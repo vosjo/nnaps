@@ -103,10 +103,12 @@ class BasePredictor():
         return Y
 
     def fit(self, data=None):
-        pass
+        raise NotImplementedError("The fit routine must be implemented "
+                                  "by subclasses")
 
     def predict(self, data=None):
-        pass
+        raise NotImplementedError("The predict routine must be implemented "
+                                  "by subclasses")
 
     def score(self, data=None, regressor_metric='mean_absolute_error', classifier_metric='accuracy'):
 
@@ -412,8 +414,6 @@ class FCPredictor(BasePredictor):
             history_df['training_run'] = np.max(self.history['training_run']) + 1
             self.history = self.history.append(history_df, sort=False)
 
-
-
     def fit(self, data=None, epochs=100, batch_size=128, early_stopping=None, reduce_lr=None):
         """
         Train the model
@@ -447,7 +447,7 @@ class FCPredictor(BasePredictor):
 
         if reduce_lr:
             # TODO: set minimum learning rate based on starting learning rate.
-            reduce_lr = ReduceLROnPlateau(monitor='val_loss', mode='min', factor=0.2, patience=5, min_lr=0.00001,
+            reduce_lr = ReduceLROnPlateau(monitor='val_loss', mode='min', factor=0.2, patience=5, min_lr=1e-8,
                                           verbose=1)
             callbacks.append(reduce_lr)
 

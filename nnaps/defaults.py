@@ -143,10 +143,16 @@ def add_defaults_to_setup(setup):
 
     # check and update the preprocessors for features and regressors/classifiers
     setup = update_with_default_dict(setup, 'features', {'processor': user_scaler})
-    setup = update_with_default_dict(setup, 'regressors', {'processor': None,
-                                                          'loss': default_regressor_loss})
-    setup = update_with_default_dict(setup, 'classifiers', {'processor': user_encoder,
-                                                           'loss': default_classifier_loss})
+    if 'regressors' in setup:
+        setup = update_with_default_dict(setup, 'regressors', {'processor': None,
+                                                              'loss': default_regressor_loss})
+    else:
+        setup['regressors'] = {}
+    if 'classifiers' in setup:
+        setup = update_with_default_dict(setup, 'classifiers', {'processor': user_encoder,
+                                                               'loss': default_classifier_loss})
+    else:
+        setup['classifiers'] = {}
 
     # check and update the model setup
     if not 'model' in setup:

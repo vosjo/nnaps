@@ -4,6 +4,8 @@ import pytest
 import pandas as pd
 import numpy as np
 
+from sklearn import preprocessing
+
 from nnaps import predictors
 
 np.random.seed(42)
@@ -36,7 +38,7 @@ class TestBasePredictorTrainingPredicting:
         assert type(X) == np.ndarray
         assert X.shape == (len(testpredictor.test_data), 2)
 
-    def test_process_targets(self, testpredictor):
+    def test_process_targets_dimensions(self, testpredictor):
 
         # -- normal transform tests
         # ---------------------------
@@ -104,3 +106,29 @@ class TestBasePredictorTrainingPredicting:
         for name in testpredictor.regressors + testpredictor.classifiers:
             assert name in Y.columns
 
+
+    def test_process_targets_values(self):
+        """
+        This test only tests the data frame use case.
+        """
+
+        mass = np.random.normal(10, 3, size=100)
+        feh = np.random.normal(-1, 1, size=100)
+        data = pd.DataFrame({'mass': mass, 'feh': feh})
+
+        processors = {
+            'mass': preprocessing.StandardScaler().fit(data[['mass']]),
+            'feh': preprocessing.StandardScaler().fit(data[['feh']])
+        }
+
+        predictor = predictors.BasePredictor()
+        predictor.regressors = ['mass', 'feh']
+        predictor.classifiers = []
+
+        predictor.processors = processors
+
+        data_scaled = predictor._process_targets(data, return_df=True)
+
+        data_unscaled = predictor._process_targets(data_scaled, inverse=True, return_df=True)
+
+        pd.testing.assert_frame_equal(data, data_unscaled)
