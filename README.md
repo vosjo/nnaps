@@ -1,3 +1,5 @@
+[![Documentation Status](https://readthedocs.org/projects/nnaps/badge/?version=latest)](https://nnaps.readthedocs.io/en/latest/?badge=latest)
+
 # Neural Network assisted Population Synthesis code
 
 NNaPS aims to be a simple and easy to use codebase for building a population synthesis code from a set of 1D 
@@ -16,6 +18,10 @@ to study this correlation and predict the P-q distribution of wide sdB binaries 
 covering the observed parameter range were calculated (blue circles in the left figure). Using NNaPS, these models 
 were used to train a model and predict the P-q distribution of ~1\,000\,000 binaries (right figure). With this new
 BPS model we can now further explore the P-q distribution of different sub populations in our galaxy.
+
+## Documentation
+
+Read the docs at [nnaps.readthedocs.io](https://nnaps.readthedocs.io/en/latest/)
 
 ## Instalation instructions
 
