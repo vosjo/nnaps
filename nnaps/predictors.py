@@ -434,7 +434,7 @@ class FCPredictor(BasePredictor):
             history_df['training_run'] = np.max(self.history['training_run']) + 1
             self.history = self.history.append(history_df, sort=False)
 
-    def fit(self, data=None, epochs=100, batch_size=128, early_stopping=None, reduce_lr=None):
+    def fit(self, data=None, epochs=100, batch_size=128, early_stopping=None, reduce_lr=None, min_lr=None):
         """
         Train the model
 
@@ -443,6 +443,8 @@ class FCPredictor(BasePredictor):
         :param batch_size: Number of mini-batches to subdivide each epoch in.
         :param early_stopping: stop training when validation set has reached the minimum loss
         :param reduce_lr: reduce the learning rate when a plateau is reached in the loss curves
+        :param min_lr: the minimum learning rate. if None, the learning rate is allowed to decrease by 4 orders
+                       of magnitude.
         :return: Nothing
         """
 
@@ -466,8 +468,9 @@ class FCPredictor(BasePredictor):
             callbacks = [es]
 
         if reduce_lr:
-            # TODO: set minimum learning rate based on starting learning rate.
-            reduce_lr = ReduceLROnPlateau(monitor='val_loss', mode='min', factor=0.2, patience=5, min_lr=1e-8,
+            if min_lr is None:
+                min_lr = float(self.model.optimizer.lr.value()) / 1e4
+            reduce_lr = ReduceLROnPlateau(monitor='val_loss', mode='min', factor=0.2, patience=5, min_lr=min_lr,
                                           verbose=1)
             callbacks.append(reduce_lr)
 
