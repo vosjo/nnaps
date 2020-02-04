@@ -73,6 +73,10 @@ class BasePredictor():
             for name in self.regressors + self.classifiers:
                 Y.append(data[name].values.reshape(-1, 1))
             data = Y
+        else:
+            # if there is only one parameter, make a list of it
+            if len(self.regressors+self.classifiers) == 1:
+                data = [data]
 
         # the processors need a 2D array even though they only deal with one feature
         # the dataframe constructor needs 1D arrays
@@ -391,15 +395,31 @@ class FCPredictor(BasePredictor):
 
     def _append_to_history(self, history):
 
-        # convert the history object to a dataframe
-        keys = [c + '_mae' for c in self.regressors]
-        keys += ['val_' + c + '_mae' for c in self.regressors]
-        keys += [c + '_accuracy' for c in self.classifiers]
-        keys += ['val_' + c + '_accuracy' for c in self.classifiers]
-        keys += [c + '_loss' for c in self.classifiers + self.regressors]
-        keys += ['val_' + c + '_loss' for c in self.classifiers + self.regressors]
+        if len(self.regressors + self.classifiers) == 1:
+            # when only one target KERAS does not add the target name to the history file
+            parname = (self.regressors + self.classifiers)[0]
 
-        data = {k: history[k] for k in keys}
+            if len(self.regressors) > 0:
+                hist_keys = ['mae', 'val_mae']
+                new_keys = [parname+'_mae', 'val_' +parname+'_mae']
+            else:
+                hist_keys = ['accuracy', 'val_accuracy']
+                new_keys = [parname+'_accuracy', 'val_' +parname+'_accuracy']
+
+            hist_keys += ['loss', 'val_loss']
+            new_keys += [parname+'_loss', 'val_'+parname+'_loss']
+            data = {k1: history[k2] for k1, k2 in zip(new_keys, hist_keys)}
+
+        else:
+            # convert the history object to a dataframe
+            keys = [c + '_mae' for c in self.regressors]
+            keys += ['val_' + c + '_mae' for c in self.regressors]
+            keys += [c + '_accuracy' for c in self.classifiers]
+            keys += ['val_' + c + '_accuracy' for c in self.classifiers]
+            keys += [c + '_loss' for c in self.classifiers + self.regressors]
+            keys += ['val_' + c + '_loss' for c in self.classifiers + self.regressors]
+
+            data = {k: history[k] for k in keys}
 
         history_df = pd.DataFrame(data=data)
         history_df.index.name = 'epoch'

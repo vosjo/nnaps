@@ -15,3 +15,5 @@ nnaps/tests/test_history.csv
 nnaps/tests/test_setup2.yaml
 nnaps/tests/test_training_data.html
 nnaps/tests/test_training_history.html
+
+docs/_build/
