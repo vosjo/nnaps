@@ -29,6 +29,9 @@ setuptools.setup(
     install_requires=install_requires,
     test_suite='pytest.collector',
     tests_require=['pytest'],
+    entry_points = {
+        'console_scripts': ['nnaps-mesa=nnaps.mesa.main:main'],
+    },
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Programming Language :: Python :: 3",

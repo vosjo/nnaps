@@ -39,3 +39,4 @@ def test_convert2hdf5():
         assert os.path.isfile(base_path / 'test_data/hdf5/M1.013_M0.331_P32.85_Z0.h5')
     finally:
         os.remove(base_path / 'test_data/hdf5/M1.013_M0.331_P32.85_Z0.h5')
+        os.rmdir(base_path / 'test_data/hdf5/')

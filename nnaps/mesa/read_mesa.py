@@ -145,48 +145,66 @@ def write2hdf5(data, filename, update=False, attr_types=[]):
     hdf.close()
 
 
-def convert2hdf5(modellist, star_columns=None, binary_columns=None, add_stopping_condition=True,
-                 input_path_kw='path', input_path_prefix='',
+def convert2hdf5(modellist, star_columns=None, binary_columns=None, add_stopping_condition=True, skip_existing=True,
                  star1_history_file='LOGS/history1.data', star2_history_file='LOGS/history2.data',
-                 binary_history_file='LOGS/binary_history.data', log_file='log.txt', output_path=None):
+                 binary_history_file='LOGS/binary_history.data', log_file='log.txt',
+                 input_path_kw='path', input_path_prefix='', output_path=None, verbose=False):
 
-    if star_columns is None:
-        star_columns = []
-    if binary_columns is None:
-        binary_columns = []
+    if not os.path.isdir(output_path):
+        os.mkdir(output_path)
 
     for i, model in modellist.iterrows():
 
-        # try to read two star history files and the binary history file. It is possible not all are available
-        e1, e2, e3 = None, None, None
-        try:
-            d1 = read_mesa_output(Path(input_path_prefix, model[input_path_kw], star1_history_file))[1]
-        except Exception as e:
-            e1 = e
-            d1 = None
-
-        try:
-            d2 = read_mesa_output(Path(input_path_prefix, model[input_path_kw], star2_history_file))[1]
-        except Exception as e:
-            e2 = e
-            d2 = None
-
-        try:
-            d3 = read_mesa_output(Path(input_path_prefix, model[input_path_kw], binary_history_file))[1]
-        except Exception as e:
-            e3 = e
-            d3 = None
-
-        # is no history data is available there is no point in storing the model, continue to the next one.
-        if d1 is None and d2 is None and d3 is None:
-            warnings.warn("Error in reading model {}: {}\n error1: {}\n error2: \n error3:".format(i,
-                          model[input_path_kw], e1, e2, e3), category=RuntimeWarning)
+        if not os.path.isdir(Path(input_path_prefix, model[input_path_kw])):
             continue
 
-        # Only keep the requested columns
-        d1 = d1[star_columns] if d1 is not None else None
-        d2 = d2[star_columns] if d2 is not None else None
-        d3 = d3[binary_columns] if d3 is not None else None
+        if skip_existing and os.path.isfile(Path(output_path, model[input_path_kw]).with_suffix('.h5')):
+            if verbose:
+                print (i, model[input_path_kw], ': exists, skipping')
+            continue
+
+        if verbose:
+            print(i, model[input_path_kw], ': processing')
+
+        # store all columns of the input file in the hdf5 file
+        data = {}
+        for col in model.index:
+            data[col] = model[col]
+
+        # check if all history files that are requested are available and can be read. If there is an error,
+        # skip to the next model
+        if star1_history_file is not None:
+            try:
+                d1 = read_mesa_output(Path(input_path_prefix, model[input_path_kw], star1_history_file))[1]
+                if star_columns is not None:
+                    d1 = d1[star_columns]
+                data['star1'] = d1
+            except Exception as e:
+                if verbose:
+                    print("Error in reading star1: ", e)
+                continue
+
+        if star2_history_file is not None:
+            try:
+                d2 = read_mesa_output(Path(input_path_prefix, model[input_path_kw], star2_history_file))[1]
+                if star_columns is not None:
+                    d2 = d2[star_columns]
+                data['star2'] = d2
+            except Exception as e:
+                if verbose:
+                    print("Error in reading star2: ", e)
+                continue
+
+        if binary_history_file is not None:
+            try:
+                d3 = read_mesa_output(Path(input_path_prefix, model[input_path_kw], binary_history_file))[1]
+                if star_columns is not None:
+                    d3 = d3[binary_columns]
+                data['binary'] = d3
+            except Exception as e:
+                if verbose:
+                    print("Error in reading binary: ", e)
+                continue
 
         # obtain the termination code
         termination_code = 'uk'
@@ -196,16 +214,6 @@ def convert2hdf5(modellist, star_columns=None, binary_columns=None, add_stopping
                 if 'termination code' in line:
                     termination_code = line.split()[-1]
 
-        data = dict(
-            primary=d1,
-            secondary=d2,
-            binary=d3,
-            termination_code=termination_code,
-        )
-        for col in model.index:
-            data[col] = model[col]
-
-        if not os.path.isdir(output_path):
-            os.mkdir(output_path)
+        data['termination_code']=termination_code
 
         write2hdf5(data, Path(output_path, model[input_path_kw]).with_suffix('.h5'), update=False)
