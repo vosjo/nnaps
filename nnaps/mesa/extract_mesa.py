@@ -237,27 +237,97 @@ def extract_parameters(data, parameters):
 
     return result
 
-# for i, name in enumerate(objectnames):
-#
-#     # 1: Get the data
-#     try:
-#         data, zinit, fehinit, population, pinit_frac, gal_age, termination_code = read_history(name)
-#     except Exception as e:
-#         print(e)
-#         continue
-#
-#     # 2: check for stability and cut data at start of CE
-#
-#     # 3: Run over all parameters and extract values
-#     for parameter in parameters:
-#
-#         pname, function, phase = decompose_parameter(parameter)
-#
-#         s = get_time(data, phase)
-#         value = function(data[pname][s])
-#
-#         data_dict_all[parameter][i] = value
-#
+
+def is_stable(data, criterion='J_div_Jdot_div_P', value=10):
+    if criterion == 'Mdot':
+
+        if np.max(data['lg_mstar_dot_1']) > value:
+            s = np.where(data['lg_mstar_dot_1'] > value)
+            a = data['age'][s][1]
+            return False, a
+
+    elif criterion == 'delta':
+
+        if np.max(data['mass_transfer_delta']) > value:
+            s = np.where(data['mass_transfer_delta'] > value)
+            a = data['age'][s][1]
+            return False, a
+
+    elif criterion == 'J_div_Jdot_div_P':
+
+        if np.min(10 ** data['log10_J_div_Jdot_div_P']) <= value:
+            s = np.where(10 ** data['log10_J_div_Jdot_div_P'] < value)
+            a = data['age'][s][1]
+            return False, a
+
+    elif criterion == 'M_div_Mdot_div_P':
+
+        if np.min(10 ** data['log10_M_div_Mdot_div_P']) <= value:
+            s = np.where(10 ** data['log10_M_div_Mdot_div_P'] < value)
+            a = data['age'][s][1]
+            return False, a
+
+    elif criterion == 'R_div_SMA':
+
+        if np.max(data['star_1_radius'] / data['binary_separation']) > value:
+            s = np.where(data['star_1_radius'] / data['binary_separation'] > value)
+            a = data['age'][s][1]
+            return False, a
+
+    return True, data['age'][-1]
+
+
+def get_post_ce_parameters(data, ce_model=''):
+
+    M1 = data['star_1_mass'][-1]
+    M2 = data['star_2_mass'][-1]
+    Mc = data['he_core_mass'][-1]
+    a = data['binary_separation'][-1]
+
+    af = 1.0 * a * (Mc * M2) / (M1 ** 2)
+    G = 2944.643655  # Rsol^3/Msol/days^2
+    P = np.sqrt(4 * np.pi ** 2 * af ** 3 / G * (Mc + M2))
+    sma = af * 0.004649183820234682 * 214.83390446073912  # sma in Rsol
+    q = Mc / M2
+
+    pars_ce = {
+        'period_days__CE': P,
+        'binary_separation__CE': sma,
+        'star_1_mass__CE': Mc,
+        'star_2_mass__CE': M2,
+        'mass_ratio__CE': q,
+    }
+
+    return pars_ce
+
+
+def extract_mesa(modellist, stability_criterion='J_div_Jdot_div_P', stability_limit=10, parameters=None):
+
+    for i, model in modellist.iterrows():
+        # 1: Get the data
+        try:
+            data = read_history(model)
+        except Exception as e:
+            print(e)
+            continue
+
+        # 2: check for stability and cut data at start of CE
+        is_stable, ce_age = is_stable(data, criterion=stability_criterion, value=stability_limit)
+        if not is_stable:
+            # if the model is not stable, cut of the evolution at the start of the CE and anything after than
+            # is non physical anyway.
+            data = data[data['age'] <= ce_age]
+
+            ce_pars = get_post_ce_parameters(data, ce_model='')
+
+        # 3: extract some standard parameters
+        pars = {}
+        pars['stability'] = 'CE' if not is_stable else 'stable'  # todo: add contact binary and merger option here
+
+        # 4: extract the requested parameters
+        for parameter in parameters:
+            pars_ = extract_parameters(data, parameters)
+
 
 
 
