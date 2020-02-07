@@ -1,9 +1,11 @@
 import os
 import warnings
-import h5py
+
 
 from pathlib import Path
 import numpy as np
+
+from . import fileio
 
 
 def read_mesa_output(filename=None, only_first=False):
@@ -91,60 +93,6 @@ def get_end_log_file(logfile):
         return []
 
 
-def write2hdf5(data, filename, update=False, attr_types=[]):
-    """
-    Write the content of a dictionary to a hdf5 file. The dictionary can contain other
-    nested dictionaries, this file stucture will be maintained in the saved hdf5 file.
-
-    Pay attention to the fact that the data type of lists might change when writing to
-    hdf5. Lists are stored as numpy arrays, thus all items in a list are converted to
-    the same type: ['bla', 1, 24.5] will become ['bla', '1', '24.5']. Upt till now there
-    is nothing in place to check this, or correct it when reading a hdf5 file.
-
-    @param data: the dictionary to write to file
-    @type data: dict
-    @param filename: the name of the hdf5 file to write to
-    @type filename: str
-    @param update: True if you want to update an existing file, False to overwrite
-    @type update: bool
-    @param attr_types: the data types that you want to save as an attribute instead of
-                      a dataset. (standard everything is saved as dataset.)
-    @type attr_types: List of types
-    """
-
-    if not update and os.path.isfile(filename):
-        os.remove(filename)
-
-    def save_rec(data, hdf):
-        """ recursively save a dictionary """
-        for key in data.keys():
-            try:
-
-                if type(data[key]) == dict:
-                    # if part is dictionary: add 1 level and save dictionary in new level
-                    if not key in hdf:
-                        hdf.create_group(key)
-                    save_rec(data[key], hdf[key])
-
-                elif type(data[key]) in attr_types:
-                    # save data as attribute
-                    hdf.attrs[key] = data[key]
-
-                else:
-                    # other data is stored as datasets
-                    if key in hdf:
-                        del hdf[key]
-                    hdf.create_dataset(key, data=data[key])
-
-            except Exception as e:
-                print( 'Error while trying to write: {}, type: {}'.format(key, type(key)) )
-                raise(e)
-
-    hdf = h5py.File(filename)
-    save_rec(data, hdf)
-    hdf.close()
-
-
 def convert2hdf5(modellist, star_columns=None, binary_columns=None, add_stopping_condition=True, skip_existing=True,
                  star1_history_file='LOGS/history1.data', star2_history_file='LOGS/history2.data',
                  binary_history_file='LOGS/binary_history.data', log_file='log.txt',
@@ -173,12 +121,13 @@ def convert2hdf5(modellist, star_columns=None, binary_columns=None, add_stopping
 
         # check if all history files that are requested are available and can be read. If there is an error,
         # skip to the next model
+        history = {}
         if star1_history_file is not None:
             try:
                 d1 = read_mesa_output(Path(input_path_prefix, model[input_path_kw], star1_history_file))[1]
                 if star_columns is not None:
                     d1 = d1[star_columns]
-                data['star1'] = d1
+                history['star1'] = d1
             except Exception as e:
                 if verbose:
                     print("Error in reading star1: ", e)
@@ -189,7 +138,7 @@ def convert2hdf5(modellist, star_columns=None, binary_columns=None, add_stopping
                 d2 = read_mesa_output(Path(input_path_prefix, model[input_path_kw], star2_history_file))[1]
                 if star_columns is not None:
                     d2 = d2[star_columns]
-                data['star2'] = d2
+                history['star2'] = d2
             except Exception as e:
                 if verbose:
                     print("Error in reading star2: ", e)
@@ -200,11 +149,13 @@ def convert2hdf5(modellist, star_columns=None, binary_columns=None, add_stopping
                 d3 = read_mesa_output(Path(input_path_prefix, model[input_path_kw], binary_history_file))[1]
                 if star_columns is not None:
                     d3 = d3[binary_columns]
-                data['binary'] = d3
+                history['binary'] = d3
             except Exception as e:
                 if verbose:
                     print("Error in reading binary: ", e)
                 continue
+
+        data['history'] = history
 
         # obtain the termination code
         termination_code = 'uk'
@@ -216,4 +167,4 @@ def convert2hdf5(modellist, star_columns=None, binary_columns=None, add_stopping
 
         data['termination_code']=termination_code
 
-        write2hdf5(data, Path(output_path, model[input_path_kw]).with_suffix('.h5'), update=False)
+        fileio.write2hdf5(data, Path(output_path, model[input_path_kw]).with_suffix('.h5'), update=False)

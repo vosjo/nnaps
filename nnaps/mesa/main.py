@@ -16,6 +16,8 @@ def main():
                         help='The setup file containing necessary info for the -2h5 and -extract option')
     parser.add_argument('-o', dest='output', default=None,
                         help='The output file or directory for the -2h5 and -extract functions')
+    parser.add_argument('--skip', dest='skip', default=False, action='store_true',
+                        help='For 2h5: skip models that have already been transformed to h5.')
     args = parser.parse_args()
 
     if args.modelfile is not None:
@@ -37,4 +39,4 @@ def main():
         if len(args.modelfile) > 1:
             setup['input_path_prefix'] = args.modelfile[1]
 
-        read_mesa.convert2hdf5(modellist, output_path=args.output, **setup, verbose=True)
+        read_mesa.convert2hdf5(modellist, output_path=args.output, **setup, skip_existing=args.skip, verbose=True)
