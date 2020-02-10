@@ -1,9 +1,12 @@
 import os
 import yaml
+import glob
 import argparse
 import pandas as pd
 
-from . import read_mesa, defaults
+from pathlib import Path
+
+from . import read_mesa, extract_mesa, defaults
 
 def main():
     parser = argparse.ArgumentParser(description='NNaPS-mesa: Process MESA models')
@@ -40,3 +43,28 @@ def main():
             setup['input_path_prefix'] = args.modelfile[1]
 
         read_mesa.convert2hdf5(modellist, output_path=args.output, **setup, skip_existing=args.skip, verbose=True)
+
+    elif args.extract is not None:
+
+        files = glob.glob(str(Path(args.extract, '*')))
+        file_list = pd.DataFrame(data=files, columns=['path'])
+
+        if args.setup is None:
+
+            if os.path.isfile('default_extract.yaml'):
+                setup = yaml.safe_load('default_extract.yaml')
+            elif os.path.isfile('~/.nnaps/default_extract.yaml'):
+                setup = yaml.safe_load('~/.nnaps/default_extract.yaml')
+            else:
+                setup = defaults.default_extract
+        else:
+            setup = yaml.safe_load(args.setup)
+
+        result = extract_mesa.extract_mesa(file_list, **setup, verbose=True)
+
+        result.to_csv(args.output)
+
+    else:
+        print("Nothing to do!\nUse as:\n"
+              ">>> nnaps-mesa -2h5 <modelfile.csv> <input_path> -o <output_path>\n"
+              ">>> nnaps-mesa -extract <input_path> -o <output_file>")

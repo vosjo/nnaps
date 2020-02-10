@@ -325,13 +325,17 @@ def apply_ce(data, ce_model=''):
     return data
 
 
-def extract_mesa(modellist, stability_criterion='J_div_Jdot_div_P', stability_limit=10, parameters=None):
+def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_limit=10, parameters=None, verbose=False):
 
     columns = ['path', 'stability'] + parameters
     # results = pd.DataFrame(columns=columns)
     results = []
 
-    for i, model in modellist.iterrows():
+    for i, model in file_list.iterrows():
+
+        if verbose:
+            print(i, model['path'])
+
         # 1: Get the data
         try:
             data = read_history(model['path'])

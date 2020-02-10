@@ -10,3 +10,9 @@ defaults_2h5 = {
     'binary_history_file': 'LOGS/binary_history.data',
     'log_file': 'log.txt',
     }
+
+default_extract = {
+    'stability_criterion': 'J_div_Jdot_div_P',
+    'stability_limit': 10,
+    'parameters': ['star_1_mass__init']
+}
