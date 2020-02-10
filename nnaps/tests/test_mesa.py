@@ -47,13 +47,40 @@ class Test2H5:
 class TestExtract:
 
     def test_get_phases(self):
+        phase_names = ['init', 'final', 'MLstart', 'MLend', 'ML', 'HeIgnition', 'HeCoreBurning', 'HeShellBurning']
 
+        # stable model without He ignition
         data = extract_mesa.read_history(base_path / 'test_data/M1.022_M0.939_P198.55_Z0.h5')
+        phases = extract_mesa.get_phases(data, phase_names)
 
-        phases = ['init', 'final', 'MLstart', 'MLend', 'HeIgnition', 'HeCoreBurning']
-        phases = extract_mesa.get_phases(data, phases)
+        assert data['model_number'][phases['init']][0] == 3
+        assert data['model_number'][phases['final']][0] == 11419
+        assert data['model_number'][phases['MLstart']][0] == 2499
+        assert data['model_number'][phases['MLend']][0] == 11106
+        assert data['model_number'][phases['ML']][0] == 2499
+        assert data['model_number'][phases['ML']][-1] == 11106
+        assert phases['HeIgnition'] is None
 
-        assert 1
+        # CE model without He ignition
+        data = extract_mesa.read_history(base_path / 'test_data/M1.239_M0.468_P165.41_Z0.h5')
+        data = data[data['model_number'] <= 6198]
+        phases = extract_mesa.get_phases(data, phase_names)
+
+        assert data['model_number'][phases['ML']][0] == 2517
+        assert data['model_number'][phases['ML']][-1] == 6198
+        assert phases['HeIgnition'] is None
+        assert phases['HeCoreBurning'] is None
+        assert phases['HeShellBurning'] is None
+
+        # stable model with degenerate He ignition
+        data = extract_mesa.read_history(base_path / 'test_data/M0.840_M0.822_P554.20_Z0.h5')
+        phases = extract_mesa.get_phases(data, phase_names)
+
+        assert data['model_number'][phases['HeIgnition']][0] == 12453
+        assert data['model_number'][phases['HeCoreBurning']][0] == 12267
+        assert data['model_number'][phases['HeCoreBurning']][-1] == 13734
+        assert data['model_number'][phases['HeShellBurning']][0] == 13737
+        assert data['model_number'][phases['HeShellBurning']][-1] == 15087
 
     def test_decompose_parameter(self):
 
@@ -100,6 +127,7 @@ class TestExtract:
                       'he_core_mass__ML__rate']
 
         res = extract_mesa.extract_parameters(data, parameters)
+        res = {k:v for k, v in zip(parameters, res)}
 
         assert res['star_1_mass__init'] == data['star_1_mass'][0]
         assert res['period_days__final'] == data['period_days'][-1]
@@ -155,4 +183,38 @@ class TestExtract:
         assert data['rl_1'][-1] == pytest.approx(0.5938, abs=1e-4)
         assert data['rl_2'][-1] == pytest.approx(0.3506, abs=1e-4)
 
+    def test_extract_mesa(self):
 
+        models = ['test_data/M1.235_M0.111_P111.58_Z0.h5',
+                  'test_data/M1.239_M0.468_P165.41_Z0.h5',
+                  'test_data/M1.022_M0.939_P198.55_Z0.h5',
+                  'test_data/M0.840_M0.822_P554.20_Z0.h5',]
+        models = pd.DataFrame(models, columns=['path'])
+
+        parameters = ['star_1_mass__init',
+                      'period_days__final',
+                      'rl_1__max',
+                      'rl_1__HeIgnition',
+                      'age__ML__diff',
+                      'he_core_mass__ML__rate',
+                     ]
+
+        results = extract_mesa.extract_mesa(models, stability_criterion='J_div_Jdot_div_P',
+                                            stability_limit=10, parameters=parameters)
+
+        # check dimensions and columns
+        for p in parameters:
+            assert p in results.columns
+        assert 'stability' in results.columns
+        assert len(results) == len(models)
+
+        # check values of one of the models
+        data = extract_mesa.read_history(base_path / 'test_data/M0.840_M0.822_P554.20_Z0.h5')
+        result1 = extract_mesa.extract_parameters(data, parameters)
+        result1 = {k: v for k, v in zip(parameters, result1)}
+
+        result2 = results.loc[3]
+
+        for k, v in result1.items():
+            assert result2[k] == v
+        assert result2['stability'] == 'stable'

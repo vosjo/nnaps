@@ -101,23 +101,26 @@ def get_phases(data, phases):
         elif phase == 'final':
             return ([data.shape[0]-1],)
 
-        elif phase == 'MLstart':
-            s = np.where(data['lg_mstar_dot_1'] > -10)
+        elif phase in ['MLstart', 'MLend', 'ML']:
+            if all(data['lg_mstar_dot_1'] < -10):
+                # no mass loss
+                return None
+            a1 = data['age'][data['lg_mstar_dot_1'] >= -10][0]
+            try:
+                a2 = data['age'][(data['age'] > a1) & (data['lg_mstar_dot_1'] <= -10)][0]
+            except IndexError:
+                a2 = data['age'][-1]
 
-            return ([s[0][0]],)
+            if phase == 'MLstart':
+                s = np.where(data['age'] >= a1)
+                return ([s[0][0]],)
 
-        elif phase == 'MLend':
-            a = data['age'][data['lg_mstar_dot_1'] > -10][0]
-            s = np.where((data['age'] > a) & (data['lg_mstar_dot_1'] <= -10))
+            elif phase == 'MLend':
+                s = np.where(data['age'] >= a2)
+                return ([s[0][0]],)
 
-            return ([s[0][0]],)
-
-        elif phase == 'ML':
-            a1 = data['age'][data['lg_mstar_dot_1'] > -10][0]
-            a2 = data['age'][(data['age'] > a1) & (data['lg_mstar_dot_1'] <= -10)][0]
-
-            s = np.where((data['age'] >= a1) & (data['age'] <= a2))
-            return s
+            else:
+                return np.where((data['age'] >= a1) & (data['age'] <= a2))
 
         elif phase == 'HeIgnition':
             # select He ignition as the point between LHe > 10 Lsol and the formation of the
@@ -129,7 +132,7 @@ def get_phases(data, phases):
             a2 = data['age'][data['c_core_mass'] >= 0.01][0]
             d = data[(data['age'] >= a1) & (data['age'] <= a2)]
 
-            return np.where(d['log_LHe'] == np.max(d['log_LHe']))
+            return np.where((data['log_LHe'] == np.max(d['log_LHe'])) & (data['age'] >= a1) & (data['age'] <= a2) )
 
         elif phase == 'HeCoreBurning':
             # He core burning is period between ignition of He and formation of CO core
@@ -138,13 +141,27 @@ def get_phases(data, phases):
                 return None
             a1 = data['age'][data['log_LHe'] > 1][0]
 
-            return np.where((data['age'] > a1) & (data['c_core_mass'] < 0.01))
+            return np.where((data['age'] >= a1) & (data['c_core_mass'] <= 0.01))
 
-        # elif phase == 'HeShellBurning':
-        #     # He shell burning is period between formation of CO core and the drop in He luminocity
-        #     a1 = data['age'][data['c_core_mass'] >= 0.01][0]
-        #
-        #     sel = ([len(data['star_1_mass'])],)
+        elif phase == 'HeShellBurning':
+            if np.all(data['log_LHe'] < 1):
+                # no He ignition
+                return None
+
+            a1 = data['age'][data['c_core_mass'] >= 0.01][0]
+            LHe_burning = data['log_LHe'][data['age'] == a1][0]
+
+            if len(data['age'][(data['age'] > a1) & (data['log_LHe'] < LHe_burning / 2.)]) > 0:
+                a2 = data['age'][(data['age'] > a1) & (data['log_LHe'] < LHe_burning / 2.)][0]
+            else:
+                try:
+                    # end of He shell burning when carbon core gets almost its final mass
+                    a2 = data['age'][data['c_core_mass'] >= 0.98 * np.max(data['c_core_mass'])][0]
+                except Exception as e:
+                    print (e)
+                    a2 = data['age'][-1]
+
+            return np.where((data['age'] >= a1) & (data['age'] <= a2))
 
     phase_selection = {}
 
@@ -220,7 +237,7 @@ def extract_parameters(data, parameters):
 
     phases = get_phases(data, phases)
 
-    result = {}
+    result = []
 
     for parameter in parameters:
         pname, phase, func = decompose_parameter(parameter)
@@ -236,7 +253,7 @@ def extract_parameters(data, parameters):
             d_ = data
             value = func(d_, pname)
 
-        result[parameter] = value
+        result.append(value)
 
     return result
 
@@ -310,10 +327,14 @@ def apply_ce(data, ce_model=''):
 
 def extract_mesa(modellist, stability_criterion='J_div_Jdot_div_P', stability_limit=10, parameters=None):
 
+    columns = ['path', 'stability'] + parameters
+    # results = pd.DataFrame(columns=columns)
+    results = []
+
     for i, model in modellist.iterrows():
         # 1: Get the data
         try:
-            data = read_history(model)
+            data = read_history(model['path'])
         except Exception as e:
             print(e)
             continue
@@ -328,13 +349,16 @@ def extract_mesa(modellist, stability_criterion='J_div_Jdot_div_P', stability_li
             data = apply_ce(data, ce_model='')
 
         # 3: extract some standard parameters
-        pars = {}
-        pars['stability'] = 'CE' if not stable else 'stable'  # todo: add contact binary and merger option here
+        pars = [model]
+        pars += ['CE' if not stable else 'stable']  # todo: add contact binary and merger option here
 
         # 4: extract the requested parameters
         extracted_pars = extract_parameters(data, parameters)
-        pars.update(extracted_pars)
+        pars += extracted_pars
+        results.append(pars)
 
+    results = pd.DataFrame(results, columns=columns)
+    return results
 
 
 
