@@ -114,3 +114,45 @@ class TestExtract:
         assert res['he_core_mass__ML__rate'] == (data['he_core_mass'][s][-1] - data['he_core_mass'][s][0]) / \
                                                 (data['age'][s][-1] - data['age'][s][0])
 
+    def test_is_stable(self):
+
+        data = extract_mesa.read_history(base_path / 'test_data/M1.239_M0.468_P165.41_Z0.h5')
+
+        stable, ce_age = extract_mesa.is_stable(data, criterion='Mdot', value=-3)
+        assert stable is False
+        assert ce_age == pytest.approx(5611615612.8, abs=0.1)
+
+        stable, ce_age = extract_mesa.is_stable(data, criterion='delta', value=0.03)
+        assert stable is False
+        assert ce_age == pytest.approx(5611615629.7, abs=0.1)
+
+        stable, ce_age = extract_mesa.is_stable(data, criterion='J_div_Jdot_div_P', value=10)
+        assert stable is False
+        assert ce_age == pytest.approx(5611615630.1, abs=0.1)
+
+        stable, ce_age = extract_mesa.is_stable(data, criterion='M_div_Mdot_div_P', value=100)
+        assert stable is False
+        assert ce_age == pytest.approx(5611615628.8, abs=0.1)
+
+        stable, ce_age = extract_mesa.is_stable(data, criterion='R_div_SMA', value=0.5)
+        assert stable is False
+        assert ce_age == pytest.approx(5611615618.8, abs=0.1)
+
+    def test_apply_ce(self):
+
+        data = extract_mesa.read_history(base_path / 'test_data/M1.235_M0.111_P111.58_Z0.h5')
+
+        stable, ce_age = extract_mesa.is_stable(data, criterion='J_div_Jdot_div_P', value=10)
+        data = data[data['age'] <= ce_age]
+
+        data = extract_mesa.apply_ce(data, ce_model='')
+
+        assert data['period_days'][-1] == pytest.approx(0.1085, abs=1e-4)
+        assert data['binary_separation'][-1] == pytest.approx(0.0057, abs=1e-4)
+        assert data['star_1_mass'][-1] == pytest.approx(0.3556, abs=1e-4)
+        assert data['star_2_mass'][-1] == pytest.approx(0.1114, abs=1e-4)
+        assert data['mass_ratio'][-1] == pytest.approx(3.1918, abs=1e-4)
+        assert data['rl_1'][-1] == pytest.approx(0.5938, abs=1e-4)
+        assert data['rl_2'][-1] == pytest.approx(0.3506, abs=1e-4)
+
+

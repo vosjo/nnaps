@@ -76,8 +76,8 @@ def read_history(objectname):
     if not 'rl_overflow_1' in data.dtype.names:
         data = append_fields(data, ['rl_overflow_1'], [data['star_1_radius'] / data['rl_1']], usemask=False)
 
-    if not 'q' in data.dtype.names:
-        data = append_fields(data, ['q'], [data['star_1_mass'] / data['star_2_mass']], usemask=False)
+    if not 'mass_ratio' in data.dtype.names:
+        data = append_fields(data, ['mass_ratio'], [data['star_1_mass'] / data['star_2_mass']], usemask=False)
 
     if not 'separation_au' in data.dtype.names:
         data = append_fields(data, ['separation_au'], [data['binary_separation'] * 0.004649183820234682], usemask=False)
@@ -86,6 +86,9 @@ def read_history(objectname):
     J_Jdot_P = np.where((J_Jdot_P == 0 ), 99, np.log10(J_Jdot_P))
     data = append_fields(data, ['log10_J_div_Jdot_div_P'], [J_Jdot_P], usemask=False)
 
+    M_Mdot_P = (data['star_1_mass'] / 10 ** data['lg_mstar_dot_1']) / (data['period_days'] / 360)
+    M_Mdot_P = np.where((M_Mdot_P == 0), 99, np.log10(M_Mdot_P))
+    data = append_fields(data, ['log10_M_div_Mdot_div_P'], [M_Mdot_P], usemask=False)
 
     return data #, zinit, fehinit, population, pinit_frac, gal_age, termination_code
 
@@ -277,7 +280,7 @@ def is_stable(data, criterion='J_div_Jdot_div_P', value=10):
     return True, data['age'][-1]
 
 
-def get_post_ce_parameters(data, ce_model=''):
+def apply_ce(data, ce_model=''):
 
     M1 = data['star_1_mass'][-1]
     M2 = data['star_2_mass'][-1]
@@ -287,18 +290,22 @@ def get_post_ce_parameters(data, ce_model=''):
     af = 1.0 * a * (Mc * M2) / (M1 ** 2)
     G = 2944.643655  # Rsol^3/Msol/days^2
     P = np.sqrt(4 * np.pi ** 2 * af ** 3 / G * (Mc + M2))
-    sma = af * 0.004649183820234682 * 214.83390446073912  # sma in Rsol
+    sma = af * 0.004649183820234682   # sma in AU
+    sma_rsol = sma * 214.83390446073912
     q = Mc / M2
 
-    pars_ce = {
-        'period_days__CE': P,
-        'binary_separation__CE': sma,
-        'star_1_mass__CE': Mc,
-        'star_2_mass__CE': M2,
-        'mass_ratio__CE': q,
-    }
+    rl_1 = sma_rsol * 0.49 * q**(2.0/3.0) / (0.6 * q**(2.0/3.0) + np.log(1 + q**(1.0/3.0)))
+    rl_2 = sma_rsol * 0.49 * q**(-2.0/3.0) / (0.6 * q**(-2.0/3.0) + np.log(1 + q**(-1.0/3.0)))
 
-    return pars_ce
+    data['period_days'][-1] = P
+    data['binary_separation'][-1] = sma
+    data['star_1_mass'][-1] = Mc
+    data['star_2_mass'][-1] = M2
+    data['mass_ratio'][-1] = Mc/M2
+    data['rl_1'][-1] = rl_1
+    data['rl_2'][-1] = rl_2
+
+    return data
 
 
 def extract_mesa(modellist, stability_criterion='J_div_Jdot_div_P', stability_limit=10, parameters=None):
@@ -312,21 +319,21 @@ def extract_mesa(modellist, stability_criterion='J_div_Jdot_div_P', stability_li
             continue
 
         # 2: check for stability and cut data at start of CE
-        is_stable, ce_age = is_stable(data, criterion=stability_criterion, value=stability_limit)
-        if not is_stable:
+        stable, ce_age = is_stable(data, criterion=stability_criterion, value=stability_limit)
+        if not stable:
             # if the model is not stable, cut of the evolution at the start of the CE and anything after than
             # is non physical anyway.
             data = data[data['age'] <= ce_age]
 
-            ce_pars = get_post_ce_parameters(data, ce_model='')
+            data = apply_ce(data, ce_model='')
 
         # 3: extract some standard parameters
         pars = {}
-        pars['stability'] = 'CE' if not is_stable else 'stable'  # todo: add contact binary and merger option here
+        pars['stability'] = 'CE' if not stable else 'stable'  # todo: add contact binary and merger option here
 
         # 4: extract the requested parameters
-        for parameter in parameters:
-            pars_ = extract_parameters(data, parameters)
+        extracted_pars = extract_parameters(data, parameters)
+        pars.update(extracted_pars)
 
 
 
