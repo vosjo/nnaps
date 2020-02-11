@@ -188,7 +188,8 @@ class TestExtract:
         models = ['test_data/M1.235_M0.111_P111.58_Z0.h5',
                   'test_data/M1.239_M0.468_P165.41_Z0.h5',
                   'test_data/M1.022_M0.939_P198.55_Z0.h5',
-                  'test_data/M0.840_M0.822_P554.20_Z0.h5',]
+                  'test_data/M0.840_M0.822_P554.20_Z0.h5',
+                  'test_data/M1.556_M1.377_P146.47_Z0.h5',]
         models = pd.DataFrame(models, columns=['path'])
 
         parameters = ['star_1_mass__init',

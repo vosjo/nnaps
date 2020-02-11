@@ -298,6 +298,16 @@ def is_stable(data, criterion='J_div_Jdot_div_P', value=10):
 
 
 def apply_ce(data, ce_model=''):
+    """
+    Function performs the ce ejection and updates some stellar and binary parameters
+
+    requires: star_1_mass, star_2_mass, he_core_mass, binary_separation
+    updates: star_1_mass, star_2_mass, period_days, binary_separation, mass_ratio, rl_1, rl_2
+
+    :param data: ndarray with model parameters
+    :param ce_model: CE model to use (not implemented yet)
+    :return: same dataset as provided with on the last line the parameters after the CE phase.
+    """
 
     M1 = data['star_1_mass'][-1]
     M2 = data['star_2_mass'][-1]
@@ -340,7 +350,8 @@ def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_li
         try:
             data = read_history(model['path'])
         except Exception as e:
-            print(e)
+            if verbose:
+                print(e)
             continue
 
         # 2: check for stability and cut data at start of CE

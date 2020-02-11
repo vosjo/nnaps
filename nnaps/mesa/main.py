@@ -25,7 +25,7 @@ def main():
 
     if args.modelfile is not None:
         # run the convert2hdf5 function
-        modellist = pd.read_csv(args.modelfile[0])
+        model_list = pd.read_csv(args.modelfile[0])
 
         # if necessary load default setup. Check local folder first, then system defaults, then load from defaults file
         if args.setup is None:
@@ -42,7 +42,7 @@ def main():
         if len(args.modelfile) > 1:
             setup['input_path_prefix'] = args.modelfile[1]
 
-        read_mesa.convert2hdf5(modellist, output_path=args.output, **setup, skip_existing=args.skip, verbose=True)
+        read_mesa.convert2hdf5(model_list, output_path=args.output, **setup, skip_existing=args.skip, verbose=True)
 
     elif args.extract is not None:
 
