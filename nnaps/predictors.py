@@ -12,7 +12,7 @@ from keras.models import Model
 from keras.callbacks.callbacks import EarlyStopping, ReduceLROnPlateau
 
 from nnaps import fileio, defaults
-from nnaps.reporting import html_reports
+from nnaps.reporting import html_reports, pdf_reports
 
 from xgboost import XGBClassifier, XGBRegressor
 
@@ -170,6 +170,10 @@ class BasePredictor():
             print("{:12s}:  {:7.3f}      {:7.3f}".format(par, train_score[par], test_score[par]))
         for par in self.classifiers:
             print("{:12s}:  {:6.1f}%      {:6.1f}%".format(par, train_score[par] * 100., test_score[par] * 100.))
+
+    def plot_confusion_matrix(self):
+
+        pdf_reports.plot_confusion_matrix(self)
 
     # }
 
@@ -501,6 +505,15 @@ class FCPredictor(BasePredictor):
         return res
 
     # }
+
+    # ----------------------------------------------------------------------
+
+    # { Reporting
+
+    def plot_training_history(self):
+        pdf_reports.plot_training_history(self)
+
+    #}
 
     # ----------------------------------------------------------------------
 
