@@ -31,13 +31,13 @@ def main():
         if args.setup is None:
 
             if os.path.isfile('default_2h5.yaml'):
-                setup = yaml.safe_load('default_2h5.yaml')
+                setup = defaults.read_defaults('default_2h5.yaml')
             elif os.path.isfile('~/.nnaps/default_2h5.yaml'):
-                setup = yaml.safe_load('~/.nnaps/default_2h5.yaml')
+                setup = defaults.read_defaults('~/.nnaps/default_2h5.yaml')
             else:
                 setup = defaults.defaults_2h5
         else:
-            setup = yaml.safe_load(args.setup)
+            setup = defaults.read_defaults(args.setup)
 
         if len(args.modelfile) > 1:
             setup['input_path_prefix'] = args.modelfile[1]

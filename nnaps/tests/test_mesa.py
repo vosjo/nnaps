@@ -10,6 +10,7 @@ base_path = Path(__file__).parent
 
 from nnaps.mesa import read_mesa, extract_mesa
 
+
 class Test2H5:
 
     def test_read_mesa_output(self):
@@ -34,9 +35,11 @@ class Test2H5:
 
         try:
             read_mesa.convert2hdf5(modellist, star_columns=None, binary_columns=None, add_stopping_condition=True,
+                                   skip_existing=False,
                                    input_path_kw='path', input_path_prefix=base_path / 'test_data',
                                    star1_history_file='LOGS/history1.data', star2_history_file='LOGS/history2.data',
                                    binary_history_file='LOGS/binary_history.data', log_file='log.txt',
+                                   profile_files='all', profiles_path='LOGS', profile_pattern='profile_*.data',
                                    output_path=base_path / 'test_data/hdf5')
 
             assert os.path.isfile(base_path / 'test_data/hdf5/M1.013_M0.331_P32.85_Z0.h5')

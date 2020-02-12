@@ -1,4 +1,5 @@
 import os
+import glob
 import warnings
 
 
@@ -93,9 +94,11 @@ def get_end_log_file(logfile):
         return []
 
 
-def convert2hdf5(modellist, star_columns=None, binary_columns=None, add_stopping_condition=True, skip_existing=True,
+def convert2hdf5(modellist, star_columns=None, binary_columns=None, profile_columns=None,
+                 add_stopping_condition=True, skip_existing=True,
                  star1_history_file='LOGS/history1.data', star2_history_file='LOGS/history2.data',
                  binary_history_file='LOGS/binary_history.data', log_file='log.txt',
+                 profile_files=None, profiles_path='', profile_pattern='*.profile',
                  input_path_kw='path', input_path_prefix='', output_path=None, verbose=False):
 
     if not os.path.isdir(output_path):
@@ -156,6 +159,37 @@ def convert2hdf5(modellist, star_columns=None, binary_columns=None, add_stopping
                 continue
 
         data['history'] = history
+
+        # check if profiles exists and store them is requested. Also make a profile lookup table (legend)
+        profiles = {}
+        profile_legend = []
+        profile_name_length = 0 # store longest profile name to create recarray of profile_legend
+        if profile_files is not None:
+            if profile_files == 'all':
+                profile_paths = Path(input_path_prefix, model[input_path_kw], profiles_path).glob(profile_pattern)
+            else:
+                profile_paths = [Path(input_path_prefix, model[input_path_kw], p) for p in profile_files]
+
+            for filepath in profile_paths:
+                if not filepath.is_file():
+                    continue
+
+                profile_name = filepath.stem
+                header, profile_data = read_mesa_output(filename=filepath, only_first=False)
+
+                if profile_columns is not None:
+                    profile_data = profile_data[profile_columns]
+                profiles[profile_name] = profile_data
+
+                if len(profile_name) > profile_name_length:
+                    profile_name_length = len(profile_name)
+                profile_legend.append((header['model_number'], profile_name))
+
+        if len(profiles.keys()) >= 1:
+            data['profiles'] = profiles
+            profile_legend = np.array(profile_legend, dtype=[('model_number', 'f8'),
+                                                             ('profile_name', 'a'+str(profile_name_length))])
+            data['profile_legend'] = profile_legend
 
         # obtain the termination code
         termination_code = 'uk'
