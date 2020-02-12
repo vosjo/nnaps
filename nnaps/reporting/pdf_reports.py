@@ -1,5 +1,6 @@
 import pylab as pl
 import numpy as np
+import itertools
 from sklearn import metrics
 
 def plot_training_history(predictor):
@@ -68,3 +69,24 @@ def plot_confusion_matrix(predictor):
         disp.plot(ax=ax)
         pl.title(classifier)
         pl.gca().grid(False)
+
+
+def plot_feature_range_comparison(predictor, data):
+
+    features = predictor.features
+    train_data = predictor.train_data
+
+    xy_pairs = list(itertools.combinations(features, 2))
+
+    ncol = 3 if len(xy_pairs) > 2 else len(xy_pairs)
+    nrow = int(np.ceil(len(xy_pairs)/ncol))
+
+    for i, pair in enumerate(xy_pairs):
+        ax = pl.subplot(nrow, ncol, i+1)
+
+        ax.hexbin(train_data[pair[0]], train_data[pair[1]], gridsize=15, cmap='viridis')
+        ax.plot(data[pair[0]], data[pair[1]], '.r', alpha=0.5, ms=1)
+        ax.set_xlabel(pair[0])
+        ax.set_ylabel(pair[1])
+
+

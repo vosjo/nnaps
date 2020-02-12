@@ -175,6 +175,10 @@ class BasePredictor():
 
         pdf_reports.plot_confusion_matrix(self)
 
+    def plot_feature_range_comparison(self, data):
+
+        pdf_reports.plot_feature_range_comparison(self, data)
+
     # }
 
     # ----------------------------------------------------------------------
