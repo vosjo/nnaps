@@ -8,7 +8,8 @@ from numpy.lib.recfunctions import append_fields
 from scipy.interpolate import interp1d
 from . import fileio
 
-def read_history(objectname):
+
+def read_history(objectname, return_profiles=True):
 
     data_ = fileio.read_hdf5(objectname)
 
@@ -31,8 +32,8 @@ def read_history(objectname):
 
     # PRIMARY
     # now interpolate primary data to match model numbers for binary history
-    dtypes = d1.dtype
-    y = d1.view(np.float64).reshape(d1.shape + (-1,))
+    dtypes = [(n, '<f8') for n in d1.dtype.names]
+    y = d1.astype(dtypes).view(np.float64).reshape(-1, len(dtypes))
     f = interp1d(d1['model_number'], y, axis=0, bounds_error=False, fill_value=0.0)
     d1 = f(db['model_number'])
 
@@ -47,8 +48,8 @@ def read_history(objectname):
 
     # SECONDARY
     # now interpolate secondary data to match model numbers for binary history
-    dtypes = d2.dtype
-    y = d2.view(np.float64).reshape(d2.shape + (-1,))
+    dtypes = [(n, '<f8') for n in d2.dtype.names]
+    y = d2.astype(dtypes).view(np.float64).reshape(-1, len(dtypes))
     f = interp1d(d2['model_number'], y, axis=0, bounds_error=False, fill_value=0.0)
     d2 = f(db['model_number'])
 
@@ -59,7 +60,7 @@ def read_history(objectname):
     # remove model_number as column from d1 and merge into 1 recarray
     columns2 = list(d2.dtype.names)
     columns2.remove('model_number')
-    column_names2 = [ c +'_2' for c in columns2]
+    column_names2 = [c+'_2' for c in columns2]
 
     # create a new record array from the data (much faster than appending to an existing array)
     columnsdb = list(db.dtype.names)
@@ -90,7 +91,17 @@ def read_history(objectname):
     M_Mdot_P = np.where((M_Mdot_P == 0), 99, np.log10(M_Mdot_P))
     data = append_fields(data, ['log10_M_div_Mdot_div_P'], [M_Mdot_P], usemask=False)
 
+    if return_profiles:
+        if 'profiles' not in data_:
+            profiles = None
+        else:
+            profiles = data_.get('profiles')
+            profiles['legend'] = data_.get('profile_legend')
+
+        return data, profiles
+
     return data #, zinit, fehinit, population, pinit_frac, gal_age, termination_code
+
 
 def get_phases(data, phases):
 
@@ -107,7 +118,9 @@ def get_phases(data, phases):
                 return None
             a1 = data['age'][data['lg_mstar_dot_1'] >= -10][0]
             try:
-                a2 = data['age'][(data['age'] > a1) & (data['lg_mstar_dot_1'] <= -10)][0]
+                # select the first point in time that the mass loss dips below -10 after it
+                # starts up. Necessary to deal with multiple mass loss phases.
+                a2 = data['age'][(data['age'] > a1) & (data['lg_mstar_dot_1'] < -10)][0]
             except IndexError:
                 a2 = data['age'][-1]
 
@@ -116,8 +129,8 @@ def get_phases(data, phases):
                 return ([s[0][0]],)
 
             elif phase == 'MLend':
-                s = np.where(data['age'] >= a2)
-                return ([s[0][0]],)
+                s = np.where(data['age'] <= a2)
+                return ([s[0][-1]],)
 
             else:
                 return np.where((data['age'] >= a1) & (data['age'] <= a2))
@@ -129,7 +142,12 @@ def get_phases(data, phases):
                 # no He ignition
                 return None
             a1 = data['age'][data['log_LHe'] > 1][0]
-            a2 = data['age'][data['c_core_mass'] >= 0.01][0]
+
+            if np.all(data['c_core_mass']) < 0.01:
+                # model ignites He, but has problems modeling the core burning. He ignition can be returned.
+                a2 = data['age'][-1]
+            else:
+                a2 = data['age'][data['c_core_mass'] >= 0.01][0]
             d = data[(data['age'] >= a1) & (data['age'] <= a2)]
 
             return np.where((data['log_LHe'] == np.max(d['log_LHe'])) & (data['age'] >= a1) & (data['age'] <= a2) )
@@ -141,11 +159,19 @@ def get_phases(data, phases):
                 return None
             a1 = data['age'][data['log_LHe'] > 1][0]
 
+            if np.all(data['c_core_mass'] < 0.01):
+                # model ignites He, but has problems modeling the core burning. No core burning phase can be returned
+                return None
+
             return np.where((data['age'] >= a1) & (data['c_core_mass'] <= 0.01))
 
         elif phase == 'HeShellBurning':
             if np.all(data['log_LHe'] < 1):
                 # no He ignition
+                return None
+
+            if np.all(data['c_core_mass'] < 0.01):
+                # no actual core He burning takes place, so no shell burning either.
                 return None
 
             a1 = data['age'][data['c_core_mass'] >= 0.01][0]
@@ -348,7 +374,7 @@ def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_li
 
         # 1: Get the data
         try:
-            data = read_history(model['path'])
+            data, profiles = read_history(model['path'])
         except Exception as e:
             if verbose:
                 print(e)

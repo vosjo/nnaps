@@ -366,7 +366,7 @@ def convert_model(model):
 
 
 def safe_model(model, processors, features, regressors, classifiers, setup, filename, history=None,
-               method='hdf5'):
+               train_data=None, test_data=None, method='hdf5'):
 
     # ignore user determined extension and replace by correct extention based on method.
     name, ext = os.path.splitext(filename)
@@ -397,6 +397,13 @@ def safe_model(model, processors, features, regressors, classifiers, setup, file
     if history is not None:
         data['history_columns'] = list(history.columns)
         data['history'] = history.values
+
+    if train_data is not None or test_data is not None:
+        data['data'] = {}
+        if train_data is not None:
+            data['data']['train_data'] = train_data
+        if test_data is not None:
+            data['data']['test_data'] = test_data
 
     if method == 'hdf5':
         save(filename, data, compress=True)
