@@ -8,6 +8,7 @@ from pathlib import Path
 
 from . import read_mesa, extract_mesa, defaults
 
+
 def main():
     parser = argparse.ArgumentParser(description='NNaPS-mesa: Process MESA models')
     group = parser.add_mutually_exclusive_group()

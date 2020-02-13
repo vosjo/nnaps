@@ -168,7 +168,7 @@ def convert2hdf5(modellist, star_columns=None, binary_columns=None, profile_colu
             if profile_files == 'all':
                 profile_paths = Path(input_path_prefix, model[input_path_kw], profiles_path).glob(profile_pattern)
             else:
-                profile_paths = [Path(input_path_prefix, model[input_path_kw], p) for p in profile_files]
+                profile_paths = [Path(input_path_prefix, model[input_path_kw], profiles_path, p) for p in profile_files]
 
             for filepath in profile_paths:
                 if not filepath.is_file():
