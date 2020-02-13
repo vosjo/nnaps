@@ -52,38 +52,61 @@ class TestExtract:
     def test_get_phases(self):
         phase_names = ['init', 'final', 'MLstart', 'MLend', 'ML', 'HeIgnition', 'HeCoreBurning', 'HeShellBurning']
 
-        # stable model without He ignition
-        data = extract_mesa.read_history(base_path / 'test_data/M1.022_M0.939_P198.55_Z0.h5')
+        # stable model without He ignition and struggles at the end
+        # age of the last 1470 time steps doesn't change!
+        data = extract_mesa.read_history(base_path / 'test_data/M0.789_M0.304_P20.58_Z0.h5', return_profiles=False)
         phases = extract_mesa.get_phases(data, phase_names)
 
         assert data['model_number'][phases['init']][0] == 3
-        assert data['model_number'][phases['final']][0] == 11419
-        assert data['model_number'][phases['MLstart']][0] == 2499
-        assert data['model_number'][phases['MLend']][0] == 11106
-        assert data['model_number'][phases['ML']][0] == 2499
-        assert data['model_number'][phases['ML']][-1] == 11106
+        assert data['model_number'][phases['final']][0] == 30000
+        assert data['model_number'][phases['MLstart']][0] == 933
+        assert data['model_number'][phases['MLend']][0] == 30000
+        assert data['model_number'][phases['ML']][0] == 933
+        assert data['model_number'][phases['ML']][-1] == 30000
         assert phases['HeIgnition'] is None
 
-        # CE model without He ignition
-        data = extract_mesa.read_history(base_path / 'test_data/M1.239_M0.468_P165.41_Z0.h5')
-        data = data[data['model_number'] <= 6198]
+        # stable model without He ignition
+        data = extract_mesa.read_history(base_path / 'test_data/M0.814_M0.512_P260.18_Z0.h5', return_profiles=False)
         phases = extract_mesa.get_phases(data, phase_names)
 
-        assert data['model_number'][phases['ML']][0] == 2517
-        assert data['model_number'][phases['ML']][-1] == 6198
+        assert data['model_number'][phases['ML']][0] == 1290
+        assert data['model_number'][phases['ML']][-1] == 7281
         assert phases['HeIgnition'] is None
         assert phases['HeCoreBurning'] is None
         assert phases['HeShellBurning'] is None
 
-        # stable model with degenerate He ignition
-        data = extract_mesa.read_history(base_path / 'test_data/M0.840_M0.822_P554.20_Z0.h5')
+        # stable model with degenerate He ignition but issues in the He burning phase, and a double ML phase
+        data = extract_mesa.read_history(base_path / 'test_data/M1.125_M0.973_P428.86_Z0.h5', return_profiles=False)
         phases = extract_mesa.get_phases(data, phase_names)
 
-        assert data['model_number'][phases['HeIgnition']][0] == 12453
-        assert data['model_number'][phases['HeCoreBurning']][0] == 12267
-        assert data['model_number'][phases['HeCoreBurning']][-1] == 13734
-        assert data['model_number'][phases['HeShellBurning']][0] == 13737
-        assert data['model_number'][phases['HeShellBurning']][-1] == 15087
+        assert data['model_number'][phases['ML']][0] == 2556
+        assert data['model_number'][phases['ML']][-1] == 19605
+        assert data['model_number'][phases['HeIgnition']][0] == 19947
+        assert phases['HeCoreBurning'] is None
+        assert phases['HeShellBurning'] is None
+
+        # CE model
+        data = extract_mesa.read_history(base_path / 'test_data/M1.205_M0.413_P505.12_Z0.h5', return_profiles=False)
+        data = data[data['model_number'] <= 12111]
+        phases = extract_mesa.get_phases(data, phase_names)
+
+        assert data['model_number'][phases['ML']][0] == 2280
+        assert data['model_number'][phases['ML']][-1] == 12111
+        assert phases['HeIgnition'] is None
+        assert phases['HeCoreBurning'] is None
+        assert phases['HeShellBurning'] is None
+
+        # HB star with core and shell He burning
+        data = extract_mesa.read_history(base_path / 'test_data/M1.276_M1.140_P333.11_Z0.h5', return_profiles=False)
+        phases = extract_mesa.get_phases(data, phase_names)
+
+        assert data['model_number'][phases['ML']][0] == 2031
+        assert data['model_number'][phases['ML']][-1] == 12018
+        assert data['model_number'][phases['HeIgnition']][0] == 11709
+        assert data['model_number'][phases['HeCoreBurning']][0] == 11565
+        assert data['model_number'][phases['HeCoreBurning']][-1] == 12594
+        assert data['model_number'][phases['HeShellBurning']][0] == 12597
+        assert data['model_number'][phases['HeShellBurning']][-1] == 14268
 
     def test_decompose_parameter(self):
 
@@ -188,11 +211,9 @@ class TestExtract:
 
     def test_extract_mesa(self):
 
-        models = ['test_data/M1.235_M0.111_P111.58_Z0.h5',
-                  'test_data/M1.239_M0.468_P165.41_Z0.h5',
-                  'test_data/M1.022_M0.939_P198.55_Z0.h5',
-                  'test_data/M0.840_M0.822_P554.20_Z0.h5',
-                  'test_data/M1.556_M1.377_P146.47_Z0.h5',]
+        models = ['test_data/M0.789_M0.304_P20.58_Z0.h5',
+                  'test_data/M0.814_M0.512_P260.18_Z0.h5',
+                  ]
         models = pd.DataFrame(models, columns=['path'])
 
         parameters = ['star_1_mass__init',
@@ -204,7 +225,7 @@ class TestExtract:
                      ]
 
         results = extract_mesa.extract_mesa(models, stability_criterion='J_div_Jdot_div_P',
-                                            stability_limit=10, parameters=parameters)
+                                            stability_limit=10, parameters=parameters, verbose=True)
 
         # check dimensions and columns
         for p in parameters:
@@ -212,13 +233,4 @@ class TestExtract:
         assert 'stability' in results.columns
         assert len(results) == len(models)
 
-        # check values of one of the models
-        data = extract_mesa.read_history(base_path / 'test_data/M0.840_M0.822_P554.20_Z0.h5')
-        result1 = extract_mesa.extract_parameters(data, parameters)
-        result1 = {k: v for k, v in zip(parameters, result1)}
 
-        result2 = results.loc[3]
-
-        for k, v in result1.items():
-            assert result2[k] == v
-        assert result2['stability'] == 'stable'
