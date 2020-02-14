@@ -6,6 +6,10 @@ import warnings
 from pathlib import Path
 import numpy as np
 
+# repack_fields is necessary since np 1.16 as selecting columns from a recarray returns an array with padding
+# that is difficult to work with afterwards.
+from numpy.lib import recfunctions as rf
+
 from . import fileio
 
 
@@ -111,7 +115,7 @@ def convert2hdf5(modellist, star_columns=None, binary_columns=None, profile_colu
 
         if skip_existing and os.path.isfile(Path(output_path, model[input_path_kw]).with_suffix('.h5')):
             if verbose:
-                print (i, model[input_path_kw], ': exists, skipping')
+                print(i, model[input_path_kw], ': exists, skipping')
             continue
 
         if verbose:
@@ -119,8 +123,21 @@ def convert2hdf5(modellist, star_columns=None, binary_columns=None, profile_colu
 
         # store all columns of the input file in the hdf5 file
         data = {}
+        extra_info = {}
         for col in model.index:
-            data[col] = model[col]
+            extra_info[col] = model[col]
+
+        # obtain the termination code and store if requested
+        termination_code = 'uk'
+        if add_stopping_condition:
+            lines = get_end_log_file(Path(input_path_prefix, model[input_path_kw], log_file))
+            for line in lines:
+                if 'termination code' in line:
+                    termination_code = line.split()[-1]
+
+        extra_info['termination_code'] = termination_code
+
+        data['extra_info'] = extra_info
 
         # check if all history files that are requested are available and can be read. If there is an error,
         # skip to the next model
@@ -129,7 +146,7 @@ def convert2hdf5(modellist, star_columns=None, binary_columns=None, profile_colu
             try:
                 d1 = read_mesa_output(Path(input_path_prefix, model[input_path_kw], star1_history_file))[1]
                 if star_columns is not None:
-                    d1 = d1[star_columns]
+                    d1 = rf.repack_fields(d1[star_columns])
                 history['star1'] = d1
             except Exception as e:
                 if verbose:
@@ -140,7 +157,7 @@ def convert2hdf5(modellist, star_columns=None, binary_columns=None, profile_colu
             try:
                 d2 = read_mesa_output(Path(input_path_prefix, model[input_path_kw], star2_history_file))[1]
                 if star_columns is not None:
-                    d2 = d2[star_columns]
+                    d2 = rf.repack_fields(d2[star_columns])
                 history['star2'] = d2
             except Exception as e:
                 if verbose:
@@ -151,7 +168,7 @@ def convert2hdf5(modellist, star_columns=None, binary_columns=None, profile_colu
             try:
                 d3 = read_mesa_output(Path(input_path_prefix, model[input_path_kw], binary_history_file))[1]
                 if star_columns is not None:
-                    d3 = d3[binary_columns]
+                    d3 = rf.repack_fields(d3[binary_columns])
                 history['binary'] = d3
             except Exception as e:
                 if verbose:
@@ -178,7 +195,7 @@ def convert2hdf5(modellist, star_columns=None, binary_columns=None, profile_colu
                 header, profile_data = read_mesa_output(filename=filepath, only_first=False)
 
                 if profile_columns is not None:
-                    profile_data = profile_data[profile_columns]
+                    profile_data = rf.repack_fields(profile_data[profile_columns])
                 profiles[profile_name] = profile_data
 
                 if len(profile_name) > profile_name_length:
@@ -190,15 +207,5 @@ def convert2hdf5(modellist, star_columns=None, binary_columns=None, profile_colu
             profile_legend = np.array(profile_legend, dtype=[('model_number', 'f8'),
                                                              ('profile_name', 'a'+str(profile_name_length))])
             data['profile_legend'] = profile_legend
-
-        # obtain the termination code
-        termination_code = 'uk'
-        if add_stopping_condition:
-            lines = get_end_log_file(Path(input_path_prefix, model[input_path_kw], log_file))
-            for line in lines:
-                if 'termination code' in line:
-                    termination_code = line.split()[-1]
-
-        data['termination_code']=termination_code
 
         fileio.write2hdf5(data, Path(output_path, model[input_path_kw]).with_suffix('.h5'), update=False)

@@ -54,7 +54,7 @@ class TestExtract:
 
         # stable model without He ignition and struggles at the end
         # age of the last 1470 time steps doesn't change!
-        data = extract_mesa.read_history(base_path / 'test_data/M0.789_M0.304_P20.58_Z0.h5', return_profiles=False)
+        data, _ = extract_mesa.read_history(base_path / 'test_data/M0.789_M0.304_P20.58_Z0.h5', return_profiles=False)
         phases = extract_mesa.get_phases(data, phase_names)
 
         assert data['model_number'][phases['init']][0] == 3
@@ -66,7 +66,7 @@ class TestExtract:
         assert phases['HeIgnition'] is None
 
         # stable model without He ignition
-        data = extract_mesa.read_history(base_path / 'test_data/M0.814_M0.512_P260.18_Z0.h5', return_profiles=False)
+        data, _ = extract_mesa.read_history(base_path / 'test_data/M0.814_M0.512_P260.18_Z0.h5', return_profiles=False)
         phases = extract_mesa.get_phases(data, phase_names)
 
         assert data['model_number'][phases['ML']][0] == 1290
@@ -76,7 +76,7 @@ class TestExtract:
         assert phases['HeShellBurning'] is None
 
         # stable model with degenerate He ignition but issues in the He burning phase, and a double ML phase
-        data = extract_mesa.read_history(base_path / 'test_data/M1.125_M0.973_P428.86_Z0.h5', return_profiles=False)
+        data, _ = extract_mesa.read_history(base_path / 'test_data/M1.125_M0.973_P428.86_Z0.h5', return_profiles=False)
         phases = extract_mesa.get_phases(data, phase_names)
 
         assert data['model_number'][phases['ML']][0] == 2556
@@ -86,7 +86,7 @@ class TestExtract:
         assert phases['HeShellBurning'] is None
 
         # CE model
-        data = extract_mesa.read_history(base_path / 'test_data/M1.205_M0.413_P505.12_Z0.h5', return_profiles=False)
+        data, _ = extract_mesa.read_history(base_path / 'test_data/M1.205_M0.413_P505.12_Z0.h5', return_profiles=False)
         data = data[data['model_number'] <= 12111]
         phases = extract_mesa.get_phases(data, phase_names)
 
@@ -97,7 +97,7 @@ class TestExtract:
         assert phases['HeShellBurning'] is None
 
         # HB star with core and shell He burning
-        data = extract_mesa.read_history(base_path / 'test_data/M1.276_M1.140_P333.11_Z0.h5', return_profiles=False)
+        data, _ = extract_mesa.read_history(base_path / 'test_data/M1.276_M1.140_P333.11_Z0.h5', return_profiles=False)
         phases = extract_mesa.get_phases(data, phase_names)
 
         assert data['model_number'][phases['ML']][0] == 2031
@@ -146,8 +146,10 @@ class TestExtract:
         assert func.__name__ == 'diff'
 
     def test_extract_parameters(self):
+        #TODO: improve this test case and add more checks
 
-        data = extract_mesa.read_history(base_path / 'test_data/M1.022_M0.939_P198.55_Z0.h5')
+        # HB star with core and shell He burning
+        data, _ = extract_mesa.read_history(base_path / 'test_data/M1.276_M1.140_P333.11_Z0.h5')
 
         parameters = ['star_1_mass__init', 'period_days__final', 'rl_1__max', 'rl_1__HeIgnition', 'age__ML__diff',
                       'he_core_mass__ML__rate']
@@ -158,7 +160,7 @@ class TestExtract:
         assert res['star_1_mass__init'] == data['star_1_mass'][0]
         assert res['period_days__final'] == data['period_days'][-1]
         assert res['rl_1__max'] == np.max(data['rl_1'])
-        assert np.isnan(res['rl_1__HeIgnition'])
+        #assert np.isnan(res['rl_1__HeIgnition'])
 
         a1 = data['age'][data['lg_mstar_dot_1'] > -10][0]
         a2 = data['age'][(data['age'] > a1) & (data['lg_mstar_dot_1'] <= -10)][0]
@@ -170,44 +172,44 @@ class TestExtract:
 
     def test_is_stable(self):
 
-        data = extract_mesa.read_history(base_path / 'test_data/M1.239_M0.468_P165.41_Z0.h5')
+        data, _ = extract_mesa.read_history(base_path / 'test_data/M1.205_M0.413_P505.12_Z0.h5')
 
         stable, ce_age = extract_mesa.is_stable(data, criterion='Mdot', value=-3)
         assert stable is False
-        assert ce_age == pytest.approx(5611615612.8, abs=0.1)
+        assert ce_age == pytest.approx(5179376595.6, abs=0.1)
 
         stable, ce_age = extract_mesa.is_stable(data, criterion='delta', value=0.03)
         assert stable is False
-        assert ce_age == pytest.approx(5611615629.7, abs=0.1)
+        assert ce_age == pytest.approx(5179376616.3, abs=0.1)
 
         stable, ce_age = extract_mesa.is_stable(data, criterion='J_div_Jdot_div_P', value=10)
         assert stable is False
-        assert ce_age == pytest.approx(5611615630.1, abs=0.1)
+        assert ce_age == pytest.approx(5179376617.0, abs=0.1)
 
         stable, ce_age = extract_mesa.is_stable(data, criterion='M_div_Mdot_div_P', value=100)
         assert stable is False
-        assert ce_age == pytest.approx(5611615628.8, abs=0.1)
+        assert ce_age == pytest.approx(5179376614.8, abs=0.1)
 
         stable, ce_age = extract_mesa.is_stable(data, criterion='R_div_SMA', value=0.5)
         assert stable is False
-        assert ce_age == pytest.approx(5611615618.8, abs=0.1)
+        assert ce_age == pytest.approx(5179376604.0, abs=0.1)
 
     def test_apply_ce(self):
 
-        data = extract_mesa.read_history(base_path / 'test_data/M1.235_M0.111_P111.58_Z0.h5')
+        data, _ = extract_mesa.read_history(base_path / 'test_data/M1.205_M0.413_P505.12_Z0.h5')
 
         stable, ce_age = extract_mesa.is_stable(data, criterion='J_div_Jdot_div_P', value=10)
         data = data[data['age'] <= ce_age]
 
         data = extract_mesa.apply_ce(data, ce_model='')
 
-        assert data['period_days'][-1] == pytest.approx(0.1085, abs=1e-4)
-        assert data['binary_separation'][-1] == pytest.approx(0.0057, abs=1e-4)
-        assert data['star_1_mass'][-1] == pytest.approx(0.3556, abs=1e-4)
-        assert data['star_2_mass'][-1] == pytest.approx(0.1114, abs=1e-4)
-        assert data['mass_ratio'][-1] == pytest.approx(3.1918, abs=1e-4)
-        assert data['rl_1'][-1] == pytest.approx(0.5938, abs=1e-4)
-        assert data['rl_2'][-1] == pytest.approx(0.3506, abs=1e-4)
+        assert data['period_days'][-1] == pytest.approx(25.55, abs=0.01)
+        assert data['binary_separation'][-1] == pytest.approx(0.1775, abs=1e-4)
+        assert data['star_1_mass'][-1] == pytest.approx(0.4477, abs=1e-4)
+        assert data['star_2_mass'][-1] == pytest.approx(0.4278, abs=1e-4)
+        assert data['mass_ratio'][-1] == pytest.approx(1.0465, abs=1e-4)
+        assert data['rl_1'][-1] == pytest.approx(14.5993, abs=1e-4)
+        assert data['rl_2'][-1] == pytest.approx(14.2991, abs=1e-4)
 
     def test_extract_mesa(self):
 

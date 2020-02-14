@@ -9,7 +9,7 @@ from scipy.interpolate import interp1d
 from . import fileio
 
 
-def read_history(objectname, return_profiles=True):
+def read_history(objectname, return_profiles=False):
 
     data_ = fileio.read_hdf5(objectname)
 
@@ -18,12 +18,8 @@ def read_history(objectname, return_profiles=True):
     d2 = history.pop('star2', None)
     db = history.pop('binary', None)
 
-    # zinit = data_['z']
-    # fehinit = data_['feh']
-    # population = data_['population']
-    # pinit_frac = data_['pinit_frac']
-    # gal_age = data_['gal_age']
-    # termination_code = data_['termination_code']
+
+    extra_info = data_.pop('extra_info', None)
 
     # set model number for primary to start at 1 and limits to correct last model number
     d1['model_number'] = d1['model_number'] - d1['model_number'][0] + 1
@@ -32,8 +28,8 @@ def read_history(objectname, return_profiles=True):
 
     # PRIMARY
     # now interpolate primary data to match model numbers for binary history
-    dtypes = [(n, '<f8') for n in d1.dtype.names]
-    y = d1.astype(dtypes).view(np.float64).reshape(-1, len(dtypes))
+    dtypes = d1.dtype
+    y = d1.view(np.float64).reshape(-1, len(dtypes))
     f = interp1d(d1['model_number'], y, axis=0, bounds_error=False, fill_value=0.0)
     d1 = f(db['model_number'])
 
@@ -48,8 +44,8 @@ def read_history(objectname, return_profiles=True):
 
     # SECONDARY
     # now interpolate secondary data to match model numbers for binary history
-    dtypes = [(n, '<f8') for n in d2.dtype.names]
-    y = d2.astype(dtypes).view(np.float64).reshape(-1, len(dtypes))
+    dtypes = d2.dtype
+    y = d2.view(np.float64).reshape(-1, len(dtypes))
     f = interp1d(d2['model_number'], y, axis=0, bounds_error=False, fill_value=0.0)
     d2 = f(db['model_number'])
 
@@ -98,9 +94,9 @@ def read_history(objectname, return_profiles=True):
             profiles = data_.get('profiles')
             profiles['legend'] = data_.get('profile_legend')
 
-        return data, profiles
+        return data, extra_info, profiles
 
-    return data #, zinit, fehinit, population, pinit_frac, gal_age, termination_code
+    return data, extra_info
 
 
 def get_phases(data, phases):
@@ -374,7 +370,7 @@ def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_li
 
         # 1: Get the data
         try:
-            data, profiles = read_history(model['path'])
+            data, extra_info, profiles = read_history(model['path'], return_profiles=True)
         except Exception as e:
             if verbose:
                 print(e)
