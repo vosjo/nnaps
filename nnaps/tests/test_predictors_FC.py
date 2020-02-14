@@ -194,23 +194,43 @@ class TestBPSPredictorTrainingPredicting:
 
         predictor = predictors.FCPredictor()
 
-        predictor.regressors = ['M1final']
+        predictor.regressors = ['M1final', 'qfinal']
         predictor.classifiers = []
 
-        data = {'M1final_mae': [0.3, 0.2], 'val_M1final_mae': [0.31, 0.21], 'M1final_loss': [1.5, 1.3],
-                'val_M1final_loss': [1.6, 1.4], 'training_run': [1, 1]}
+        data = {'M1final_mae': [0.3, 0.2],
+                'val_M1final_mae': [0.31, 0.21],
+                'M1final_loss': [1.5, 1.3],
+                'val_M1final_loss': [1.6, 1.4],
+                'qfinal_mae': [0.3, 0.2],
+                'val_qfinal_mae': [0.31, 0.21],
+                'qfinal_loss': [1.5, 1.3],
+                'val_qfinal_loss': [1.6, 1.4],
+                'training_run': [1, 1]}
         history1 = pd.DataFrame(data=data)
         history1.index.name = 'epoch'
 
         predictor.history = history1
 
-        data = {'M1final_mae': [0.1, 0.0], 'val_M1final_mae': [0.11, 0.01], 'M1final_loss': [1.2, 1.1],
-                'val_M1final_loss': [1.3, 1.2]}
+        data = {'M1final_mae': [0.1, 0.0],
+                'val_M1final_mae': [0.11, 0.01],
+                'M1final_loss': [1.2, 1.1],
+                'val_M1final_loss': [1.3, 1.2],
+                'qfinal_mae': [0.1, 0.0],
+                'val_qfinal_mae': [0.11, 0.01],
+                'qfinal_loss': [1.2, 1.1],
+                'val_qfinal_loss': [1.3, 1.2],
+                }
         history2 = pd.DataFrame(data=data)
         history2.index.name = 'epoch'
 
-        data = {'M1final_mae': [0.3, 0.2, 0.1, 0.0], 'val_M1final_mae': [0.31, 0.21, 0.11, 0.01],
-                'M1final_loss': [1.5, 1.3, 1.2, 1.1], 'val_M1final_loss': [1.6, 1.4, 1.3, 1.2],
+        data = {'M1final_mae': [0.3, 0.2, 0.1, 0.0],
+                'val_M1final_mae': [0.31, 0.21, 0.11, 0.01],
+                'M1final_loss': [1.5, 1.3, 1.2, 1.1],
+                'val_M1final_loss': [1.6, 1.4, 1.3, 1.2],
+                'qfinal_mae': [0.3, 0.2, 0.1, 0.0],
+                'val_qfinal_mae': [0.31, 0.21, 0.11, 0.01],
+                'qfinal_loss': [1.5, 1.3, 1.2, 1.1],
+                'val_qfinal_loss': [1.6, 1.4, 1.3, 1.2],
                 'training_run': [1, 1, 2, 2]}
         history_expected = pd.DataFrame(data=data)
         history_expected.index.name = 'epoch'
