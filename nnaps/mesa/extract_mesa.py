@@ -253,7 +253,8 @@ def decompose_parameter(par):
 
     return pname, phase, func
 
-def extract_parameters(data, parameters):
+
+def extract_parameters(data, parameters=[], phase_flags=[]):
 
     phases = ['init', 'final', 'MLstart', 'MLend', 'ML', 'HeIgnition', 'HeCoreBurning']
 
@@ -261,6 +262,7 @@ def extract_parameters(data, parameters):
 
     result = []
 
+    # extract the parameters
     for parameter in parameters:
         pname, phase, func = decompose_parameter(parameter)
 
@@ -276,6 +278,13 @@ def extract_parameters(data, parameters):
             value = func(d_, pname)
 
         result.append(value)
+
+    # add flags for triggered phases
+    for phase in phase_flags:
+        if phases[phase] is not None:
+            result.append(True)
+        else:
+            result.append(False)
 
     return result
 
@@ -357,9 +366,10 @@ def apply_ce(data, ce_model=''):
     return data
 
 
-def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_limit=10, parameters=None, verbose=False):
+def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_limit=10, parameters=[],
+                 phase_flags=[], verbose=False):
 
-    columns = ['path', 'stability'] + parameters
+    columns = ['path', 'stability'] + parameters + phase_flags
     # results = pd.DataFrame(columns=columns)
     results = []
 
@@ -390,8 +400,12 @@ def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_li
         pars += ['CE' if not stable else 'stable']  # todo: add contact binary and merger option here
 
         # 4: extract the requested parameters
-        extracted_pars = extract_parameters(data, parameters)
+        # 5: add the requested phase flags
+        extracted_pars = extract_parameters(data, parameters, phase_flags)
         pars += extracted_pars
+
+        # 6: check for some possible errors and flag them
+
         results.append(pars)
 
     results = pd.DataFrame(results, columns=columns)

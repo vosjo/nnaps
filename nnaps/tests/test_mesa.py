@@ -170,6 +170,13 @@ class TestExtract:
         assert res['he_core_mass__ML__rate'] == (data['he_core_mass'][s][-1] - data['he_core_mass'][s][0]) / \
                                                 (data['age'][s][-1] - data['age'][s][0])
 
+        phase_flags = ['ML', 'HeCoreBurning']
+        res = extract_mesa.extract_parameters(data, parameters, phase_flags=phase_flags)
+        res = {k: v for k, v in zip(parameters+phase_flags, res)}
+
+        assert res['ML'] is True
+        assert res['HeCoreBurning'] is True
+
     def test_is_stable(self):
 
         data, _ = extract_mesa.read_history(base_path / 'test_data/M1.205_M0.413_P505.12_Z0.h5')
