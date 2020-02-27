@@ -185,6 +185,46 @@ def get_phases(data, phases):
 
             return np.where((data['age'] >= a1) & (data['age'] <= a2))
 
+        elif phase == 'sdB':
+            # requires He core burning and 20000 < Teff < 40000
+            if np.all(data['log_LHe'] < 1):
+                # no He ignition
+                return None
+            a1 = data['age'][data['log_LHe'] > 1][0]
+
+            if np.all(data['c_core_mass'] < 0.01):
+                # model ignites He, but has problems modeling the core burning. No core burning phase can be returned
+                return None
+
+            return np.where((data['age'] >= a1) & (data['c_core_mass'] <= 0.01) &
+                            (10**data['log_Teff'] >= 20000) & (10**data['log_Teff'] <= 40000))
+
+        elif phase == 'sdO':
+            # requires He burning and Teff > 40000
+            if np.all(data['log_LHe'] < 1):
+                # no He ignition
+                return None
+            a1 = data['age'][data['log_LHe'] > 1][0]
+
+            if np.all(data['c_core_mass'] < 0.01):
+                # model ignites He, but has problems modeling the core burning. No core burning phase can be returned
+                return None
+
+            return np.where((data['age'] >= a1) & (10 ** data['log_Teff'] >= 40000))
+
+        elif phase == 'He-WD':
+            # Requires star to be on WD cooling track and have He core
+
+            if np.max(data['log_g']) < 7.5:
+                # no final WD yet
+                return None
+
+            if np.max(data['c_core_mass']) > 0.01 or np.max(data['log_LHe']) > 1:
+                # sign of He burning
+                return None
+
+            return np.where(data['log_g'] > 7.5)
+
     phase_selection = {}
 
     for phase in phases:
@@ -256,7 +296,7 @@ def decompose_parameter(par):
 
 def extract_parameters(data, parameters=[], phase_flags=[]):
 
-    phases = ['init', 'final', 'MLstart', 'MLend', 'ML', 'HeIgnition', 'HeCoreBurning']
+    phases = ['init', 'final', 'MLstart', 'MLend', 'ML', 'HeIgnition', 'HeCoreBurning', 'sdB', 'sdO', 'He-WD']
 
     phases = get_phases(data, phases)
 
