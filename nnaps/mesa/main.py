@@ -26,7 +26,6 @@ def main():
 
     if args.modelfile is not None:
         # run the convert2hdf5 function
-        model_list = pd.read_csv(args.modelfile[0])
 
         # if necessary load default setup. Check local folder first, then system defaults, then load from defaults file
         if args.setup is None:
@@ -40,8 +39,17 @@ def main():
         else:
             setup = defaults.read_defaults(args.setup)
 
-        if len(args.modelfile) > 1:
-            setup['input_path_prefix'] = args.modelfile[1]
+        modelfile = Path(args.modelfile[0])
+
+        if modelfile.is_dir():
+            model_list = modelfile.glob('*')
+            model_list = pd.DataFrame(data={'path': [p.name for p in model_list]})
+            setup['input_path_prefix'] = args.modelfile[0]
+            setup['input_path_kw'] = 'path'
+        else:
+            model_list = pd.read_csv(args.modelfile[0])
+            if len(args.modelfile) > 1:
+                setup['input_path_prefix'] = args.modelfile[1]
 
         read_mesa.convert2hdf5(model_list, output_path=args.output, **setup, skip_existing=args.skip, verbose=True)
 

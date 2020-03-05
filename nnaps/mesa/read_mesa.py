@@ -208,4 +208,8 @@ def convert2hdf5(modellist, star_columns=None, binary_columns=None, profile_colu
                                                              ('profile_name', 'a'+str(profile_name_length))])
             data['profile_legend'] = profile_legend
 
-        fileio.write2hdf5(data, Path(output_path, model[input_path_kw]).with_suffix('.h5'), update=False)
+        # rather annoying way to assure that Path doesn't cut of part of the folder name when adding the .h5 suffix
+        # if not this will happen: M1.080_M0.502_P192.67_Z0.01129 -> M1.080_M0.502_P192.67_Z0.h5
+        output_file = Path(output_path, model[input_path_kw])
+        output_file = output_file.with_suffix(output_file.suffix + '.h5')
+        fileio.write2hdf5(data, output_file, update=False)
