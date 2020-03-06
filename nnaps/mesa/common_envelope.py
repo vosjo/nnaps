@@ -1,6 +1,44 @@
 
 import numpy as np
 
+def is_stable(data, criterion='J_div_Jdot_div_P', value=10):
+    if criterion == 'Mdot':
+
+        if np.max(data['lg_mstar_dot_1']) > value:
+            s = np.where(data['lg_mstar_dot_1'] > value)
+            a = data['age'][s][1]
+            return False, a
+
+    elif criterion == 'delta':
+
+        if np.max(data['mass_transfer_delta']) > value:
+            s = np.where(data['mass_transfer_delta'] > value)
+            a = data['age'][s][1]
+            return False, a
+
+    elif criterion == 'J_div_Jdot_div_P':
+
+        if np.min(10 ** data['log10_J_div_Jdot_div_P']) <= value:
+            s = np.where(10 ** data['log10_J_div_Jdot_div_P'] < value)
+            a = data['age'][s][1]
+            return False, a
+
+    elif criterion == 'M_div_Mdot_div_P':
+
+        if np.min(10 ** data['log10_M_div_Mdot_div_P']) <= value:
+            s = np.where(10 ** data['log10_M_div_Mdot_div_P'] < value)
+            a = data['age'][s][1]
+            return False, a
+
+    elif criterion == 'R_div_SMA':
+
+        if np.max(data['star_1_radius'] / data['binary_separation']) > value:
+            s = np.where(data['star_1_radius'] / data['binary_separation'] > value)
+            a = data['age'][s][1]
+            return False, a
+
+    return True, data['age'][-1]
+
 
 def apply_ce(data, profile=None, ce_model='iben_tutukov1984', **kwargs):
     """
@@ -33,7 +71,7 @@ def apply_ce(data, profile=None, ce_model='iben_tutukov1984', **kwargs):
     sma = af * 0.004649183820234682  # sma in AU
     sma_rsol = sma * 214.83390446073912
 
-    q = M1_final / data['star_2_mass']
+    q = M1_final / M2
 
     rl_1 = sma_rsol * 0.49 * q ** (2.0 / 3.0) / (0.6 * q ** (2.0 / 3.0) + np.log(1 + q ** (1.0 / 3.0)))
     rl_2 = sma_rsol * 0.49 * q ** (-2.0 / 3.0) / (0.6 * q ** (-2.0 / 3.0) + np.log(1 + q ** (-1.0 / 3.0)))

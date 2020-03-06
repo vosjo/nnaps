@@ -330,76 +330,6 @@ def extract_parameters(data, parameters=[], phase_flags=[]):
     return result
 
 
-def is_stable(data, criterion='J_div_Jdot_div_P', value=10):
-    if criterion == 'Mdot':
-
-        if np.max(data['lg_mstar_dot_1']) > value:
-            s = np.where(data['lg_mstar_dot_1'] > value)
-            a = data['age'][s][1]
-            return False, a
-
-    elif criterion == 'delta':
-
-        if np.max(data['mass_transfer_delta']) > value:
-            s = np.where(data['mass_transfer_delta'] > value)
-            a = data['age'][s][1]
-            return False, a
-
-    elif criterion == 'J_div_Jdot_div_P':
-
-        if np.min(10 ** data['log10_J_div_Jdot_div_P']) <= value:
-            s = np.where(10 ** data['log10_J_div_Jdot_div_P'] < value)
-            a = data['age'][s][1]
-            return False, a
-
-    elif criterion == 'M_div_Mdot_div_P':
-
-        if np.min(10 ** data['log10_M_div_Mdot_div_P']) <= value:
-            s = np.where(10 ** data['log10_M_div_Mdot_div_P'] < value)
-            a = data['age'][s][1]
-            return False, a
-
-    elif criterion == 'R_div_SMA':
-
-        if np.max(data['star_1_radius'] / data['binary_separation']) > value:
-            s = np.where(data['star_1_radius'] / data['binary_separation'] > value)
-            a = data['age'][s][1]
-            return False, a
-
-    return True, data['age'][-1]
-
-
-def apply_ce(data, ce_model=''):
-
-
-    M1 = data['star_1_mass'][-1]
-    M2 = data['star_2_mass'][-1]
-    Mc = data['he_core_mass'][-1]
-    a = data['binary_separation'][-1]
-
-    af = 1.0 * a * (Mc * M2) / (M1 ** 2)
-    G = 2944.643655  # Rsol^3/Msol/days^2
-    P = np.sqrt(4 * np.pi ** 2 * af ** 3 / G * (Mc + M2))
-    sma = af * 0.004649183820234682   # sma in AU
-    sma_rsol = sma * 214.83390446073912
-    q = Mc / M2
-
-    rl_1 = sma_rsol * 0.49 * q**(2.0/3.0) / (0.6 * q**(2.0/3.0) + np.log(1 + q**(1.0/3.0)))
-    rl_2 = sma_rsol * 0.49 * q**(-2.0/3.0) / (0.6 * q**(-2.0/3.0) + np.log(1 + q**(-1.0/3.0)))
-
-    data['period_days'][-1] = P
-    data['binary_separation'][-1] = sma
-    data['star_1_mass'][-1] = Mc
-    data['star_2_mass'][-1] = M2
-    data['mass_ratio'][-1] = Mc/M2
-    data['rl_1'][-1] = rl_1
-    data['rl_2'][-1] = rl_2
-
-    return data
-
-
-
-
 def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_limit=10, parameters=[],
                  phase_flags=[], verbose=False):
 
@@ -421,7 +351,7 @@ def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_li
             continue
 
         # 2: check for stability and cut data at start of CE
-        stable, ce_age = is_stable(data, criterion=stability_criterion, value=stability_limit)
+        stable, ce_age = common_envelope.is_stable(data, criterion=stability_criterion, value=stability_limit)
         if not stable:
             # if the model is not stable, cut of the evolution at the start of the CE and anything after than
             # is non physical anyway.

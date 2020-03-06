@@ -15,17 +15,42 @@ def data():
     data, _, profiles = extract_mesa.read_history(base_path / 'test_data/M1.080_M0.502_P192.67_Z0.01129.h5'
                                                   , return_profiles=True)
 
-    stable, ce_age = extract_mesa.is_stable(data, criterion='Mdot', value=-2)
+    stable, ce_age = common_envelope.is_stable(data, criterion='Mdot', value=-2)
     data = data[data['age'] <= ce_age]
     return data
+
+
+def test_is_stable():
+    data, _ = extract_mesa.read_history(base_path / 'test_data/M1.205_M0.413_P505.12_Z0.h5')
+
+    stable, ce_age = common_envelope.is_stable(data, criterion='Mdot', value=-3)
+    assert stable is False
+    assert ce_age == pytest.approx(5179376595.6, abs=0.1)
+
+    stable, ce_age = common_envelope.is_stable(data, criterion='delta', value=0.03)
+    assert stable is False
+    assert ce_age == pytest.approx(5179376616.3, abs=0.1)
+
+    stable, ce_age = common_envelope.is_stable(data, criterion='J_div_Jdot_div_P', value=10)
+    assert stable is False
+    assert ce_age == pytest.approx(5179376617.0, abs=0.1)
+
+    stable, ce_age = common_envelope.is_stable(data, criterion='M_div_Mdot_div_P', value=100)
+    assert stable is False
+    assert ce_age == pytest.approx(5179376614.8, abs=0.1)
+
+    stable, ce_age = common_envelope.is_stable(data, criterion='R_div_SMA', value=0.5)
+    assert stable is False
+    assert ce_age == pytest.approx(5179376604.0, abs=0.1)
+
 
 def test_apply_ce():
     data, _ = extract_mesa.read_history(base_path / 'test_data/M1.205_M0.413_P505.12_Z0.h5')
 
-    stable, ce_age = extract_mesa.is_stable(data, criterion='J_div_Jdot_div_P', value=10)
+    stable, ce_age = common_envelope.is_stable(data, criterion='J_div_Jdot_div_P', value=10)
     data = data[data['age'] <= ce_age]
 
-    data = extract_mesa.apply_ce(data, ce_model='')
+    data = common_envelope.apply_ce(data, ce_model='')
 
     assert data['period_days'][-1] == pytest.approx(25.55, abs=0.01)
     assert data['binary_separation'][-1] == pytest.approx(0.1775, abs=1e-4)
@@ -40,7 +65,7 @@ def test_apply_ce_profile(data):
     data, _, profiles = extract_mesa.read_history(base_path / 'test_data/M1.080_M0.502_P192.67_Z0.01129.h5'
                                                   , return_profiles=True)
 
-    stable, ce_age = extract_mesa.is_stable(data, criterion='Mdot', value=-2)
+    stable, ce_age = common_envelope.is_stable(data, criterion='Mdot', value=-2)
     data = data[data['age'] <= ce_age]
 
     profile = profiles['profile_1_mdot-2.0']

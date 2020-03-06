@@ -180,30 +180,6 @@ class TestExtract:
         assert res['HeCoreBurning'] is True
         assert res['He-WD'] is False
 
-    def test_is_stable(self):
-
-        data, _ = extract_mesa.read_history(base_path / 'test_data/M1.205_M0.413_P505.12_Z0.h5')
-
-        stable, ce_age = extract_mesa.is_stable(data, criterion='Mdot', value=-3)
-        assert stable is False
-        assert ce_age == pytest.approx(5179376595.6, abs=0.1)
-
-        stable, ce_age = extract_mesa.is_stable(data, criterion='delta', value=0.03)
-        assert stable is False
-        assert ce_age == pytest.approx(5179376616.3, abs=0.1)
-
-        stable, ce_age = extract_mesa.is_stable(data, criterion='J_div_Jdot_div_P', value=10)
-        assert stable is False
-        assert ce_age == pytest.approx(5179376617.0, abs=0.1)
-
-        stable, ce_age = extract_mesa.is_stable(data, criterion='M_div_Mdot_div_P', value=100)
-        assert stable is False
-        assert ce_age == pytest.approx(5179376614.8, abs=0.1)
-
-        stable, ce_age = extract_mesa.is_stable(data, criterion='R_div_SMA', value=0.5)
-        assert stable is False
-        assert ce_age == pytest.approx(5179376604.0, abs=0.1)
-
     def test_extract_mesa(self):
 
         models = ['test_data/M0.789_M0.304_P20.58_Z0.h5',
