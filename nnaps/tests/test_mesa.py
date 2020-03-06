@@ -5,10 +5,12 @@ import pandas as pd
 import numpy as np
 import pylab as pl
 
+from nnaps.mesa import read_mesa, extract_mesa
+
 from pathlib import Path
 base_path = Path(__file__).parent
 
-from nnaps.mesa import read_mesa, extract_mesa
+
 
 
 class Test2H5:
@@ -201,23 +203,6 @@ class TestExtract:
         stable, ce_age = extract_mesa.is_stable(data, criterion='R_div_SMA', value=0.5)
         assert stable is False
         assert ce_age == pytest.approx(5179376604.0, abs=0.1)
-
-    def test_apply_ce(self):
-
-        data, _ = extract_mesa.read_history(base_path / 'test_data/M1.205_M0.413_P505.12_Z0.h5')
-
-        stable, ce_age = extract_mesa.is_stable(data, criterion='J_div_Jdot_div_P', value=10)
-        data = data[data['age'] <= ce_age]
-
-        data = extract_mesa.apply_ce(data, ce_model='')
-
-        assert data['period_days'][-1] == pytest.approx(25.55, abs=0.01)
-        assert data['binary_separation'][-1] == pytest.approx(0.1775, abs=1e-4)
-        assert data['star_1_mass'][-1] == pytest.approx(0.4477, abs=1e-4)
-        assert data['star_2_mass'][-1] == pytest.approx(0.4278, abs=1e-4)
-        assert data['mass_ratio'][-1] == pytest.approx(1.0465, abs=1e-4)
-        assert data['rl_1'][-1] == pytest.approx(14.5993, abs=1e-4)
-        assert data['rl_2'][-1] == pytest.approx(14.2991, abs=1e-4)
 
     def test_extract_mesa(self):
 

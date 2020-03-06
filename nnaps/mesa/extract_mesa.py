@@ -6,7 +6,8 @@ import pandas as pd
 from numpy.lib.recfunctions import append_fields
 
 from scipy.interpolate import interp1d
-from . import fileio
+
+from nnaps.mesa import fileio, common_envelope
 
 
 def read_history(objectname, return_profiles=False):
@@ -369,16 +370,7 @@ def is_stable(data, criterion='J_div_Jdot_div_P', value=10):
 
 
 def apply_ce(data, ce_model=''):
-    """
-    Function performs the ce ejection and updates some stellar and binary parameters
 
-    requires: star_1_mass, star_2_mass, he_core_mass, binary_separation
-    updates: star_1_mass, star_2_mass, period_days, binary_separation, mass_ratio, rl_1, rl_2
-
-    :param data: ndarray with model parameters
-    :param ce_model: CE model to use (not implemented yet)
-    :return: same dataset as provided with on the last line the parameters after the CE phase.
-    """
 
     M1 = data['star_1_mass'][-1]
     M2 = data['star_2_mass'][-1]
@@ -404,6 +396,8 @@ def apply_ce(data, ce_model=''):
     data['rl_2'][-1] = rl_2
 
     return data
+
+
 
 
 def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_limit=10, parameters=[],
@@ -433,7 +427,7 @@ def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_li
             # is non physical anyway.
             data = data[data['age'] <= ce_age]
 
-            data = apply_ce(data, ce_model='')
+            data = common_envelope.apply_ce(data, ce_model='')
 
         # 3: extract some standard parameters
         pars = [model]
