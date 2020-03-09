@@ -100,11 +100,6 @@ def iben_tutukov1984(data, al=1):
     Mc = data['he_core_mass'][-1]
     a = data['binary_separation'][-1]
 
-    print('A', a)
-    print('M1', M1)
-    print('M2', M2)
-    print('Mc', Mc)
-
     af = al * (Mc * M2) / (M1 ** 2) * a
 
     return af, Mc

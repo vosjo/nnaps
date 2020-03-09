@@ -7,7 +7,7 @@ from numpy.lib.recfunctions import append_fields
 
 from scipy.interpolate import interp1d
 
-from nnaps.mesa import fileio, common_envelope
+from nnaps.mesa import fileio, common_envelope, evolution_phases
 
 
 def read_history(objectname, return_profiles=False):
@@ -100,212 +100,20 @@ def read_history(objectname, return_profiles=False):
     return data, extra_info
 
 
-def get_phases(data, phases):
-
-    def get_phase(data, phase):
-        if phase == 'init':
-            return ([0],)
-
-        elif phase == 'final':
-            return ([data.shape[0]-1],)
-
-        elif phase in ['MLstart', 'MLend', 'ML']:
-            if all(data['lg_mstar_dot_1'] < -10):
-                # no mass loss
-                return None
-            a1 = data['age'][data['lg_mstar_dot_1'] >= -10][0]
-            try:
-                # select the first point in time that the mass loss dips below -10 after it
-                # starts up. Necessary to deal with multiple mass loss phases.
-                a2 = data['age'][(data['age'] > a1) & (data['lg_mstar_dot_1'] < -10)][0]
-            except IndexError:
-                a2 = data['age'][-1]
-
-            if phase == 'MLstart':
-                s = np.where(data['age'] >= a1)
-                return ([s[0][0]],)
-
-            elif phase == 'MLend':
-                s = np.where(data['age'] <= a2)
-                return ([s[0][-1]],)
-
-            else:
-                return np.where((data['age'] >= a1) & (data['age'] <= a2))
-
-        elif phase == 'HeIgnition':
-            # select He ignition as the point between LHe > 10 Lsol and the formation of the
-            # carbon-oxigen core where the L output is at it's maximum. This is the He flash.
-            if np.all(data['log_LHe'] < 1):
-                # no He ignition
-                return None
-            a1 = data['age'][data['log_LHe'] > 1][0]
-
-            if np.all(data['c_core_mass']) < 0.01:
-                # model ignites He, but has problems modeling the core burning. He ignition can be returned.
-                a2 = data['age'][-1]
-            else:
-                a2 = data['age'][data['c_core_mass'] >= 0.01][0]
-            d = data[(data['age'] >= a1) & (data['age'] <= a2)]
-
-            return np.where((data['log_LHe'] == np.max(d['log_LHe'])) & (data['age'] >= a1) & (data['age'] <= a2) )
-
-        elif phase == 'HeCoreBurning':
-            # He core burning is period between ignition of He and formation of CO core
-            if np.all(data['log_LHe'] < 1):
-                # no He ignition
-                return None
-            a1 = data['age'][data['log_LHe'] > 1][0]
-
-            if np.all(data['c_core_mass'] < 0.01):
-                # model ignites He, but has problems modeling the core burning. No core burning phase can be returned
-                return None
-
-            return np.where((data['age'] >= a1) & (data['c_core_mass'] <= 0.01))
-
-        elif phase == 'HeShellBurning':
-            if np.all(data['log_LHe'] < 1):
-                # no He ignition
-                return None
-
-            if np.all(data['c_core_mass'] < 0.01):
-                # no actual core He burning takes place, so no shell burning either.
-                return None
-
-            a1 = data['age'][data['c_core_mass'] >= 0.01][0]
-            LHe_burning = data['log_LHe'][data['age'] == a1][0]
-
-            if len(data['age'][(data['age'] > a1) & (data['log_LHe'] < LHe_burning / 2.)]) > 0:
-                a2 = data['age'][(data['age'] > a1) & (data['log_LHe'] < LHe_burning / 2.)][0]
-            else:
-                try:
-                    # end of He shell burning when carbon core gets almost its final mass
-                    a2 = data['age'][data['c_core_mass'] >= 0.98 * np.max(data['c_core_mass'])][0]
-                except Exception as e:
-                    print (e)
-                    a2 = data['age'][-1]
-
-            return np.where((data['age'] >= a1) & (data['age'] <= a2))
-
-        elif phase == 'sdB':
-            # requires He core burning and 20000 < Teff < 40000
-            if np.all(data['log_LHe'] < 1):
-                # no He ignition
-                return None
-            a1 = data['age'][data['log_LHe'] > 1][0]
-
-            if np.all(data['c_core_mass'] < 0.01):
-                # model ignites He, but has problems modeling the core burning. No core burning phase can be returned
-                return None
-
-            return np.where((data['age'] >= a1) & (data['c_core_mass'] <= 0.01) &
-                            (10**data['log_Teff'] >= 20000) & (10**data['log_Teff'] <= 40000))
-
-        elif phase == 'sdO':
-            # requires He burning and Teff > 40000
-            if np.all(data['log_LHe'] < 1):
-                # no He ignition
-                return None
-            a1 = data['age'][data['log_LHe'] > 1][0]
-
-            if np.all(data['c_core_mass'] < 0.01):
-                # model ignites He, but has problems modeling the core burning. No core burning phase can be returned
-                return None
-
-            return np.where((data['age'] >= a1) & (10 ** data['log_Teff'] >= 40000))
-
-        elif phase == 'He-WD':
-            # Requires star to be on WD cooling track and have He core
-
-            if np.max(data['log_g']) < 7.5:
-                # no final WD yet
-                return None
-
-            if np.max(data['c_core_mass']) > 0.01 or np.max(data['log_LHe']) > 1:
-                # sign of He burning
-                return None
-
-            return np.where(data['log_g'] > 7.5)
-
-    phase_selection = {}
-
-    for phase in phases:
-
-        phase_selection[phase] = get_phase(data, phase)
-
-    return phase_selection
-
-
-def decompose_parameter(par):
-    """
-    Decompose a parameter in the parameter name recognized by mesa, a potential function
-    to apply to the parameter and the phase for which to calculate it.
-
-    recognized functions:
-     - min
-     - max
-     - avg (average over time)
-     - diff (difference between start and end)
-     - rate (change rate: (end-start)/(end_time - start_time)
-
-
-    examples:
-    M1__init                -> avg(star_1_mass[init])
-    max__RL                 -> max(RL)
-    duration__HeCoreBurning -> duration(time[HeCoreBurning])
-    max__Teff__ML            -> max(effective_T[ML])
-    """
-    def min(data, pname):
-        return np.min(data[pname])
-
-    def max(data, pname):
-        return np.max(data[pname])
-
-    def avg(data, pname):
-        return np.average(data[pname], weights=10**data['log_dt'])
-
-    def diff(data, pname):
-        return data[pname][-1] - data[pname][0]
-
-    def rate(data, pname):
-        return (data[pname][-1] - data[pname][0]) / (data['age'][-1] - data['age'][0])
-
-    known_functions = {'min': min, 'max':max, 'avg':avg, 'diff':diff, 'rate':rate}
-
-    parts = par.split('__')
-
-    pname, func, phase = None, None, None
-
-    if len(parts) == 1:
-        pname = parts[0]
-        func = avg
-
-    elif len(parts) == 2:
-        pname = parts[0]
-        if parts[-1] in known_functions.keys():
-            func = known_functions[parts[1]]
-        else:
-            phase = parts[1]
-            func = avg
-
-    elif len(parts) == 3:
-        pname = parts[0]
-        phase = parts[1]
-        func = known_functions[parts[2]]
-
-    return pname, phase, func
-
-
 def extract_parameters(data, parameters=[], phase_flags=[]):
 
-    phases = ['init', 'final', 'MLstart', 'MLend', 'ML', 'HeIgnition', 'HeCoreBurning', 'sdB', 'sdO', 'He-WD']
-
-    phases = get_phases(data, phases)
+    phases = []
+    for parameter in parameters:
+        pname, phase, func = evolution_phases.decompose_parameter(parameter)
+        phases.append(phase)
+    phases = phases + phase_flags
+    phases = evolution_phases.get_all_phases(phases, data)
 
     result = []
 
     # extract the parameters
     for parameter in parameters:
-        pname, phase, func = decompose_parameter(parameter)
+        pname, phase, func = evolution_phases.decompose_parameter(parameter)
 
         if phase is not None:
             if phases[phase] is None:
@@ -331,9 +139,19 @@ def extract_parameters(data, parameters=[], phase_flags=[]):
 
 
 def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_limit=10, parameters=[],
-                 phase_flags=[], verbose=False):
+                 phase_flags=[], verbose=False,**kwargs):
 
-    columns = ['path', 'stability'] + parameters + phase_flags
+    parameters_, column_names = [], []
+    for parameter in parameters:
+        if type(parameter) == tuple:
+            parameters_.append(parameter[0])
+            column_names.append(parameter[1])
+        else:
+            parameters_.append(parameter)
+            column_names.append(parameter)
+    parameters = parameters_
+
+    columns = ['path', 'stability'] + column_names + phase_flags
     # results = pd.DataFrame(columns=columns)
     results = []
 
@@ -360,7 +178,7 @@ def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_li
             data = common_envelope.apply_ce(data, ce_model='')
 
         # 3: extract some standard parameters
-        pars = [model]
+        pars = [model['path'].split('/')[-1]]
         pars += ['CE' if not stable else 'stable']  # todo: add contact binary and merger option here
 
         # 4: extract the requested parameters

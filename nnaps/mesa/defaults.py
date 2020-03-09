@@ -31,4 +31,15 @@ def read_defaults(filename):
         except yaml.YAMLError as exc:
             print(exc)
 
+    # adjust setup to recognize comma separated parameters as a tuple pair
+    # period_days__init, P_init  ->  (period_days__init, P_init)
+    if 'parameters' in setup:
+        parameters = []
+        for p in setup['parameters']:
+            if ',' in p:
+                parameters.append(tuple(p.split(',')))
+            else:
+                parameters.append(p)
+        setup['parameters'] = parameters
+
     return setup

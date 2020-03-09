@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 import pylab as pl
 
-from nnaps.mesa import read_mesa, extract_mesa
+from nnaps.mesa import read_mesa, extract_mesa, evolution_phases
 
 from pathlib import Path
 base_path = Path(__file__).parent
@@ -44,9 +44,9 @@ class Test2H5:
                                    profile_files='all', profiles_path='LOGS', profile_pattern='profile_*.data',
                                    output_path=base_path / 'test_data/hdf5')
 
-            assert os.path.isfile(base_path / 'test_data/hdf5/M1.013_M0.331_P32.85_Z0.h5')
+            assert os.path.isfile(base_path / 'test_data/hdf5/M1.013_M0.331_P32.85_Z0.00155.h5')
         finally:
-            os.remove(base_path / 'test_data/hdf5/M1.013_M0.331_P32.85_Z0.h5')
+            os.remove(base_path / 'test_data/hdf5/M1.013_M0.331_P32.85_Z0.00155.h5')
             os.rmdir(base_path / 'test_data/hdf5/')
 
 class TestExtract:
@@ -57,7 +57,7 @@ class TestExtract:
         # stable model without He ignition and struggles at the end
         # age of the last 1470 time steps doesn't change!
         data, _ = extract_mesa.read_history(base_path / 'test_data/M0.789_M0.304_P20.58_Z0.h5', return_profiles=False)
-        phases = extract_mesa.get_phases(data, phase_names)
+        phases = evolution_phases.get_all_phases(phase_names, data)
 
         assert data['model_number'][phases['init']][0] == 3
         assert data['model_number'][phases['final']][0] == 30000
@@ -69,7 +69,7 @@ class TestExtract:
 
         # stable model without He ignition
         data, _ = extract_mesa.read_history(base_path / 'test_data/M0.814_M0.512_P260.18_Z0.h5', return_profiles=False)
-        phases = extract_mesa.get_phases(data, phase_names)
+        phases = evolution_phases.get_all_phases(phase_names, data)
 
         assert data['model_number'][phases['ML']][0] == 1290
         assert data['model_number'][phases['ML']][-1] == 7281
@@ -79,7 +79,7 @@ class TestExtract:
 
         # stable model with degenerate He ignition but issues in the He burning phase, and a double ML phase
         data, _ = extract_mesa.read_history(base_path / 'test_data/M1.125_M0.973_P428.86_Z0.h5', return_profiles=False)
-        phases = extract_mesa.get_phases(data, phase_names)
+        phases = evolution_phases.get_all_phases(phase_names, data)
 
         assert data['model_number'][phases['ML']][0] == 2556
         assert data['model_number'][phases['ML']][-1] == 19605
@@ -90,7 +90,7 @@ class TestExtract:
         # CE model
         data, _ = extract_mesa.read_history(base_path / 'test_data/M1.205_M0.413_P505.12_Z0.h5', return_profiles=False)
         data = data[data['model_number'] <= 12111]
-        phases = extract_mesa.get_phases(data, phase_names)
+        phases = evolution_phases.get_all_phases(phase_names, data)
 
         assert data['model_number'][phases['ML']][0] == 2280
         assert data['model_number'][phases['ML']][-1] == 12111
@@ -100,7 +100,7 @@ class TestExtract:
 
         # HB star with core and shell He burning
         data, _ = extract_mesa.read_history(base_path / 'test_data/M1.276_M1.140_P333.11_Z0.h5', return_profiles=False)
-        phases = extract_mesa.get_phases(data, phase_names)
+        phases = evolution_phases.get_all_phases(phase_names, data)
 
         assert data['model_number'][phases['ML']][0] == 2031
         assert data['model_number'][phases['ML']][-1] == 12018
@@ -112,40 +112,45 @@ class TestExtract:
 
     def test_decompose_parameter(self):
 
-        pname, phase, func = extract_mesa.decompose_parameter('star_1_mass__init')
+        pname, phase, func = evolution_phases.decompose_parameter('star_1_mass__init')
         assert pname == 'star_1_mass'
         assert phase == 'init'
-        assert func.__name__ == 'avg'
+        assert func.__name__ == 'avg_'
 
-        pname, phase, func = extract_mesa.decompose_parameter('period_days__final')
+        pname, phase, func = evolution_phases.decompose_parameter('period_days__final')
         assert pname == 'period_days'
         assert phase == 'final'
-        assert func.__name__ == 'avg'
+        assert func.__name__ == 'avg_'
 
-        pname, phase, func = extract_mesa.decompose_parameter('rl_1__max')
+        pname, phase, func = evolution_phases.decompose_parameter('rl_1__max')
         assert pname == 'rl_1'
         assert phase is None
-        assert func.__name__ == 'max'
+        assert func.__name__ == 'max_'
 
-        pname, phase, func = extract_mesa.decompose_parameter('rl_1__HeIgnition')
+        pname, phase, func = evolution_phases.decompose_parameter('rl_1__HeIgnition')
         assert pname == 'rl_1'
         assert phase == 'HeIgnition'
-        assert func.__name__ == 'avg'
+        assert func.__name__ == 'avg_'
 
-        pname, phase, func = extract_mesa.decompose_parameter('age__ML__diff')
+        pname, phase, func = evolution_phases.decompose_parameter('age__ML__diff')
         assert pname == 'age'
         assert phase == 'ML'
-        assert func.__name__ == 'diff'
+        assert func.__name__ == 'diff_'
 
-        pname, phase, func = extract_mesa.decompose_parameter('he_core_mass__ML__rate')
+        pname, phase, func = evolution_phases.decompose_parameter('he_core_mass__ML__rate')
         assert pname == 'he_core_mass'
         assert phase == 'ML'
-        assert func.__name__ == 'rate'
+        assert func.__name__ == 'rate_'
 
-        pname, phase, func = extract_mesa.decompose_parameter('age__ML__diff')
+        pname, phase, func = evolution_phases.decompose_parameter('age__ML__diff')
         assert pname == 'age'
         assert phase == 'ML'
-        assert func.__name__ == 'diff'
+        assert func.__name__ == 'diff_'
+
+        pname, phase, func = evolution_phases.decompose_parameter('star_1_mass__lg_mstar_dot_1_max')
+        assert pname == 'star_1_mass'
+        assert phase == 'lg_mstar_dot_1_max'
+        assert func.__name__ == 'avg_'
 
     def test_extract_parameters(self):
         #TODO: improve this test case and add more checks
@@ -154,7 +159,7 @@ class TestExtract:
         data, _ = extract_mesa.read_history(base_path / 'test_data/M1.276_M1.140_P333.11_Z0.h5')
 
         parameters = ['star_1_mass__init', 'period_days__final', 'rl_1__max', 'rl_1__HeIgnition', 'age__ML__diff',
-                      'he_core_mass__ML__rate']
+                      'he_core_mass__ML__rate', 'star_1_mass__lg_mstar_dot_1_max']
 
         res = extract_mesa.extract_parameters(data, parameters)
         res = {k:v for k, v in zip(parameters, res)}
@@ -172,6 +177,10 @@ class TestExtract:
         assert res['he_core_mass__ML__rate'] == (data['he_core_mass'][s][-1] - data['he_core_mass'][s][0]) / \
                                                 (data['age'][s][-1] - data['age'][s][0])
 
+        assert res['rl_1__HeIgnition'] == pytest.approx(152.8606, abs=0.0001)
+
+        assert res['star_1_mass__lg_mstar_dot_1_max'] == pytest.approx(0.5205, abs=0.0001)
+
         phase_flags = ['ML', 'HeCoreBurning', 'He-WD']
         res = extract_mesa.extract_parameters(data, parameters, phase_flags=phase_flags)
         res = {k: v for k, v in zip(parameters+phase_flags, res)}
@@ -184,24 +193,34 @@ class TestExtract:
 
         models = ['test_data/M0.789_M0.304_P20.58_Z0.h5',
                   'test_data/M0.814_M0.512_P260.18_Z0.h5',
+                  'test_data/M1.276_M1.140_P333.11_Z0.h5'
                   ]
         models = pd.DataFrame(models, columns=['path'])
 
-        parameters = ['star_1_mass__init',
-                      'period_days__final',
+        parameters = [('star_1_mass__init', 'M1_init'),
+                      ('period_days__final', 'P_final'),
                       'rl_1__max',
                       'rl_1__HeIgnition',
                       'age__ML__diff',
                       'he_core_mass__ML__rate',
                      ]
+        parameter_names = ['M1_init', 'P_final', 'rl_1__max', 'rl_1__HeIgnition', 'age__ML__diff', 'he_core_mass__ML__rate']
 
-        results = extract_mesa.extract_mesa(models, stability_criterion='J_div_Jdot_div_P',
-                                            stability_limit=10, parameters=parameters, verbose=True)
+        phase_flags = ['sdB', 'He-WD']
+
+        results = extract_mesa.extract_mesa(models, stability_criterion='J_div_Jdot_div_P', stability_limit=10,
+                                            parameters=parameters, phase_flags=phase_flags,
+                                            verbose=True)
+
+        results.to_csv('test_results.csv', na_rep='nan')
 
         # check dimensions and columns
-        for p in parameters:
+        for p in parameter_names:
+            assert p in results.columns
+        for p in phase_flags:
             assert p in results.columns
         assert 'stability' in results.columns
         assert len(results) == len(models)
+
 
 

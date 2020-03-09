@@ -1,5 +1,4 @@
 import os
-import yaml
 import glob
 import argparse
 import pandas as pd
@@ -26,6 +25,10 @@ def main():
 
     if args.modelfile is not None:
         # run the convert2hdf5 function
+
+        if args.output is None:
+            print("You need to specify an output path with option -o <path>")
+            exit()
 
         # if necessary load default setup. Check local folder first, then system defaults, then load from defaults file
         if args.setup is None:
@@ -55,23 +58,28 @@ def main():
 
     elif args.extract is not None:
 
+        if args.output is None:
+            print("You need to specify an output file with option -o <filename>")
+            exit()
+
         files = glob.glob(str(Path(args.extract, '*')))
         file_list = pd.DataFrame(data=files, columns=['path'])
 
         if args.setup is None:
 
             if os.path.isfile('default_extract.yaml'):
-                setup = yaml.safe_load('default_extract.yaml')
+                setup = defaults.read_defaults('default_extract.yaml')
             elif os.path.isfile('~/.nnaps/default_extract.yaml'):
-                setup = yaml.safe_load('~/.nnaps/default_extract.yaml')
+                setup = defaults.read_defaults('~/.nnaps/default_extract.yaml')
             else:
                 setup = defaults.default_extract
+
         else:
-            setup = yaml.safe_load(args.setup)
+            setup = defaults.read_defaults(args.setup)
 
         result = extract_mesa.extract_mesa(file_list, **setup, verbose=True)
 
-        result.to_csv(args.output)
+        result.to_csv(args.output, index=False, na_rep='NaN')
 
     else:
         print("Nothing to do!\nUse as:\n"
