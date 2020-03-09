@@ -145,10 +145,10 @@ def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_li
     for parameter in parameters:
         if type(parameter) == tuple:
             parameters_.append(parameter[0])
-            column_names.append(parameter[1])
+            column_names.append(parameter[1].strip())
         else:
             parameters_.append(parameter)
-            column_names.append(parameter)
+            column_names.append(parameter.strip())
     parameters = parameters_
 
     columns = ['path', 'stability'] + column_names + phase_flags
