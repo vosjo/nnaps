@@ -42,4 +42,13 @@ def read_defaults(filename):
                 parameters.append(p)
         setup['parameters'] = parameters
 
+    if 'extra_info_parameters' in setup:
+        parameters = []
+        for p in setup['extra_info_parameters']:
+            if ',' in p:
+                parameters.append(tuple(p.split(',')))
+            else:
+                parameters.append(p)
+        setup['extra_info_parameters'] = parameters
+
     return setup

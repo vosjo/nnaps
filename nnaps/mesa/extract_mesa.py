@@ -138,8 +138,8 @@ def extract_parameters(data, parameters=[], phase_flags=[]):
     return result
 
 
-def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_limit=10, parameters=[],
-                 phase_flags=[], verbose=False,**kwargs):
+def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_limit=10,
+                 parameters=[], phase_flags=[], extra_info_parameters=[], verbose=False,**kwargs):
 
     parameters_, column_names = [], []
     for parameter in parameters:
@@ -151,7 +151,17 @@ def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_li
             column_names.append(parameter.strip())
     parameters = parameters_
 
-    columns = ['path', 'stability'] + column_names + phase_flags
+    extra_parameters_, extra_names = [], []
+    for parameter in extra_info_parameters:
+        if type(parameter) == tuple:
+            extra_parameters_.append(parameter[0])
+            extra_names.append(parameter[1].strip())
+        else:
+            extra_parameters_.append(parameter)
+            extra_names.append(parameter.strip())
+    extra_info_parameters = extra_parameters_
+
+    columns = ['path', 'stability'] + extra_names + column_names + phase_flags
     # results = pd.DataFrame(columns=columns)
     results = []
 
@@ -181,12 +191,15 @@ def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_li
         pars = [model['path'].split('/')[-1]]
         pars += ['CE' if not stable else 'stable']  # todo: add contact binary and merger option here
 
-        # 4: extract the requested parameters
-        # 5: add the requested phase flags
+        # 4: add the extra info to the output
+        for p in extra_info_parameters:
+            pars.append(extra_info[p])
+
+        # 5: extract the requested parameters & 6: add the requested phase flags
         extracted_pars = extract_parameters(data, parameters, phase_flags)
         pars += extracted_pars
 
-        # 6: check for some possible errors and flag them
+        # 7: todo: check for some possible errors and flag them
 
         results.append(pars)
 

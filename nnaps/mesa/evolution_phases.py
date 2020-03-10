@@ -245,10 +245,11 @@ def sdO(data):
 
 def He_WD(data):
     """
-    Requires star to be on WD cooling track and have He core
+    Requires star to be on WD cooling track and have He core. Cooling track is selected to start when
+    teff < 10000K and logg > 7, or when logg > 7.5 regardless of teff
     """
 
-    if np.max(data['log_g']) < 7.5:
+    if np.max(data['log_g']) < 7.0:
         # no final WD yet
         return None
 
@@ -256,7 +257,15 @@ def He_WD(data):
         # sign of He burning
         return None
 
-    return np.where(data['log_g'] > 7.5)
+    # select first point where teff < 10^4 and logg < 7
+    a1 = data['age'][((data['log_Teff'] < 4) & (data['log_g'] > 7)) | (data['log_g'] >= 7.5)]
+    if len(a1) == 0:
+        # WD doesn't start
+        return None
+    else:
+        a1 = a1[0]
+
+    return np.where(data['age'] > a1)
 
 
 all_phases = {'init': init, 'final': final, 'MLstart': MLstart, 'MLend': MLend, 'ML': ML, 'HeIgnition': HeIgnition,
