@@ -71,8 +71,16 @@ def apply_ce(data, profiles=None, ce_formalism='iben_tutukov1984', max_profile_d
     """
     Function performs the ce ejection and updates some stellar and binary parameters
 
-    requires: star_1_mass, star_2_mass, he_core_mass, binary_separation
-    updates: star_1_mass, star_2_mass, period_days, binary_separation, mass_ratio, rl_1, rl_2
+    Different CE formalisms are supported:
+    - iben_tutukov1984: Iben & Tutukov 1984, ApJ, 284, 719
+    - webbink1984: Webbink 1984, ApJ, 277, 355
+    - dewi_tauris2000: Dewi and Tauris 2000, A&A, 360, 1043
+    - demarco2011: De Marco et al. 2011, MNRAS, 411, 2277
+
+    for more details on each of the formalisms and which parameters are required, see the respective functions below.
+
+    all formalisms require: star_2_mass, he_core_mass
+    updates: star_1_mass, envelope_mass, period_days, binary_separation, mass_ratio, rl_1, rl_2
 
     :param data: ndarray with model parameters
     :param profiles: dictionary containing all available profiles for the model
@@ -146,6 +154,8 @@ def iben_tutukov1984(data, al=1):
     CE formalism from Iben & Tutukov 1984, ApJ, 284, 719
     https://ui.adsabs.harvard.edu/abs/1984ApJ...284..719I/abstract
 
+    requires: star_1_mass, star_2_mass, he_core_mass, binary_separation
+
     :param data: ndarray with model parameters
     :param al: alpha CE, the efficiency parameter for the CE formalism
     :return: final separation, final primary mass
@@ -164,6 +174,8 @@ def webbink1984(data, al=1, lb=1):
     """
     CE formalism from Webbink 1984, ApJ, 277, 355
     https://ui.adsabs.harvard.edu/abs/1984ApJ...277..355W/abstract
+
+    requires: star_1_mass, star_2_mass, he_core_mass, binary_separation, rl_1
 
     :param data: ndarray with model parameters
     :param al: alpha CE, the efficiency parameter for the CE formalism
@@ -188,6 +200,8 @@ def demarco2011(data, al=1, lb=1):
     CE formalism from De Marco et al. 2011, MNRAS, 411, 2277
     https://ui.adsabs.harvard.edu/abs/2011MNRAS.411.2277D/abstract
 
+    requires: star_1_mass, star_2_mass, he_core_mass, binary_separation, rl_1
+
     :param data: ndarray with model parameters
     :param al: alpha CE, the efficiency parameter for the CE formalism
     :param lb: lambda CE, the mass distribution factor of the primary envelope: lambda * Rl = the effective
@@ -208,10 +222,13 @@ def demarco2011(data, al=1, lb=1):
 
 def dewi_tauris2000(data, profile, a_ce=1, a_th=0.5):
     """
-    CE formalism presented in Dewi and Tauris 2000 based on the idea of obtaining the binding energy by
+    CE formalism presented in Dewi and Tauris 2000, A&A, 360, 1043 based on the idea of obtaining the binding energy by
     integrating the stellar profile from Han et al 1995
     https://ui.adsabs.harvard.edu/abs/2000A%26A...360.1043D/abstract
     https://ui.adsabs.harvard.edu/abs/1995MNRAS.272..800H/abstract
+
+    data requires: star_2_mass, binary_separation
+    profile requires: mass, logR, logP, logRho
 
     :param data: ndarray with model parameters
     :param profile: profile for the integration of binding energy
