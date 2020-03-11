@@ -58,8 +58,8 @@ def apply_ce(data, profile=None, ce_model='iben_tutukov1984', **kwargs):
     elif ce_model == 'webbink1984':
         af, M1_final = webbink1984(data, **kwargs)
 
-    elif ce_model == 'profile':
-        af, M1_final = apply_ce_profile(data, profile=profile, **kwargs)
+    elif ce_model == 'dewi_tauris2000':
+        af, M1_final = dewi_tauris2000(data, profile=profile, **kwargs)
 
     else:
         af, M1_final = iben_tutukov1984(data, al=1)
@@ -151,7 +151,7 @@ def demarco2011(data, al=1, lb=1):
     return af, Mc
 
 
-def apply_ce_profile(data, profile, al=1, lb=1):
+def dewi_tauris2000(data, profile, a_ce=1, a_th=0.5):
 
     # import pylab as pl
     # pl.plot(10**profile['logR'], profile['mass'])
@@ -161,9 +161,6 @@ def apply_ce_profile(data, profile, al=1, lb=1):
 
     M2 = data['star_2_mass'][-1]
     a = data['binary_separation'][-1]
-
-    alpha_th = 0
-    alpha_ce = 1
 
     star_outside_rl = True
     i = 0
@@ -175,9 +172,10 @@ def apply_ce_profile(data, profile, al=1, lb=1):
         G = 2944.643655  # Rsol^3/Msol/days^2
         R1 = 10**line['logR'] # Rsol
         q = M1 / M2
-        U = 0
+        U = (3.0 * 10**line['logP']) / (2.0 * 10**line['logRho']) # cm^2 / s^2
+        U = U * 1.5432035916041713e-12 # Rsol^2 / days^2
 
-        da = dm * (G * M1 / R1 + alpha_ce * G * M2 / (2 * a)) * 2 * a**2 / (alpha_ce * G * M1 * M2)
+        da = dm * (G * M1 / R1 - a_th * U + a_ce * G * M2 / (2 * a)) * 2 * a**2 / (a_ce * G * M1 * M2)
         a = a - da
 
         i += 1

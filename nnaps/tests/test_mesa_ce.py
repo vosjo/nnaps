@@ -70,10 +70,15 @@ def test_apply_ce_profile(data):
 
     profile = profiles['profile_1_mdot-2.0']
 
-    af, M1_final = common_envelope.apply_ce_profile(data, profile)
+    af, M1_final = common_envelope.dewi_tauris2000(data, profile, a_th=0)
 
     assert af == pytest.approx(4.91, abs=0.01)
     assert M1_final == pytest.approx(0.383, abs=0.001)
+
+    af, M1_final = common_envelope.dewi_tauris2000(data, profile, a_th=0.5)
+
+    assert af == pytest.approx(6.463032, abs=0.000001)
+    assert M1_final == pytest.approx(0.3859326, abs=0.000001)
 
 # def test_all(data):
 #
