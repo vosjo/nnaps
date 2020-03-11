@@ -200,12 +200,18 @@ def demarco2011(data, al=1, lb=1):
 
 
 def dewi_tauris2000(data, profile, a_ce=1, a_th=0.5):
+    """
+    CE formalism presented in Dewi and Tauris 2000 based on the idea of obtaining the binding energy by
+    integrating the stellar profile from Han et al 1995
+    https://ui.adsabs.harvard.edu/abs/2000A%26A...360.1043D/abstract
+    https://ui.adsabs.harvard.edu/abs/1995MNRAS.272..800H/abstract
 
-    # import pylab as pl
-    # pl.plot(10**profile['logR'], profile['mass'])
-    # s = np.where(profile['mass'] <= 0.378)
-    # pl.axvline(x=10**profile['logR'][s][0])
-    # pl.show()
+    :param data: ndarray with model parameters
+    :param profile: profile for the integration of binding energy
+    :param a_ce: efficiency of ce
+    :param a_th: efficiency of binding energy
+    :return: final separation, final primary mass
+    """
 
     M2 = data['star_2_mass'][-1]
     a = data['binary_separation'][-1]
