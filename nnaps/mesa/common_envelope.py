@@ -94,20 +94,27 @@ def apply_ce(data, profiles=None, ce_formalism='iben_tutukov1984', max_profile_d
     elif ce_formalism == 'dewi_tauris2000':
         # need to find the correct profile for this
 
-        ce_mn = data['model_number'][-1]
-        profile_legend = profiles['legend']
-
-        diff = abs(profile_legend['model_number'] - ce_mn)
-
-        if np.min(diff) > max_profile_distance:
-            # no suitable profile, use Webbink instead
-            af, M1_final = webbink1984(data, **kwargs)
+        if type(profiles) is not dict:
+            # a specific profile is provided for use in CE
+            af, M1_final = dewi_tauris2000(data, profile=profiles, **kwargs)
 
         else:
-            profile_name = profile_legend['profile_name'][diff == np.min(diff)][0]
-            profile = profiles[profile_name.decode('UTF-8')]
+            ce_mn = data['model_number'][-1]
+            profile_legend = profiles['legend']
 
-            af, M1_final = dewi_tauris2000(data, profile=profile, **kwargs)
+            diff = abs(profile_legend['model_number'] - ce_mn)
+
+            if np.min(diff) > max_profile_distance:
+                # no suitable profile, use Webbink instead
+                print('\t CE: Fallback to Webbink')
+                al = kwargs.get('a_ce', 1)
+                af, M1_final = webbink1984(data, al=al)
+
+            else:
+                profile_name = profile_legend['profile_name'][diff == np.min(diff)][0]
+                profile = profiles[profile_name.decode('UTF-8')]
+
+                af, M1_final = dewi_tauris2000(data, profile=profile, **kwargs)
 
     else:
         raise ValueError('CE formalism not recognized, use one of: iben_tutukov1984, webbink1984,'
@@ -213,8 +220,19 @@ def dewi_tauris2000(data, profile, a_ce=1, a_th=0.5):
     :return: final separation, final primary mass
     """
 
+    def fRoche1(q):
+        Xi = np.log10(q)
+        ResPre = -0.420297 + 0.232069 * (Xi) - 0.0438153 * (Xi ** 2) - \
+                 0.00567072 * (Xi ** 3) + 0.00870908 * (Xi ** 4) - 0.0205853 * (Xi ** 5) - \
+                 0.0169055 * (Xi ** 6) + 0.0876934 * (Xi ** 7) - 0.0227041 * (Xi ** 8) - \
+                 0.13918 * (Xi ** 9) + 0.118513 * (Xi ** 10) + 0.0627232 * (Xi ** 11) - \
+                 0.122257 * (Xi ** 12) + 0.0345071 * (Xi ** 13) + 0.0297013 * (Xi ** 14) - \
+                 0.0253245 * (Xi ** 15) + 0.00734239 * (Xi ** 16) - 0.000780009 * (Xi ** 17)
+        return (pow(10, ResPre))
+
     M2 = data['star_2_mass'][-1]
     a = data['binary_separation'][-1]
+    G = 2944.643655  # Rsol^3/Msol/days^2
 
     star_outside_rl = True
     i = 0
@@ -222,22 +240,30 @@ def dewi_tauris2000(data, profile, a_ce=1, a_th=0.5):
         line = profile[i]
 
         dm = line['mass'] - profile[i+1]['mass']
-        M1 = line['mass'] # Msol
-        G = 2944.643655  # Rsol^3/Msol/days^2
-        R1 = 10**line['logR'] # Rsol
+        M1 = profile[i+1]['mass']  # Msol
+        R1 = 10**profile[i+1]['logR']  # Rsol
+        Rmid = R1 + (10**line['logR'] - R1) / 2  # mid point of the cell in Rsol
         q = M1 / M2
-        U = (3.0 * 10**line['logP']) / (2.0 * 10**line['logRho']) # cm^2 / s^2
-        U = U * 1.5432035916041713e-12 # Rsol^2 / days^2
+        U = (3.0 * 10**line['logP']) / (2.0 * 10**line['logRho'])  # cm^2 / s^2
+        U = U * 1.5432035916041713e-12  # Rsol^2 / days^2
 
-        da = dm * (G * M1 / R1 - a_th * U + a_ce * G * M2 / (2 * a)) * 2 * a**2 / (a_ce * G * M1 * M2)
+        da = dm * (G * M1 / Rmid - a_th * U + a_ce * G * M2 / (2 * a)) * 2 * a**2 / (a_ce * G * M1 * M2)
         a = a - da
 
         i += 1
 
         # check if still outside RL
-        rl_1 = a * 0.49 * q**(2.0/3.0) / (0.6 * q**(2.0/3.0) + np.log(1 + q**(1.0/3.0)))
+        #rl_1 = a * 0.49 * q**(2.0/3.0) / (0.6 * q**(2.0/3.0) + np.log(1 + q**(1.0/3.0)))
+        rl_1 = a * fRoche1(q)
         if R1 < rl_1:
             star_outside_rl = False
+
+        # if center of star reached report merger
+        if i >= len(profile)-1:
+            print('CE: Merged')
+            M1 = 0
+            a = 0
+            break
 
     M1_final = M1
     a_final = a

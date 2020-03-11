@@ -94,13 +94,13 @@ def test_dewi_tauris2000(data):
 
     af, M1_final = common_envelope.dewi_tauris2000(data, profile, a_th=0)
 
-    assert af == pytest.approx(4.91, abs=0.01)
-    assert M1_final == pytest.approx(0.383, abs=0.001)
+    assert af == pytest.approx(4.859609326, abs=0.00001)
+    assert M1_final == pytest.approx(0.38321120, abs=0.00001)
 
-    af, M1_final = common_envelope.dewi_tauris2000(data, profile, a_th=0.5)
+    af, M1_final = common_envelope.dewi_tauris2000(data, profile, a_th=1.0)
 
-    assert af == pytest.approx(6.463032, abs=0.000001)
-    assert M1_final == pytest.approx(0.3859326, abs=0.000001)
+    assert af == pytest.approx(9.176693170265052, abs=0.00001)
+    assert M1_final == pytest.approx(0.39115816046997015, abs=0.00001)
 
 # def test_all(data):
 #

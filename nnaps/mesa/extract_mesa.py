@@ -139,7 +139,7 @@ def extract_parameters(data, parameters=[], phase_flags=[]):
 
 
 def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_limit=10,
-                 ce_formalism='iben_tutukov1984', ce_parameters={'al':1},
+                 ce_formalism='iben_tutukov1984', ce_parameters={'al':1}, ce_profile_name=None,
                  parameters=[], phase_flags=[], extra_info_parameters=[], verbose=False,**kwargs):
 
     parameters_, column_names = [], []
@@ -181,16 +181,24 @@ def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_li
 
         # 2: check for stability and cut data at start of CE
         stable, ce_age = common_envelope.is_stable(data, criterion=stability_criterion, value=stability_limit)
+        stability = 'stable'
         if not stable:
             # if the model is not stable, cut of the evolution at the start of the CE and anything after than
             # is non physical anyway.
             data = data[data['age'] <= ce_age]
 
+            if ce_profile_name is not None:
+                profiles = profiles[ce_profile_name]
             data = common_envelope.apply_ce(data, profiles=profiles, ce_formalism=ce_formalism, **ce_parameters)
+
+            if data['binary_separation'][-1] > 0:
+                stability = 'CE'
+            else:
+                stability = 'merger'
 
         # 3: extract some standard parameters
         pars = [model['path'].split('/')[-1]]
-        pars += ['CE' if not stable else 'stable']  # todo: add contact binary and merger option here
+        pars += [stability]  # todo: add contact binary option here
 
         # 4: add the extra info to the output
         for p in extra_info_parameters:
