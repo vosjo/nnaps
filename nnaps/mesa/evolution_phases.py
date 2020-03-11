@@ -204,6 +204,26 @@ def HeShellBurning(data):
     return np.where((data['age'] >= a1) & (data['age'] <= a2))
 
 
+def sdA(data):
+    """
+    The sdA phase requires core He burning and 15000 < Teff < 20000
+    """
+    ages = HeCoreBurning(data, return_age=True)
+
+    # Core He Burning phase is required
+    if ages is None:
+        return None
+    else:
+        a1, a2 = ages
+
+    d = data[(data['age'] > a1) & (data['age'] < a2)]
+    if all(10 ** d['log_Teff'] < 15000) or all(10 ** d['log_Teff'] >= 20000):
+        return None
+
+    return np.where((data['age'] > a1) & (data['age'] < a2) &
+                    (10 ** data['log_Teff'] >= 15000) & (10 ** data['log_Teff'] < 20000))
+
+
 def sdB(data):
     """
     The sdB phase requires core He burning and 20000 < Teff < 40000
@@ -217,7 +237,7 @@ def sdB(data):
         a1, a2 = ages
 
     d = data[(data['age'] > a1) & (data['age'] < a2)]
-    if all(d['log_Teff'] < 20000) or all(d['log_Teff'] > 40000):
+    if all(10**d['log_Teff'] < 20000) or all(10**d['log_Teff'] > 40000):
         return None
 
     return np.where((data['age'] > a1) & (data['age'] < a2) &
@@ -237,7 +257,7 @@ def sdO(data):
         a1, a2 = ages
 
     d = data[(data['age'] > a1) & (data['age'] < a2)]
-    if all(d['log_Teff'] <= 40000):
+    if all(10**d['log_Teff'] <= 40000):
         return None
 
     return np.where((data['age'] > a1) & (data['age'] < a2) & (10**data['log_Teff'] > 40000))
@@ -269,7 +289,8 @@ def He_WD(data):
 
 
 all_phases = {'init': init, 'final': final, 'MLstart': MLstart, 'MLend': MLend, 'ML': ML, 'HeIgnition': HeIgnition,
-              'HeCoreBurning': HeCoreBurning, 'HeShellBurning': HeShellBurning, 'sdB': sdB, 'sdO': sdO, 'He-WD': He_WD}
+              'HeCoreBurning': HeCoreBurning, 'HeShellBurning': HeShellBurning,
+              'sdA': sdA, 'sdB': sdB, 'sdO': sdO, 'He-WD': He_WD}
 
 
 def get_custom_phase(phase, data):
