@@ -139,6 +139,7 @@ def extract_parameters(data, parameters=[], phase_flags=[]):
 
 
 def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_limit=10,
+                 ce_formalism='iben_tutukov1984', ce_parameters={'al':1},
                  parameters=[], phase_flags=[], extra_info_parameters=[], verbose=False,**kwargs):
 
     parameters_, column_names = [], []
@@ -185,7 +186,7 @@ def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_li
             # is non physical anyway.
             data = data[data['age'] <= ce_age]
 
-            data = common_envelope.apply_ce(data, ce_model='')
+            data = common_envelope.apply_ce(data, profiles=profiles, ce_formalism=ce_formalism, **ce_parameters)
 
         # 3: extract some standard parameters
         pars = [model['path'].split('/')[-1]]

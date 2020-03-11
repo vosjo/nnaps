@@ -1,46 +1,73 @@
 
 import numpy as np
 
-def is_stable(data, criterion='J_div_Jdot_div_P', value=10):
+
+def is_stable(data, criterion='J_div_Jdot_div_P', value=10, return_model_number=False):
+    """
+    Checks if a model is stable with respect to the provided stability criterion. Known criteria are:
+
+    - Mdot: lg_mstar_dot_1 > value
+    - delta: mass_transfer_delta > value
+    - J_div_Jdot_div_P: 10**log10_J_div_Jdot_div_P < value
+    - M_div_Mdot_div_P: 10**log10_M_div_Mdot_div_P < value
+    - R_div_SMA: star_1_radius / binary_separation > value
+
+    :param data: model (np ndarray)
+    :param criterion: which criterion to use
+    :param value: value for the criterion to satisfy
+    :param return_model_number: if true also return the model_number
+    :return: stable (boolean), age (float), [model_number (int)], when stable age and model_number are last reached values
+             when unstable, they are the age and model_number when the model becomes unstable.
+    """
+    stable = True
+    a = data['age'][-1]
+    m = data['model_number'][-1]
+
     if criterion == 'Mdot':
 
         if np.max(data['lg_mstar_dot_1']) > value:
             s = np.where(data['lg_mstar_dot_1'] > value)
-            a = data['age'][s][1]
-            return False, a
+            stable = False
 
     elif criterion == 'delta':
 
         if np.max(data['mass_transfer_delta']) > value:
             s = np.where(data['mass_transfer_delta'] > value)
-            a = data['age'][s][1]
-            return False, a
+            stable = False
 
     elif criterion == 'J_div_Jdot_div_P':
 
         if np.min(10 ** data['log10_J_div_Jdot_div_P']) <= value:
             s = np.where(10 ** data['log10_J_div_Jdot_div_P'] < value)
-            a = data['age'][s][1]
-            return False, a
+            stable = False
 
     elif criterion == 'M_div_Mdot_div_P':
 
         if np.min(10 ** data['log10_M_div_Mdot_div_P']) <= value:
             s = np.where(10 ** data['log10_M_div_Mdot_div_P'] < value)
-            a = data['age'][s][1]
-            return False, a
+            stable = False
 
     elif criterion == 'R_div_SMA':
 
         if np.max(data['star_1_radius'] / data['binary_separation']) > value:
             s = np.where(data['star_1_radius'] / data['binary_separation'] > value)
-            a = data['age'][s][1]
-            return False, a
+            stable = False
 
-    return True, data['age'][-1]
+    else:
+        raise ValueError('Stability criterion not recognized. Use any of: Mdot, delta,' +\
+                         ' J_div_Jdot_div_P, M_div_Mdot_div_P  or R_div_SMA')
+
+    if not stable:
+        a = data['age'][s][1]
+        m = data['model_number'][s][1]
+
+    if return_model_number:
+        return stable, a, m
+    else:
+        return stable, a
 
 
-def apply_ce(data, profile=None, ce_model='iben_tutukov1984', **kwargs):
+def apply_ce(data, profiles=None, ce_formalism='iben_tutukov1984', max_profile_distance=5, **kwargs):
     """
     Function performs the ce ejection and updates some stellar and binary parameters
 
@@ -48,37 +75,58 @@ def apply_ce(data, profile=None, ce_model='iben_tutukov1984', **kwargs):
     updates: star_1_mass, star_2_mass, period_days, binary_separation, mass_ratio, rl_1, rl_2
 
     :param data: ndarray with model parameters
-    :param ce_model: CE model to use (not implemented yet)
+    :param profiles: dictionary containing all available profiles for the model
+    :param ce_formalism: Which CE formalism to use
+    :param max_profile_distance: when using dewi_tauris2000, the maximum model_number difference between onset CE and
+           the closest profile available.
     :return: same dataset as provided with on the last line the parameters after the CE phase.
     """
 
-    if ce_model == 'iben_tutukov1984':
+    if ce_formalism == 'iben_tutukov1984':
         af, M1_final = iben_tutukov1984(data, **kwargs)
 
-    elif ce_model == 'webbink1984':
+    elif ce_formalism == 'webbink1984':
         af, M1_final = webbink1984(data, **kwargs)
 
-    elif ce_model == 'dewi_tauris2000':
-        af, M1_final = dewi_tauris2000(data, profile=profile, **kwargs)
+    elif ce_formalism == 'demarco2011':
+        af, M1_final = demarco2011(data, **kwargs)
+
+    elif ce_formalism == 'dewi_tauris2000':
+        # need to find the correct profile for this
+
+        ce_mn = data['model_number'][-1]
+        profile_legend = profiles['legend']
+
+        diff = abs(profile_legend['model_number'] - ce_mn)
+
+        if np.min(diff) > max_profile_distance:
+            # no suitable profile, use Webbink instead
+            af, M1_final = webbink1984(data, **kwargs)
+
+        else:
+            profile_name = profile_legend['profile_name'][diff == np.min(diff)][0]
+            profile = profiles[profile_name.decode('UTF-8')]
+
+            af, M1_final = dewi_tauris2000(data, profile=profile, **kwargs)
 
     else:
-        af, M1_final = iben_tutukov1984(data, al=1)
+        raise ValueError('CE formalism not recognized, use one of: iben_tutukov1984, webbink1984,'
+                         'dewi_tauris2000 or demarco2011.')
 
     M2 = data['star_2_mass'][-1]
 
     G = 2944.643655  # Rsol^3/Msol/days^2
     P = np.sqrt(4 * np.pi ** 2 * af ** 3 / G * (M1_final + M2))
-    sma = af * 0.004649183820234682  # sma in AU
-    sma_rsol = sma * 214.83390446073912
 
     q = M1_final / M2
 
-    rl_1 = sma_rsol * 0.49 * q ** (2.0 / 3.0) / (0.6 * q ** (2.0 / 3.0) + np.log(1 + q ** (1.0 / 3.0)))
-    rl_2 = sma_rsol * 0.49 * q ** (-2.0 / 3.0) / (0.6 * q ** (-2.0 / 3.0) + np.log(1 + q ** (-1.0 / 3.0)))
+    rl_1 = af * 0.49 * q ** (2.0 / 3.0) / (0.6 * q ** (2.0 / 3.0) + np.log(1 + q ** (1.0 / 3.0)))
+    rl_2 = af * 0.49 * q ** (-2.0 / 3.0) / (0.6 * q ** (-2.0 / 3.0) + np.log(1 + q ** (-1.0 / 3.0)))
 
     data['period_days'][-1] = P
-    data['binary_separation'][-1] = sma
+    data['binary_separation'][-1] = af
     data['star_1_mass'][-1] = M1_final
+    data['envelope_mass'][-1] = np.max([M1_final - data['he_core_mass'][-1], 0])  # can't be negative
     data['mass_ratio'][-1] = q
     data['rl_1'][-1] = rl_1
     data['rl_2'][-1] = rl_2
