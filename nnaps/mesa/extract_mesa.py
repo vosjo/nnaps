@@ -195,10 +195,12 @@ def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_li
                 stability = 'CE'
             else:
                 stability = 'merger'
+        if extra_info['termination_code'] == 'accretor_overflow_terminate':
+            stability = 'contact' # todo: improve contact option, check R1/RL1 and R2/RL2
 
         # 3: extract some standard parameters
         pars = [model['path'].split('/')[-1]]
-        pars += [stability]  # todo: add contact binary option here
+        pars += [stability]
 
         # 4: add the extra info to the output
         for p in extra_info_parameters:
