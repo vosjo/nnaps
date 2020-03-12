@@ -163,7 +163,6 @@ def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_li
     extra_info_parameters = extra_parameters_
 
     columns = ['path', 'stability'] + extra_names + column_names + phase_flags
-    # results = pd.DataFrame(columns=columns)
     results = []
 
     for i, model in file_list.iterrows():
@@ -182,6 +181,8 @@ def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_li
         # 2: check for stability and cut data at start of CE
         stable, ce_age = common_envelope.is_stable(data, criterion=stability_criterion, value=stability_limit)
         stability = 'stable'
+        if extra_info['termination_code'] == 'accretor_overflow_terminate':
+            stability = 'contact'
         if not stable:
             # if the model is not stable, cut of the evolution at the start of the CE and anything after than
             # is non physical anyway.
@@ -191,12 +192,11 @@ def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_li
                 profiles = profiles[ce_profile_name]
             data = common_envelope.apply_ce(data, profiles=profiles, ce_formalism=ce_formalism, **ce_parameters)
 
-            if data['binary_separation'][-1] > 0:
-                stability = 'CE'
-            else:
+            stability = 'CE'
+
+            # check if companion is overflowing or if components merged
+            if data['star_2_radius'] >= 0.99 * data['rl_2'] or data['binary_separation'][-1] > 0:
                 stability = 'merger'
-        if extra_info['termination_code'] == 'accretor_overflow_terminate':
-            stability = 'contact' # todo: improve contact option, check R1/RL1 and R2/RL2
 
         # 3: extract some standard parameters
         pars = [model['path'].split('/')[-1]]
