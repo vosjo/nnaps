@@ -195,7 +195,7 @@ def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_li
             stability = 'CE'
 
             # check if companion is overflowing or if components merged
-            if data['star_2_radius'] >= 0.99 * data['rl_2'] or data['binary_separation'][-1] > 0:
+            if data['star_2_radius'][-1] >= 0.99 * data['rl_2'][-1] or data['binary_separation'][-1] > 0:
                 stability = 'merger'
 
         # 3: extract some standard parameters
