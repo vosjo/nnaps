@@ -1,7 +1,7 @@
 .. nnaps documentation master file, created by
-   sphinx-quickstart on Tue Feb  4 11:35:28 2020.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+sphinx-quickstart on Tue Feb  4 11:35:28 2020.
+You can adapt this file completely to your liking, but it should at least
+contain the root `toctree` directive.
 
 NNaPS
 =====
@@ -40,19 +40,26 @@ that you are interested in. You can make a model predicting those observables in
 
 
 .. toctree::
-   :maxdepth: 2
-   :caption: User Guide
+    :maxdepth: 2
+    :caption: User Guide
 
-   userguide/install
-   userguide/predictors
-   userguide/reports
+    userguide/install
+    userguide/mesa
+    userguide/mesa_2h5
+    userguide/mesa_extract
+    userguide/predictors
+    userguide/reports
 
 .. toctree::
-   :maxdepth: 1
-   :caption: Tutorials
+    :maxdepth: 1
+    :caption: Tutorials
 
-   tutorials/quickstart
-   tutorials/observables
-   tutorials/tracks
-   
+    tutorials/quickstart
+    tutorials/observables
+    tutorials/tracks
+
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
 
