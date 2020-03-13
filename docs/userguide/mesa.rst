@@ -13,9 +13,54 @@ Both tools run from the command line as follows:
     nnaps-mesa -2h5
     nnaps-mesa -extract
 
-Both the 2h5 and the extract tool have many settings. To simplify the process, the settings of both tools can be
-provided in a yaml settings file. See below for the details on both tools.
+command line options
+--------------------
 
+**nnaps-mesa** mode <*(file_list)*> <*model_directory*> [*options*]
+
+.. program:: nnaps-mesa
+
+.. option:: -2h5 (file_list.csv) model_directory
+
+    The compress option, used to compress MESA models and store them in hdf5 format.
+
+    **file_list.csv** optional argument. A list of the models in csv format. Should at least contain  a column named
+    'path' with the folder name of the mesa models. The other columns can contain other information which will be stored
+    in the hdf5 file of the model.
+
+    **model_directory** mandatory argument. The directory containing all mesa models. Each model in its own sub folder.
+
+.. option:: -extract model_directory
+
+    The extract option, used to extract model parameters from MESA models stored in hdf5 format.
+
+    **model_directory** mandatory argument. The directory containing all mesa models in hdf5 format.
+
+.. option:: -setup setup_file
+
+    yaml file containing the settings for either the :option:`-2h5` or :option:`-extract` option.
+
+    If not setup file is give, nnaps-mesa will look for one in the current directory or in the *<user>/.nnaps*
+    directory. In that case the filename of the setup file needs to be *defaults_2h5.yaml* or *defaults_extract.yaml*
+    for respectively the :option:`-2h5` and :option:`-extract` option.
+
+    If no setup file can be found anywhere, nnaps-mesa will use the defaults stored in the mesa.defaults module.
+
+.. option:: -o output
+
+    Where the output of either the :option:`-2h5` or :option:`-extract` option should be stored.
+
+    In the case of :option:`-2h5`: *output* should be the path to the directory where you want the hdf5 MESA files
+    to be stored.
+
+    In the case of :option:`-extract`: *output* is the name of the csv file where nnaps-mesa will write the extracted
+    parameters for all models.
+
+.. option:: --skip
+
+    Only relevant for the :option:`-2h5` option. When provided, nnaps-mesa will only compress models that are not yet
+    present in the output folder. Models that already have a compressed hdf5 version in the output folder will be
+    ignored.
 
 Compressing runs (2h5)
 ----------------------
