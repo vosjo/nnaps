@@ -52,7 +52,7 @@ class Test2H5:
 class TestExtract:
 
     def test_get_phases(self):
-        phase_names = ['init', 'final', 'MLstart', 'MLend', 'ML', 'HeIgnition', 'HeCoreBurning', 'HeShellBurning']
+        phase_names = ['init', 'final', 'MLstart', 'MLend', 'ML', 'HeIgnition', 'HeCoreBurning', 'HeShellBurning', 'sdB']
 
         # stable model without He ignition and struggles at the end
         # age of the last 1470 time steps doesn't change!
@@ -109,6 +109,19 @@ class TestExtract:
         assert data['model_number'][phases['HeCoreBurning']][-1] == 12594
         assert data['model_number'][phases['HeShellBurning']][0] == 12597
         assert data['model_number'][phases['HeShellBurning']][-1] == 14268
+
+        # sdB star with core and shell He burning
+        data, _ = extract_mesa.read_history(base_path / 'test_data/M1.269_M1.229_P133.46_Z0.00320.h5',
+                                            return_profiles=False)
+        phases = evolution_phases.get_all_phases(phase_names, data)
+
+        assert data['model_number'][phases['sdB']][0] == 11025
+        assert data['model_number'][phases['sdB']][-1] == 22689
+
+        a1, a2 = evolution_phases.HeCoreBurning(data, return_age=True)
+
+        assert a1 == pytest.approx(3230113709.8599186, abs=0.001)
+        assert a2 == pytest.approx(3316814816.4952917, abs=0.001)
 
     def test_decompose_parameter(self):
 

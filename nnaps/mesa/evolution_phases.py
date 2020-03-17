@@ -170,7 +170,7 @@ def HeCoreBurning(data, return_age=False):
         return None
 
     if return_age:
-        a2 = data['age'][(data['age'] >= a1) & (data['c_core_mass'] <= 0.01)][0]
+        a2 = data['age'][(data['age'] >= a1) & (data['c_core_mass'] <= 0.01)][-1]
         return a1, a2
     else:
         return np.where((data['age'] >= a1) & (data['c_core_mass'] <= 0.01))
