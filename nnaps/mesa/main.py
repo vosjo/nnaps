@@ -15,7 +15,7 @@ def main():
                         help='Convert MESA models history files to h5 format')
     group.add_argument('-extract', dest='extract', default=None,
                         help='Extract parameters from history files stored as h5')
-    parser.add_argument('-setup', dest='setup', nargs=1, default=None,
+    parser.add_argument('-setup', dest='setup', default=None,
                         help='The setup file containing necessary info for the -2h5 and -extract option')
     parser.add_argument('-o', dest='output', default=None,
                         help='The output file or directory for the -2h5 and -extract functions')
