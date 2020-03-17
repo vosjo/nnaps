@@ -5,7 +5,7 @@ import pandas as pd
 
 from pathlib import Path
 
-from . import read_mesa, extract_mesa, defaults
+from nnaps.mesa import read_mesa, extract_mesa, defaults
 
 
 def main():
@@ -84,4 +84,9 @@ def main():
     else:
         print("Nothing to do!\nUse as:\n"
               ">>> nnaps-mesa -2h5 <modelfile.csv> <input_path> -o <output_path>\n"
-              ">>> nnaps-mesa -extract <input_path> -o <output_file>")
+              ">>> nnaps-mesa -extract <input_path> -o <output_file>\n"
+              "For help run\n>>> nnaps-mesa -h")
+
+
+if __name__=="__main__":
+    main()
