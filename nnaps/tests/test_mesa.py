@@ -52,7 +52,7 @@ class Test2H5:
 class TestExtract:
 
     def test_get_phases(self):
-        phase_names = ['init', 'final', 'MLstart', 'MLend', 'ML', 'HeIgnition', 'HeCoreBurning', 'HeShellBurning', 'sdB']
+        phase_names = ['init', 'final', 'MLstart', 'MLend', 'ML', 'HeIgnition', 'HeCoreBurning', 'HeShellBurning']
 
         # stable model without He ignition and struggles at the end
         # age of the last 1470 time steps doesn't change!
@@ -113,10 +113,12 @@ class TestExtract:
         # sdB star with core and shell He burning
         data, _ = extract_mesa.read_history(base_path / 'test_data/M1.269_M1.229_P133.46_Z0.00320.h5',
                                             return_profiles=False)
-        phases = evolution_phases.get_all_phases(phase_names, data)
+        phases = evolution_phases.get_all_phases(['sdA', 'sdB', 'sdO'], data)
 
+        assert phases['sdA'] is None
         assert data['model_number'][phases['sdB']][0] == 11025
         assert data['model_number'][phases['sdB']][-1] == 22689
+        assert phases['sdO'] is None
 
         a1, a2 = evolution_phases.HeCoreBurning(data, return_age=True)
 

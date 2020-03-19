@@ -206,7 +206,9 @@ def HeShellBurning(data):
 
 def sdA(data):
     """
-    The sdA phase requires core He burning and 15000 < Teff < 20000
+    The sdA phase requires core He burning and the average He core burning Teff between 15000 and 20000
+
+    If the star is an sdA, returns the part of the He core burning phase with 15000 <= teff < 20000
     """
     ages = HeCoreBurning(data, return_age=True)
 
@@ -217,16 +219,21 @@ def sdA(data):
         a1, a2 = ages
 
     d = data[(data['age'] > a1) & (data['age'] < a2)]
-    if all(10 ** d['log_Teff'] < 15000) or all(10 ** d['log_Teff'] >= 20000):
-        return None
 
-    return np.where((data['age'] > a1) & (data['age'] < a2) &
+    teff = 10**avg_(d, 'log_Teff')
+
+    if teff < 15000 or teff >= 20000:
+        return None
+    else:
+        return np.where((data['age'] > a1) & (data['age'] < a2) &
                     (10 ** data['log_Teff'] >= 15000) & (10 ** data['log_Teff'] < 20000))
 
 
 def sdB(data):
     """
-    The sdB phase requires core He burning and 20000 < Teff < 40000
+    The sdB phase requires core He burning and the average He core burning Teff between 20000 and 40000
+
+    If the star is an sdB, returns the part of the He core burning phase with 20000 <= teff < 40000
     """
     ages = HeCoreBurning(data, return_age=True)
 
@@ -237,16 +244,21 @@ def sdB(data):
         a1, a2 = ages
 
     d = data[(data['age'] > a1) & (data['age'] < a2)]
-    if all(10**d['log_Teff'] < 20000) or all(10**d['log_Teff'] > 40000):
-        return None
 
-    return np.where((data['age'] > a1) & (data['age'] < a2) &
-                    (10**data['log_Teff'] >= 20000) & (10**data['log_Teff'] <= 40000))
+    teff = 10 ** avg_(d, 'log_Teff')
+
+    if teff < 20000 or teff >= 40000:
+        return None
+    else:
+        return np.where((data['age'] > a1) & (data['age'] < a2) &
+                    (10**data['log_Teff'] >= 20000) & (10**data['log_Teff'] < 40000))
 
 
 def sdO(data):
     """
-    sdO requires core He burning and Teff > 40000
+    sdO requires core He burning and the average He core burning Teff >= 40000
+
+    If the star is an sdO, returns the part of the He core burning phase with teff >= 40000
     """
     ages = HeCoreBurning(data, return_age=True)
 
@@ -257,10 +269,13 @@ def sdO(data):
         a1, a2 = ages
 
     d = data[(data['age'] > a1) & (data['age'] < a2)]
-    if all(10**d['log_Teff'] <= 40000):
-        return None
 
-    return np.where((data['age'] > a1) & (data['age'] < a2) & (10**data['log_Teff'] > 40000))
+    teff = 10 ** avg_(d, 'log_Teff')
+
+    if teff < 40000:
+        return None
+    else:
+        return np.where((data['age'] > a1) & (data['age'] < a2) & (10**data['log_Teff'] >= 40000))
 
 
 def He_WD(data):
