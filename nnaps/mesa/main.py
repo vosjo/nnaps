@@ -56,6 +56,8 @@ def main():
 
         read_mesa.convert2hdf5(model_list, output_path=args.output, **setup, skip_existing=args.skip, verbose=True)
 
+        print("--> {}".format(args.output))
+
     elif args.extract is not None:
 
         if args.output is None:
@@ -80,6 +82,8 @@ def main():
         result = extract_mesa.extract_mesa(file_list, **setup, verbose=True)
 
         result.to_csv(args.output, index=False, na_rep='NaN')
+
+        print("--> {}".format(args.output))
 
     else:
         print("Nothing to do!\nUse as:\n"
