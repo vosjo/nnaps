@@ -442,7 +442,7 @@ class FCPredictor(BasePredictor):
             history_df['training_run'] = np.max(self.history['training_run']) + 1
             self.history = self.history.append(history_df, sort=False)
 
-    def fit(self, data=None, epochs=100, batch_size=128, early_stopping=None, reduce_lr=None, min_lr=None):
+    def fit(self, data=None, epochs=100, batch_size=128, early_stopping=None, reduce_lr=None, min_lr=None, verbose=2):
         """
         Train the model
 
@@ -483,7 +483,7 @@ class FCPredictor(BasePredictor):
             callbacks.append(reduce_lr)
 
         history = self.model.fit(X, Y, epochs=epochs, batch_size=batch_size, shuffle=True,
-                                 validation_data=(X_val, Y_val), verbose=2, callbacks=callbacks)
+                                 validation_data=(X_val, Y_val), verbose=verbose, callbacks=callbacks)
 
         self._append_to_history(history.history)
 
