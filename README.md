@@ -6,8 +6,11 @@ NNaPS aims to be a simple and easy to use codebase for building a population syn
 stellar/binary evolution models. For example, with NNaPS, a set of MESA models can be turned into a population 
 synthesis code. 
 
-NNaPS trains a neural network to act as an interpolator in the provided models, and can then be used to predict 
-new models, as long as their starting parameters are in the same range as those used to train the network. 
+NNaPS can extract interesting parameters from a grid of MESA models and even apply a CE ejection for binary models. 
+
+Based on the extracted grid, NNaPS trains a neural network to act as an interpolator in the provided models, and can 
+then be used to predict new models, as long as their starting parameters are in the same range as those used to train 
+the network. 
 
 Lets look at an example:
 
@@ -33,7 +36,25 @@ To uninstall NNaPS, run:
 
     pip uninstall nnaps
 
-## Simplest use
+## Compress and Extract a grid of MESA models
+
+If you have a calculate a grid of MESA models the first step is to compress the output and keep only what is of 
+interest in your study. This can decrease the necessary storage space by a factor of 10 or more, and will make dealing 
+with a large MESA grid on a laptop much more manageable. 
+
+Compressing a grid of MESA runs to hdf5 format can be done with the nnaps-mesa command line tool:
+
+    nnaps-mesa -2h5 <input folder> -o <output folder>
+    
+Once a MESA grid is compressed, all interesting parameters can be extracted from the models and stored in a 2D csv 
+table:
+
+    nnaps-mesa -extract <input folder> -o <output csv filename>
+
+The produced csv file can be used to create a predictive model. See the documentation for details on the nnaps-mesa
+tool.
+
+## Simple predictor
 
 NNaPS requires a setup file or setup dictionary telling it what to do. The minimaly necessary setup includes a list 
 of features and targets together with the path to the training data. Using the test data sample, the simplest model 
@@ -196,7 +217,7 @@ predictors.BPS_predictor(saved_model='model.h5')
 ``` 
 
 
-## Advanced use
+## Advanced predictor
 
 It is possible to define many more setting in the setup file. A complete setupfile would look like:
 

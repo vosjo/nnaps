@@ -6,15 +6,24 @@ contain the root `toctree` directive.
 NNaPS
 =====
 
-Why a new ML package
---------------------
+What is NNaPS?
+--------------
 
-Machine learning models are already easy to set up with scikit learn or Keras. Why a new package that builds
-on top of those? Many astronomers are not acustomed to work with machine learning code. This package aims to 
-make it easy to make a model from scratch by providing only the most basic information in a text file and 
-letting the code deal with the rest. 
-Furthermore, NNaPS allows you to store all necessary information to make, train and use a model in one file. 
-Simplifying distributing and checking a model. 
+Neural Network assisted Population Synthesis is a python package that wants to make it easy to perform population
+synthesis studies with 1D stellar evolution codes. NNaPS is develope specifically with the
+`MESA <http://mesa.sourceforge.net/>`_ (Modules and Experiments in Stellar Evolution) in mind. NNaPS provides a MESA
+module that simplifies extracting interesting parameters from a grid of MESA runs and a machine learning module that
+can be used to create a predictive model based on the results of a MESA run. This model can then be used to perform
+a population synthesis study.
+
+A typical experiment will have the following steps:
+
+1. Create a grid of MESA models covering the input parameter space you want to study
+2. Use nnaps-mesa to extract the parameters of interest from the MESA grid, and apply CE ejection if wanted
+3. Use the machine learning part nnaps.predictors to create a predictive model linking the input parameters of your
+   grid to the output parameters of interest
+4. Create an input population of a few million models and run them through your predictive model to perform the
+   population synthesis study.
 
 Basic Usage
 -----------
