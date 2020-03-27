@@ -182,12 +182,8 @@ def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_li
         stable, ce_age = common_envelope.is_stable(data, criterion=stability_criterion, value=stability_limit)
         stability = 'stable'
 
-        s = np.where((data['star_2_radius'] >= 0.99 * data['rl_2']) & (data['star_1_radius'] >= 0.99 * data['rl_1']))
-        if len(data['model_number'][s]) > 0:
-            stability = 'contact'
-
         if not stable:
-            # if the model is not stable, cut of the evolution at the start of the CE and anything after than
+            # if the model is not stable, cut of the evolution at the start of the CE as anything after than
             # is non physical anyway.
             data = data[data['age'] <= ce_age]
 
@@ -195,11 +191,16 @@ def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_li
                 profiles = profiles[ce_profile_name]
             data = common_envelope.apply_ce(data, profiles=profiles, ce_formalism=ce_formalism, **ce_parameters)
 
-            stability = 'CE'
-
-            # check if companion is overflowing or if components merged
-            if data['star_2_radius'][-1] >= 0.99 * data['rl_2'][-1] or data['binary_separation'][-1] <= 0:
+            # check if CE is ejected or if the system is a merger
+            if data['binary_separation'][-1] <= 0:
                 stability = 'merger'
+            else:
+                stability = 'CE'
+
+        # check if the binary is a contact system at any point during its evolution
+        s = np.where((data['star_2_radius'] >= 0.99 * data['rl_2']) & (data['star_1_radius'] >= 0.99 * data['rl_1']))
+        if len(data['model_number'][s]) > 0:
+            stability = 'contact'
 
         # 3: extract some standard parameters
         pars = [model['path'].split('/')[-1]]

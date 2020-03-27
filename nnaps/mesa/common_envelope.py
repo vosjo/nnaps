@@ -220,7 +220,7 @@ def demarco2011(data, al=1, lb=1):
     return af, Mc
 
 
-def dewi_tauris2000(data, profile, a_ce=1, a_th=0.5):
+def dewi_tauris2000(data, profile, a_ce=1, a_th=0.5, merge_when_core_reached=True):
     """
     CE formalism presented in Dewi and Tauris 2000, A&A, 360, 1043 based on the idea of obtaining the binding energy by
     integrating the stellar profile from Han et al 1995
@@ -234,6 +234,8 @@ def dewi_tauris2000(data, profile, a_ce=1, a_th=0.5):
     :param profile: profile for the integration of binding energy
     :param a_ce: efficiency of ce
     :param a_th: efficiency of binding energy
+    :param merge_when_core_reached: if True, the system is reported as a merger when the He core is reached in the
+                                    iteration before the envelope is ejected and the CE ends.
     :return: final separation, final primary mass
     """
 
@@ -247,9 +249,10 @@ def dewi_tauris2000(data, profile, a_ce=1, a_th=0.5):
                  0.0253245 * (Xi ** 15) + 0.00734239 * (Xi ** 16) - 0.000780009 * (Xi ** 17)
         return (pow(10, ResPre))
 
-    M2 = data['star_2_mass'][-1]
-    a = data['binary_separation'][-1]
-    G = 2944.643655  # Rsol^3/Msol/days^2
+    M2 = data['star_2_mass'][-1]  # Msun
+    Mc = data['he_core_mass'][-1]  # Msun
+    a = data['binary_separation'][-1]  # Rsun
+    G = 2944.643655  # Rsun^3/Msun/days^2
 
     star_outside_rl = True
     i = 0
@@ -257,12 +260,12 @@ def dewi_tauris2000(data, profile, a_ce=1, a_th=0.5):
         line = profile[i]
 
         dm = line['mass'] - profile[i+1]['mass']
-        M1 = profile[i+1]['mass']  # Msol
-        R1 = 10**profile[i+1]['logR']  # Rsol
+        M1 = profile[i+1]['mass']  # Msun
+        R1 = 10**profile[i+1]['logR']  # Rsun
         Rmid = R1 + (10**line['logR'] - R1) / 2  # mid point of the cell in Rsol
         q = M1 / M2
         U = (3.0 * 10**line['logP']) / (2.0 * 10**line['logRho'])  # cm^2 / s^2
-        U = U * 1.5432035916041713e-12  # Rsol^2 / days^2
+        U = U * 1.5432035916041713e-12  # Rsun^2 / days^2
 
         da = dm * (G * M1 / Rmid - a_th * U + a_ce * G * M2 / (2 * a)) * 2 * a**2 / (a_ce * G * M1 * M2)
         a = a - da
@@ -279,6 +282,13 @@ def dewi_tauris2000(data, profile, a_ce=1, a_th=0.5):
         if i >= len(profile)-1:
             print('CE: Merged')
             M1 = 0
+            a = 0
+            break
+
+        # if core is reached and merge_when_core_reached == True report merger
+        if merge_when_core_reached and M1 < Mc:
+            print('CE: Merged')
+            M1 = Mc
             a = 0
             break
 
