@@ -2,7 +2,38 @@
 MESA 2h5
 ========
 
-**nnaps-mesa** -2h5 <*(file_list)*> <*model_directory*> [*options*]
+**nnaps-mesa** -2h5 <*(file_list.csv)*> <*model_directory*> -o <*output_directory*> [*options*]
+
+.. program:: nnaps-mesa
+
+.. option:: -2h5 (file_list.csv) model_directory
+
+    The compress option, used to compress MESA models and store them in hdf5 format.
+
+    **file_list.csv** optional argument. A list of the models in csv format. Should at least contain  a column named
+    'path' with the folder name of the mesa models. The other columns can contain other information which will be stored
+    in the hdf5 file of the model.
+
+    **model_directory** mandatory argument. The directory containing all mesa models. Each model in its own sub folder.
+
+.. option:: -o output
+
+    The path to the directory where the compressed hdf5 MESA files need to be stored.
+
+.. option:: -setup setup_file
+
+    yaml file containing the detailed setup for the compression.
+
+    If not setup file is give, nnaps-mesa will look for one in the current directory or in the *<user>/.nnaps*
+    directory. In that case the filename of the setup file needs to be *defaults_2h5.yaml*.
+
+    If no setup file can be found anywhere, nnaps-mesa will use the defaults stored in the mesa.defaults module.
+
+.. option:: --skip
+
+    When provided, nnaps-mesa will only compress models that are not yet
+    present in the output folder. Models that already have a compressed hdf5 version in the output folder will be
+    ignored.
 
 Basic usage
 -----------
@@ -58,7 +89,9 @@ Setup file
 ----------
 
 By using a custom setup file you can specify exactly what should be included in the hdf5 archive and what the exact
-structure of the MESA model directory is:
+structure of the MESA model directory is.
+
+The setup file has to be structured in yaml format, and can be provided using the *-setup* option.
 
 .. code-block:: yaml
 
@@ -90,15 +123,15 @@ structure of the MESA model directory is:
 
 .. option:: input_path_kw (str)
 
-    If nnaps-mesa -2h5 is called with a file_list.csv and a model_directory, then this keyword indicates the name of the
-    column in the file_list.csv that contains the path of the directory containing the MESA model relative to the
-    working directory.
+    If nnaps-mesa :option:`-2h5` is called with a file_list.csv and a model_directory, then this keyword indicates the
+    name of the column in the file_list.csv that contains the path of the directory containing the MESA model relative
+    to the working directory.
 
 .. option:: input_path_prefix (str)
 
-    If nnaps-mesa -2h5 is called with a file_list.csv and a model_directory, then this keyword indicates the optional
-    prefix to be added in front of the directory given in the file_list.csv by the input_path_kw. The full path relative
-    to the current working directory is then:
+    If nnaps-mesa :option:`-2h5` is called with a file_list.csv and a model_directory, then this keyword indicates the
+    optional prefix to be added in front of the directory given in the file_list.csv by the :option:`input_path_kw`.
+    The full path relative to the current working directory is then:
 
     input_path_prefix + file_list.csv[input_path_kw]
 
@@ -120,12 +153,13 @@ structure of the MESA model directory is:
 
 .. option:: add_stopping_condition (boolean)
 
-    When true, the stopping criteria of MESA will be extracted from the log_file and included in the hdf5 file.
+    When true, the stopping criteria of MESA will be extracted from the :option:`log_file` and included in the hdf5
+    file.
 
 .. option:: profile_files (list)
 
     A list of which profile files to include. If empty or not included all profile files that can be identified using
-    the profile_pattern keyword will be included.
+    the :option:`profile_pattern` keyword will be included.
 
 .. option:: profiles_path (str)
 
@@ -133,4 +167,4 @@ structure of the MESA model directory is:
 
 .. option:: profile_pattern (str)
 
-    The pattern of the profiles to include. Will only be used when profile_files is empty or not included.
+    The pattern of the profiles to include. Will only be used when :option:`profile_files` is empty or not included.
