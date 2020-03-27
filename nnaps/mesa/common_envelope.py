@@ -280,14 +280,12 @@ def dewi_tauris2000(data, profile, a_ce=1, a_th=0.5, merge_when_core_reached=Tru
 
         # if center of star reached report merger
         if i >= len(profile)-1:
-            print('CE: Merged')
             M1 = 0
             a = 0
             break
 
         # if core is reached and merge_when_core_reached == True report merger
         if merge_when_core_reached and M1 < Mc:
-            print('CE: Merged')
             M1 = Mc
             a = 0
             break

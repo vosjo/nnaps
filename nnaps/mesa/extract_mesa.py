@@ -191,16 +191,18 @@ def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_li
                 profiles = profiles[ce_profile_name]
             data = common_envelope.apply_ce(data, profiles=profiles, ce_formalism=ce_formalism, **ce_parameters)
 
-            # check if CE is ejected or if the system is a merger
+            # check if CE is ejected or if the system is a merger or a contact binary
+            s = np.where((data['star_2_radius'] >= 0.99 * data['rl_2']) &
+                         (data['star_1_radius'] >= 0.99 * data['rl_1']))
+
             if data['binary_separation'][-1] <= 0:
                 stability = 'merger'
+                print('CE: Merged')
+            elif len(data['model_number'][s]) > 0:
+                stability = 'contact'
+                print('CE: Contact')
             else:
                 stability = 'CE'
-
-        # check if the binary is a contact system at any point during its evolution
-        s = np.where((data['star_2_radius'] >= 0.99 * data['rl_2']) & (data['star_1_radius'] >= 0.99 * data['rl_1']))
-        if len(data['model_number'][s]) > 0:
-            stability = 'contact'
 
         # 3: extract some standard parameters
         pars = [model['path'].split('/')[-1]]
