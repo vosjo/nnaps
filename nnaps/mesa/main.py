@@ -8,12 +8,25 @@ from pathlib import Path
 from nnaps.mesa import read_mesa, extract_mesa, defaults
 
 
+def get_file_list(input_dirs):
+
+    files = []
+
+    for input_dir in input_dirs:
+        files_ = glob.glob(str(Path(input_dir, '*')))
+        files += files_
+
+    file_list = pd.DataFrame(data=files, columns=['path'])
+
+    return file_list
+
+
 def main():
     parser = argparse.ArgumentParser(description='NNaPS-mesa: Process MESA models')
     group = parser.add_mutually_exclusive_group()
     group.add_argument('-2h5', dest='modelfile', nargs='+', default=None,
                         help='Convert MESA models history files to h5 format')
-    group.add_argument('-extract', dest='extract', default=None,
+    group.add_argument('-extract', dest='extract', default=None, nargs='*',
                         help='Extract parameters from history files stored as h5')
     parser.add_argument('-setup', dest='setup', default=None,
                         help='The setup file containing necessary info for the -2h5 and -extract option')
@@ -60,13 +73,6 @@ def main():
 
     elif args.extract is not None:
 
-        if args.output is None:
-            print("You need to specify an output file with option -o <filename>")
-            exit()
-
-        files = glob.glob(str(Path(args.extract, '*')))
-        file_list = pd.DataFrame(data=files, columns=['path'])
-
         if args.setup is None:
 
             if os.path.isfile('default_extract.yaml'):
@@ -79,11 +85,33 @@ def main():
         else:
             setup = defaults.read_defaults(args.setup)
 
+        # check which output filename to use
+        if 'output' not in setup and args.output is None:
+            print("You need to specify an output file with option -o <filename>")
+            exit()
+        else:
+            if args.output is not None:
+                output = args.output
+            else:
+                output = setup['output']
+
+        # check which intput directories to use
+        if 'input' in setup and len(args.extract) == 0:
+            file_list = get_file_list(setup['input'])
+        else:
+            file_list = get_file_list(args.extract)
+
+        if len(file_list) == 0:
+            print("No input files found!")
+            exit()
+        else:
+            print('Found {} files'.format(len(file_list)))
+
         result = extract_mesa.extract_mesa(file_list, **setup, verbose=True)
 
-        result.to_csv(args.output, index=False, na_rep='NaN')
+        result.to_csv(output, index=False, na_rep='NaN')
 
-        print("--> {}".format(args.output))
+        print("--> {}".format(output))
 
     else:
         print("Nothing to do!\nUse as:\n"
