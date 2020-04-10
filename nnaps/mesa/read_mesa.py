@@ -110,6 +110,8 @@ def convert2hdf5(modellist, star_columns=None, binary_columns=None, profile_colu
 
     for i, model in modellist.iterrows():
 
+        print(input_path_prefix, model[input_path_kw])
+
         if not os.path.isdir(Path(input_path_prefix, model[input_path_kw])):
             continue
 
