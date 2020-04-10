@@ -58,8 +58,8 @@ def is_stable(data, criterion='J_div_Jdot_div_P', value=10, return_model_number=
                          ' J_div_Jdot_div_P, M_div_Mdot_div_P  or R_div_SMA')
 
     if not stable:
-        a = data['age'][s][1]
-        m = data['model_number'][s][1]
+        a = data['age'][s][0]
+        m = data['model_number'][s][0]
 
     if return_model_number:
         return stable, a, m
