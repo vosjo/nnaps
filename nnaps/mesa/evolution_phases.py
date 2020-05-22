@@ -148,7 +148,7 @@ def MLend(data):
     return ([s[0][-1]],)
 
 
-def HeIgnition(data):
+def HeIgnition(data, return_age=False):
     """
     select He ignition as the point between LHe > 10 Lsol and the formation of the
     carbon-oxigen core where the L output is at it's maximum. This is the He flash.
@@ -163,9 +163,14 @@ def HeIgnition(data):
         a2 = data['age'][-1]
     else:
         a2 = data['age'][data['c_core_mass'] >= 0.01][0]
-    d = data[(data['age'] >= a1) & (data['age'] <= a2)]
 
-    return np.where((data['log_LHe'] == np.max(d['log_LHe'])) & (data['age'] >= a1) & (data['age'] <= a2))
+    d = data[(data['age'] >= a1) & (data['age'] <= a2)]
+    s = np.where((data['log_LHe'] == np.max(d['log_LHe'])) & (data['age'] >= a1) & (data['age'] <= a2))
+
+    if return_age:
+        return data['age'][s][0]
+    else:
+        return s
 
 
 def HeCoreBurning(data, return_age=False):
