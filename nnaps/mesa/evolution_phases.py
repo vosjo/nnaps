@@ -1,5 +1,17 @@
 
+from pathlib import Path
+
 import numpy as np
+import pandas as pd
+import scipy as sc
+
+#{ Load limits for core He burning
+
+base_path = Path(__file__).parent
+HeIgnition = pd.read_csv(base_path / 'helium_burn.data', sep='\s+', names=['rho', 'T'])
+HeIgF = sc.interpolate.interp1d(HeIgnition['rho'], HeIgnition['T'])
+
+#}
 
 #{ Parameter decomposition
 
@@ -160,10 +172,10 @@ def HeCoreBurning(data, return_age=False):
     """
     He core burning is period between ignition of He and formation of CO core
     """
-    if np.all(data['log_LHe'] < 1):
-        # no He ignition
+    if np.all(data['log_LHe'] < 1) or np.all(data['log_center_T'] < HeIgF(data['log_center_Rho'])):
+        # no He ignition or no core burning
         return None
-    a1 = data['age'][data['log_LHe'] > 1][0]
+    a1 = data['age'][data['log_center_T'] >= HeIgF(data['log_center_Rho'])][0]
 
     if np.all(data['c_core_mass'] < 0.01):
         # model ignites He, but has problems modeling the core burning. No core burning phase can be returned

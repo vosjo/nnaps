@@ -105,7 +105,7 @@ class TestExtract:
         assert data['model_number'][phases['ML']][0] == 2031
         assert data['model_number'][phases['ML']][-1] == 12018
         assert data['model_number'][phases['HeIgnition']][0] == 11709
-        assert data['model_number'][phases['HeCoreBurning']][0] == 11565
+        assert data['model_number'][phases['HeCoreBurning']][0] == 12492
         assert data['model_number'][phases['HeCoreBurning']][-1] == 12594
         assert data['model_number'][phases['HeShellBurning']][0] == 12597
         assert data['model_number'][phases['HeShellBurning']][-1] == 14268
@@ -116,13 +116,13 @@ class TestExtract:
         phases = evolution_phases.get_all_phases(['sdA', 'sdB', 'sdO'], data)
 
         assert phases['sdA'] is None
-        assert data['model_number'][phases['sdB']][0] == 11025
+        assert data['model_number'][phases['sdB']][0] == 22608
         assert data['model_number'][phases['sdB']][-1] == 22689
         assert phases['sdO'] is None
 
         a1, a2 = evolution_phases.HeCoreBurning(data, return_age=True)
 
-        assert a1 == pytest.approx(3230113709.8599186, abs=0.001)
+        assert a1 == pytest.approx(3232213210.6798477, abs=0.001)
         assert a2 == pytest.approx(3316814816.4952917, abs=0.001)
 
     def test_decompose_parameter(self):
