@@ -24,7 +24,7 @@ def get_file_list(input_dirs):
 def main():
     parser = argparse.ArgumentParser(description='NNaPS-mesa: Process MESA models')
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('-2h5', dest='modelfile', nargs='+', default=None,
+    group.add_argument('-2h5', dest='toh5', nargs='+', default=None,
                         help='Convert MESA models history files to h5 format')
     group.add_argument('-extract', dest='extract', default=None, nargs='*',
                         help='Extract parameters from history files stored as h5')
@@ -36,7 +36,7 @@ def main():
                         help='For 2h5: skip models that have already been transformed to h5.')
     args = parser.parse_args()
 
-    if args.modelfile is not None:
+    if args.toh5 is not None:
         # run the convert2hdf5 function
 
         if args.output is None:
@@ -55,17 +55,26 @@ def main():
         else:
             setup = defaults.read_defaults(args.setup)
 
-        modelfile = Path(args.modelfile[0])
+        modelfile = Path(args.toh5[0])
 
         if modelfile.is_dir():
-            model_list = modelfile.glob('*')
-            model_list = pd.DataFrame(data={'path': [p.name for p in model_list]})
-            setup['input_path_prefix'] = args.modelfile[0]
-            setup['input_path_kw'] = 'path'
+            # check if the path given is of 1 MESA model, or if it contains multiple directories with MESA models
+            # check is performed by checking if a modelfile/inlist file exist
+
+            if (modelfile / 'inlist' ).is_file():
+                model_list = [modelfile]
+                model_list = pd.DataFrame(data={'path': [p.name for p in model_list]})
+                setup['input_path_prefix'] = ''
+                setup['input_path_kw'] = 'path'
+            else:
+                model_list = modelfile.glob('*')
+                model_list = pd.DataFrame(data={'path': [p.name for p in model_list]})
+                setup['input_path_prefix'] = args.toh5[0]
+                setup['input_path_kw'] = 'path'
         else:
-            model_list = pd.read_csv(args.modelfile[0])
-            if len(args.modelfile) > 1:
-                setup['input_path_prefix'] = args.modelfile[1]
+            model_list = pd.read_csv(args.toh5[0])
+            if len(args.toh5) > 1:
+                setup['input_path_prefix'] = args.toh5[1]
 
         read_mesa.convert2hdf5(model_list, output_path=args.output, **setup, skip_existing=args.skip, verbose=True)
 
