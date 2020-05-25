@@ -120,7 +120,7 @@ def ML(data, return_age=False):
         return np.where((data['age'] >= a1) & (data['age'] <= a2))
 
 
-def MLstart(data):
+def MLstart(data, return_age=False):
     """
     First time lg_mstar_dot_1 reaches -10
     """
@@ -131,10 +131,14 @@ def MLstart(data):
         a1, a2 = ages
 
     s = np.where(data['age'] >= a1)
-    return ([s[0][0]],)
+
+    if return_age:
+        return a1
+    else:
+        return ([s[0][0]],)
 
 
-def MLend(data):
+def MLend(data, return_age=False):
     """
     First time lg_mstar_dot_1 dips below -10 after starting mass loss
     """
@@ -145,7 +149,11 @@ def MLend(data):
         a1, a2 = ages
 
     s = np.where(data['age'] <= a2)
-    return ([s[0][-1]],)
+
+    if return_age:
+        return a2
+    else:
+        return ([s[0][-1]],)
 
 
 def HeIgnition(data, return_age=False):
@@ -193,7 +201,7 @@ def HeCoreBurning(data, return_age=False):
         return np.where((data['age'] >= a1) & (data['c_core_mass'] <= 0.01))
 
 
-def HeShellBurning(data):
+def HeShellBurning(data, return_age):
     """
     Shell burning is taken as the period between the formation of the CO core and the drop in He luminosity
     """
@@ -218,7 +226,10 @@ def HeShellBurning(data):
             print(e)
             a2 = data['age'][-1]
 
-    return np.where((data['age'] >= a1) & (data['age'] <= a2))
+    if return_age:
+        return a1, a2
+    else:
+        return np.where((data['age'] >= a1) & (data['age'] <= a2))
 
 
 def sdA(data):
@@ -227,7 +238,7 @@ def sdA(data):
 
     If the star is an sdA, returns the part of the He core burning phase with 15000 <= teff < 20000
     """
-    ages = HeCoreBurning(data, return_age=True)
+    ages = HeCoreBurning(data)
 
     # Core He Burning phase is required
     if ages is None:
