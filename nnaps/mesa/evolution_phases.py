@@ -201,7 +201,7 @@ def HeCoreBurning(data, return_age=False):
         return np.where((data['age'] >= a1) & (data['c_core_mass'] <= 0.01))
 
 
-def HeShellBurning(data, return_age):
+def HeShellBurning(data, return_age=False):
     """
     Shell burning is taken as the period between the formation of the CO core and the drop in He luminosity
     """
@@ -238,7 +238,7 @@ def sdA(data):
 
     If the star is an sdA, returns the part of the He core burning phase with 15000 <= teff < 20000
     """
-    ages = HeCoreBurning(data)
+    ages = HeCoreBurning(data, return_age=True)
 
     # Core He Burning phase is required
     if ages is None:
