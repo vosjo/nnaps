@@ -65,28 +65,52 @@ def read_history(objectname, return_profiles=False):
         ([db[c] for c in columnsdb] + [d1[c] for c in columns1] + [d2[c] for c in columns2],
                                       names=columnsdb + column_names1 + column_names2)
 
+    fields = []
+    fields_data = []
+
     if not 'effective_T' in data.dtype.names:
-        data = append_fields(data, ['effective_T'], [10**data['log_Teff']], usemask=False)
+        fields.append('effective_T')
+        fields_data.append(10**data['log_Teff'])
+        # data = append_fields(data, ['effective_T'], [10**data['log_Teff']], usemask=False)
 
     if not 'effective_T_2' in data.dtype.names:
-        data = append_fields(data, ['effective_T_2'], [10**data['log_Teff_2']], usemask=False)
+        fields.append('effective_T_2')
+        fields_data.append(10**data['log_Teff_2'])
+        # data = append_fields(data, ['effective_T_2'], [10**data['log_Teff_2']], usemask=False)
 
     if not 'rl_overflow_1' in data.dtype.names:
-        data = append_fields(data, ['rl_overflow_1'], [data['star_1_radius'] / data['rl_1']], usemask=False)
+        fields.append('rl_overflow_1')
+        fields_data.append(data['star_1_radius'] / data['rl_1'])
+        # data = append_fields(data, ['rl_overflow_1'], [data['star_1_radius'] / data['rl_1']], usemask=False)
 
     if not 'mass_ratio' in data.dtype.names:
-        data = append_fields(data, ['mass_ratio'], [data['star_1_mass'] / data['star_2_mass']], usemask=False)
+        fields.append('mass_ratio')
+        fields_data.append(data['star_1_mass'] / data['star_2_mass'])
+        # data = append_fields(data, ['mass_ratio'], [data['star_1_mass'] / data['star_2_mass']], usemask=False)
 
     if not 'separation_au' in data.dtype.names:
-        data = append_fields(data, ['separation_au'], [data['binary_separation'] * 0.004649183820234682], usemask=False)
+        fields.append('separation_au')
+        fields_data.append(data['binary_separation'] * 0.004649183820234682)
+        # data = append_fields(data, ['separation_au'], [data['binary_separation'] * 0.004649183820234682], usemask=False)
+
+    if not 'CE_phase' in data.dtype.names:
+        fields.append('CE_phase')
+        fields_data.append(np.zeros_like(data['model_number']))
+        # data = append_fields(data, ['CE_phase'], [np.zeros_like(data['model_number'])], usemask=False)
 
     J_Jdot_P = (data['J_orb'] / np.abs(data['Jdot'])) / (data['period_days'] * 24.0 *60.0 *60.0)
     J_Jdot_P = np.where((J_Jdot_P == 0 ), 99, np.log10(J_Jdot_P))
-    data = append_fields(data, ['log10_J_div_Jdot_div_P'], [J_Jdot_P], usemask=False)
+    fields.append('log10_J_div_Jdot_div_P')
+    fields_data.append(J_Jdot_P)
+    # data = append_fields(data, ['log10_J_div_Jdot_div_P'], [J_Jdot_P], usemask=False)
 
     M_Mdot_P = (data['star_1_mass'] / 10 ** data['lg_mstar_dot_1']) / (data['period_days'] / 360)
     M_Mdot_P = np.where((M_Mdot_P == 0), 99, np.log10(M_Mdot_P))
-    data = append_fields(data, ['log10_M_div_Mdot_div_P'], [M_Mdot_P], usemask=False)
+    fields.append('log10_M_div_Mdot_div_P')
+    fields_data.append(M_Mdot_P)
+    # data = append_fields(data, ['log10_M_div_Mdot_div_P'], [M_Mdot_P], usemask=False)
+
+    data = append_fields(data, fields, fields_data, usemask=False)
 
     if return_profiles:
         if 'profiles' not in data_:

@@ -25,28 +25,28 @@ def test_is_stable():
 
     stable, ce_age, ce_mn = common_envelope.is_stable(data, criterion='Mdot', value=-3, return_model_number=True)
     assert stable is False
-    assert ce_age == pytest.approx(5179376595.6, abs=0.1)
-    assert ce_mn == 11931
+    assert ce_age == pytest.approx(5179376593.6, abs=0.1)
+    assert ce_mn == 11928
 
     stable, ce_age, ce_mn = common_envelope.is_stable(data, criterion='delta', value=0.03, return_model_number=True)
     assert stable is False
-    assert ce_age == pytest.approx(5179376616.3, abs=0.1)
-    assert ce_mn == 12060
+    assert ce_age == pytest.approx(5179376616.1, abs=0.1)
+    assert ce_mn == 12057
 
     stable, ce_age, ce_mn = common_envelope.is_stable(data, criterion='J_div_Jdot_div_P', value=10, return_model_number=True)
     assert stable is False
     assert ce_age == pytest.approx(5179376617.0, abs=0.1)
-    assert ce_mn == 12111
+    assert ce_mn == 12108
 
     stable, ce_age, ce_mn = common_envelope.is_stable(data, criterion='M_div_Mdot_div_P', value=100, return_model_number=True)
     assert stable is False
-    assert ce_age == pytest.approx(5179376614.8, abs=0.1)
-    assert ce_mn == 12024
+    assert ce_age == pytest.approx(5179376614.6, abs=0.1)
+    assert ce_mn == 12021
 
     stable, ce_age, ce_mn = common_envelope.is_stable(data, criterion='R_div_SMA', value=0.5, return_model_number=True)
     assert stable is False
-    assert ce_age == pytest.approx(5179376604.0, abs=0.1)
-    assert ce_mn == 11949
+    assert ce_age == pytest.approx(5179376602.9, abs=0.1)
+    assert ce_mn == 11946
 
     with pytest.raises(ValueError):
         stable, ce_age = common_envelope.is_stable(data, criterion='uk_criterion', value=0.5)
@@ -59,14 +59,17 @@ def test_apply_ce():
 
     data = common_envelope.apply_ce(data, ce_formalism='iben_tutukov1984')
 
-    assert data['period_days'][-1] == pytest.approx(25.55, abs=0.01)
-    assert data['binary_separation'][-1] == pytest.approx(38.1776, abs=1e-4)
+    assert data['period_days'][-1] == pytest.approx(25.62, abs=0.01)
+    assert data['binary_separation'][-1] == pytest.approx(38.2451, abs=1e-4)
     assert data['star_1_mass'][-1] == pytest.approx(0.4477, abs=1e-4)
     assert data['envelope_mass'][-1] == 0
     assert data['star_2_mass'][-1] == pytest.approx(0.4278, abs=1e-4)
     assert data['mass_ratio'][-1] == pytest.approx(1.0465, abs=1e-4)
-    assert data['rl_1'][-1] == pytest.approx(14.6168, abs=1e-4)
-    assert data['rl_2'][-1] == pytest.approx(14.3163, abs=1e-4)
+    assert data['rl_1'][-1] == pytest.approx(14.6426, abs=1e-4)
+    assert data['rl_2'][-1] == pytest.approx(14.3415, abs=1e-4)
+    assert data['CE_phase'][-1] == 1
+    assert data['CE_phase'][-2] == 1
+    assert data['CE_phase'][-3] == 0
 
     data, _, profiles = extract_mesa.read_history(base_path / 'test_data/M1.080_M0.502_P192.67_Z0.01129.h5'
                                                   , return_profiles=True)
@@ -75,8 +78,8 @@ def test_apply_ce():
 
     data = common_envelope.apply_ce(data, profiles=profiles, ce_formalism='dewi_tauris2000', a_th=0.5)
 
-    assert data['binary_separation'][-1] == pytest.approx(6.463032, abs=0.000001)
-    assert data['star_1_mass'][-1] == pytest.approx(0.3859326, abs=0.000001)
+    assert data['binary_separation'][-1] == pytest.approx(6.394841, abs=0.000001)
+    assert data['star_1_mass'][-1] == pytest.approx(0.38572328, abs=0.000001)
     assert data['envelope_mass'][-1] > 0
 
     with pytest.raises(ValueError):
@@ -94,12 +97,12 @@ def test_dewi_tauris2000(data):
 
     af, M1_final = common_envelope.dewi_tauris2000(data, profile, a_th=0)
 
-    assert af == pytest.approx(4.859609326, abs=0.00001)
+    assert af == pytest.approx(4.8597844860, abs=0.00001)
     assert M1_final == pytest.approx(0.38321120, abs=0.00001)
 
     af, M1_final = common_envelope.dewi_tauris2000(data, profile, a_th=1.0)
 
-    assert af == pytest.approx(9.176693170265052, abs=0.00001)
+    assert af == pytest.approx(9.17843738836, abs=0.00001)
     assert M1_final == pytest.approx(0.39115816046997015, abs=0.00001)
 
 # def test_all(data):
@@ -141,7 +144,7 @@ def test_iben_tutukov(data):
     af, M1_final = common_envelope.iben_tutukov1984(data, al=1)
 
     assert M1_final == data['he_core_mass'][-1]
-    assert af == pytest.approx(31.273, abs=0.001)
+    assert af == pytest.approx(31.123, abs=0.001)
 
 
 def test_webbink(data):
@@ -149,7 +152,7 @@ def test_webbink(data):
     af, M1_final = common_envelope.webbink1984(data, al=1, lb=1)
 
     assert M1_final == data['he_core_mass'][-1]
-    assert af == pytest.approx(9.213, abs=0.001)
+    assert af == pytest.approx(9.162, abs=0.001)
 
 
 def test_demarco(data):
@@ -157,4 +160,4 @@ def test_demarco(data):
     af, M1_final = common_envelope.demarco2011(data, al=1, lb=1)
 
     assert M1_final == data['he_core_mass'][-1]
-    assert af == pytest.approx(19.856, abs=0.001)
+    assert af == pytest.approx(19.779, abs=0.001)

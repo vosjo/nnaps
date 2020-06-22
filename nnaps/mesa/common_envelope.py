@@ -1,5 +1,6 @@
 
 import numpy as np
+from numpy.lib.recfunctions import append_fields
 
 
 def is_stable(data, criterion='J_div_Jdot_div_P', value=10, return_model_number=False):
@@ -138,6 +139,12 @@ def apply_ce(data, profiles=None, ce_formalism='iben_tutukov1984', max_profile_d
     rl_1 = af * 0.49 * q ** (2.0 / 3.0) / (0.6 * q ** (2.0 / 3.0) + np.log(1 + q ** (1.0 / 3.0)))
     rl_2 = af * 0.49 * q ** (-2.0 / 3.0) / (0.6 * q ** (-2.0 / 3.0) + np.log(1 + q ** (-1.0 / 3.0)))
 
+    # copy the last row of data so that we don't overwrite the parameters at the start of the CE
+    # add a flag 'CE_phase' that is set to 1 during the CE phase. For now this is maximum 1 row.
+    data = np.hstack([data, data[-1]])
+    data['model_number'][-1] = data['model_number'][-1] + 1
+
+    # update the parameters after the CE phase to their final version
     data['period_days'][-1] = P
     data['binary_separation'][-1] = af
     data['star_1_mass'][-1] = M1_final
@@ -145,6 +152,8 @@ def apply_ce(data, profiles=None, ce_formalism='iben_tutukov1984', max_profile_d
     data['mass_ratio'][-1] = q
     data['rl_1'][-1] = rl_1
     data['rl_2'][-1] = rl_2
+    data['CE_phase'][-1] = 1
+    data['CE_phase'][-2] = 1
 
     return data
 

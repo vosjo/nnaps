@@ -156,6 +156,38 @@ def MLend(data, return_age=False):
         return ([s[0][-1]],)
 
 
+def CE(data):
+    """
+    CE phase as defined in the common_envelope settings.
+    """
+    if all(data['CE_phase'] == 0):
+        return None
+
+    return np.where(data['CE_phase'] == 1)
+
+
+def CEstart(data):
+    """
+    start of the CE phase as defined in the common_envelope settings.
+    """
+    s = CE(data)
+    if s is None:
+        return s
+
+    return ([s[0][0]],)
+
+
+def CEend(data):
+    """
+    end of the CE phase as defined in the common_envelope settings.
+    """
+    s = CE(data)
+    if s is None:
+        return s
+
+    return ([s[0][-1]],)
+
+
 def HeIgnition(data, return_age=False):
     """
     select He ignition as the point between LHe > 10 Lsol and the formation of the
@@ -331,8 +363,9 @@ def He_WD(data):
     return np.where(data['age'] > a1)
 
 
-all_phases = {'init': init, 'final': final, 'MLstart': MLstart, 'MLend': MLend, 'ML': ML, 'HeIgnition': HeIgnition,
-              'HeCoreBurning': HeCoreBurning, 'HeShellBurning': HeShellBurning,
+all_phases = {'init': init, 'final': final, 'MLstart': MLstart, 'MLend': MLend, 'ML': ML,
+              'CEstart': CEstart, 'CEend': CEend, 'CE': CE,
+              'HeIgnition': HeIgnition, 'HeCoreBurning': HeCoreBurning, 'HeShellBurning': HeShellBurning,
               'sdA': sdA, 'sdB': sdB, 'sdO': sdO, 'He-WD': He_WD}
 
 

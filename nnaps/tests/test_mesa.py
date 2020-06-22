@@ -52,7 +52,8 @@ class Test2H5:
 class TestExtract:
 
     def test_get_phases(self):
-        phase_names = ['init', 'final', 'MLstart', 'MLend', 'ML', 'HeIgnition', 'HeCoreBurning', 'HeShellBurning']
+        phase_names = ['init', 'final', 'MLstart', 'MLend', 'ML', 'CE', 'CEstart', 'CEend', 'HeIgnition',
+                       'HeCoreBurning', 'HeShellBurning']
 
         # stable model without He ignition and struggles at the end
         # age of the last 1470 time steps doesn't change!
@@ -86,14 +87,23 @@ class TestExtract:
         assert data['model_number'][phases['HeIgnition']][0] == 19947
         assert phases['HeCoreBurning'] is None
         assert phases['HeShellBurning'] is None
+        assert phases['CE'] is None
+        assert phases['CEstart'] is None
+        assert phases['CEend'] is None
 
         # CE model
         data, _ = extract_mesa.read_history(base_path / 'test_data/M1.205_M0.413_P505.12_Z0.h5', return_profiles=False)
         data = data[data['model_number'] <= 12111]
+        data['CE_phase'][-1] = 1
+        data['CE_phase'][-2] = 1
         phases = evolution_phases.get_all_phases(phase_names, data)
 
         assert data['model_number'][phases['ML']][0] == 2280
         assert data['model_number'][phases['ML']][-1] == 12111
+        assert data['model_number'][phases['CE']][0] == 12108
+        assert data['model_number'][phases['CE']][1] == 12111
+        assert data['model_number'][phases['CEstart']][0] == 12108
+        assert data['model_number'][phases['CEend']][0] == 12111
         assert phases['HeIgnition'] is None
         assert phases['HeCoreBurning'] is None
         assert phases['HeShellBurning'] is None
