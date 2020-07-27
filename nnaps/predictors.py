@@ -9,7 +9,7 @@ from sklearn.model_selection import train_test_split
 
 from keras.layers import Dense, Input, Dropout
 from keras.models import Model
-from keras.callbacks.callbacks import EarlyStopping, ReduceLROnPlateau
+from keras.callbacks import EarlyStopping, ReduceLROnPlateau
 
 from nnaps import fileio, defaults
 from nnaps.reporting import html_reports, pdf_reports
