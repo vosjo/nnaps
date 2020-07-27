@@ -14,7 +14,7 @@ install_requires = [
     "tables",
     "six",
     "astropy",
-    "pylab"
+    "matplotlib"
 ]
 
 setuptools.setup(
