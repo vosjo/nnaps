@@ -13,7 +13,8 @@ install_requires = [
     "bokeh",
     "tables",
     "six",
-    "astropy"
+    "astropy",
+    "pylab"
 ]
 
 setuptools.setup(
