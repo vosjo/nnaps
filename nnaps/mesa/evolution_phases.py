@@ -9,7 +9,7 @@ import scipy as sc
 
 base_path = Path(__file__).parent
 HeIgnition = pd.read_csv(base_path / 'helium_burn.data', sep='\s+', names=['rho', 'T'])
-HeIgF = sc.interpolate.interp1d(HeIgnition['rho'], HeIgnition['T'])
+HeIgF = sc.interpolate.interp1d(HeIgnition['rho'], HeIgnition['T'], bounds_error=False, fill_value='extrapolate')
 
 #}
 
