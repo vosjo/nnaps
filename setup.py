@@ -8,13 +8,14 @@ install_requires = [
     "numpy",
     "pandas >= 0.25",
     "keras >= 2.3",
+    "xgboost >= 0.9",
     "scikit-learn >= 0.21",
     "pyyaml",
+    "matplotlib",
     "bokeh",
     "tables",
     "six",
     "astropy",
-    "matplotlib"
 ]
 
 setuptools.setup(
