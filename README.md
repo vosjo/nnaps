@@ -22,6 +22,11 @@ covering the observed parameter range were calculated (blue circles in the left 
 were used to train a model and predict the P-q distribution of ~1\,000\,000 binaries (right figure). With this new
 BPS model we can now further explore the P-q distribution of different sub populations in our galaxy.
 
+If you want to try out a BPS model that was created using NNaPS you can try MESA-bps. It allows you to predict the 
+orbital properties of a low mass (< 2.0 Msol) binary after its interaction phase on the red giant branch.
+
+MESA-bps: https://mesa-bps.herokuapp.com/
+
 ## Documentation
 
 Read the docs at [nnaps.readthedocs.io](https://nnaps.readthedocs.io/en/latest/)
@@ -35,6 +40,9 @@ The simplest way to install NNaPS is using pip from the terminal. This will inst
 To uninstall NNaPS, run:
 
     pip uninstall nnaps
+    
+Warning: At the moment saving and loading of NN models requires scikit-learn version 0.22, newer or older version will 
+not work. This problem is being worked on.
 
 ## Compress and Extract a grid of MESA models
 
