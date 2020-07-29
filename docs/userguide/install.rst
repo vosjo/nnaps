@@ -14,6 +14,8 @@ To uninstall NNaPS, run:
 
    pip uninstall nnaps
 
+Warning: at the moment saving and loading models to and from hdf5 format in NNaPS will only work with scikit-learn
+version 0.22. Any newer or older version will not work. This is a known issue and is being worked on.
    
 .. _source:
    
