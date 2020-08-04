@@ -14,7 +14,7 @@ the network.
 
 Lets look at an example:
 
-![wide sdB example](https://raw.githubusercontent.com/vosjo/nnaps/master/docs/wide_sdB_period_q_example.png)
+![wide sdB example](docs/wide_sdB_period_q_example.png)
 
 The orbital period and mass ratio distribution of wide hot subdwarf binaries shows a very strong correlation. We want 
 to study this correlation and predict the P-q distribution of wide sdB binaries in the galaxy. Using MESA, 2000 models 
@@ -29,7 +29,8 @@ MESA-bps: https://mesa-bps.herokuapp.com/
 
 ## Documentation
 
-Read the docs at [nnaps.readthedocs.io](https://nnaps.readthedocs.io/en/latest/)
+The detailed documentation is a work in progress, you can read the current version at
+[nnaps.readthedocs.io](https://nnaps.readthedocs.io/en/latest/)
 
 ## Instalation instructions
 
@@ -45,6 +46,8 @@ Warning: At the moment saving and loading of NN models requires scikit-learn ver
 not work. This problem is being worked on.
 
 ## Compress and Extract a grid of MESA models
+
+![nnaps-mesa workflow](docs/mesa_process_diagram.png)
 
 If you have a calculate a grid of MESA models the first step is to compress the output and keep only what is of 
 interest in your study. This can decrease the necessary storage space by a factor of 10 or more, and will make dealing 
