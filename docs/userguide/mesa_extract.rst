@@ -146,7 +146,7 @@ A parameter to extract consists of 3 parts divided by a double underscore '__': 
 interested in, the phase or exact point in time and potentially the function to apply. Not all three parts need to be
 present:
 
-    <parameter_name>__<evolution_phase>__<function>
+    <parameter_name>__<evolution_phase>__<agregate_function>
 
 Easiest way to demonstrate how this works is by example:
 
@@ -174,17 +174,67 @@ yaml setup file this would look like:
 Evolution phases
 ^^^^^^^^^^^^^^^^
 
-NNaPS MESA can recognize a lot of different evolution phases. A list of all phases is given in ???, together with what
-parameters the MESA track needs to contain to recognize the phase. If a phase you need is missing, please add it and do
-a pull request so that other NNaPS users can also benefit from your work.
+NNaPS MESA can recognize a many of different evolution phases:
 
-Functions
-^^^^^^^^^
+- init
+- final
+- ML
+- MLstart
+- MLend
+- CE
+- CEstart
+- CEend
+- HeIgnition
+- HeCoreBurning
+- HeShellBurning
+- sdA
+- sdB
+- sdO
+- He_WD
 
-The different functions that NNaPS mesa recognizes are:
+An overview of the different phases is given in :doc:`mesa_evolution_phases`, together with the parameters the MESA track
+needs to contain to recognize the phase.
+
+An up to date list of all recognized phases can be obtained with:
+
+.. code-block:: python
+
+    from nnaps.mesa.evolution_phases import EVOLUTION_PHASES
+    print(EVOLUTION_PHASES)
+
+
+Agregate functions
+^^^^^^^^^^^^^^^^^^
+
+The different agregate functions that NNaPS mesa recognizes are:
 
 - *max*: maximum
 - *min*: minimum
 - *avg*: average
 - *diff*: takes the difference between the end and start of the phase: diff = par_end - par_start
 - *rate*: calculates the difference over time: rate = (par_end - par_start) / (age_end-age_start). Uses age in years.
+
+An up to date list of all recognized agregate functions can be obtained with:
+
+.. code-block:: python
+
+    from nnaps.mesa.evolution_phases import AGREGATE_FUNCTIONS
+    print(AGREGATE_FUNCTIONS)
+
+Advanced phases
+^^^^^^^^^^^^^^^
+
+In some cases you will want to obtain the value of a parameters at a point in time that is not directly defined by one
+of the included evolution phases, and which might not be a fixed phase in a stars evolution. NNaPS-mesa offers some
+support to define points based on the value of a different parameter included in the run.
+
+To use this functionality  replace the <evolution_phase> in the parameter name by the name of the parameter that you
+want to base the moment on and combine that with either max or min to define the moment during the evolution that this
+parameter reaches its minimum or maximum. For example, if you want to get the value of the He core mass at the time that
+the mass loss will reach its maximum, you can define a parameter as follows:
+
+    he_core_mass__lg_mstar_dot_1_max
+
+The first part, *he_core_mass*, defines the parameter that you want the value of. The second part, *lg_mstar_dot_1_max*,
+defines the point in time you want to use. In this case that time point is defined as when *lg_mstar_dot_1* reaches its
+maximum value.

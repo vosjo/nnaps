@@ -3,13 +3,16 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import scipy as sc
+from scipy import interpolate
+
+AGREGATE_FUNCTIONS = ['max', 'min', 'avg', 'diff', 'rate']
+EVOLUTION_PHASES = ['init', 'final', 'ML', 'MLstart', 'MLend', ]
 
 #{ Load limits for core He burning
 
 base_path = Path(__file__).parent
 HeIgnition = pd.read_csv(base_path / 'helium_burn.data', sep='\s+', names=['rho', 'T'])
-HeIgF = sc.interpolate.interp1d(HeIgnition['rho'], HeIgnition['T'], bounds_error=False, fill_value='extrapolate')
+HeIgF = interpolate.interp1d(HeIgnition['rho'], HeIgnition['T'], bounds_error=False, fill_value='extrapolate')
 
 #}
 

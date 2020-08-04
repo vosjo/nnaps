@@ -51,6 +51,7 @@ that you are interested in. You can make a model predicting those observables in
     userguide/mesa
     userguide/mesa_2h5
     userguide/mesa_extract
+    userguide/mesa_evolution_phases
     userguide/predictors
     userguide/reports
 

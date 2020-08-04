@@ -42,7 +42,7 @@ release = u'0.1'
 # ones.
 extensions = [
     # 'sphinx_automodapi.automodapi',
-    # 'sphinx.ext.autodoc',
+    'sphinx.ext.autodoc',
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
