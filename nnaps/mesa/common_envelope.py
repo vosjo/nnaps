@@ -2,6 +2,8 @@
 import numpy as np
 from numpy.lib.recfunctions import append_fields
 
+STABILITY_CRITERIA = ['Mdot', 'delta', 'J_div_Jdot_div_P', 'M_div_Mdot_div_P', 'R_div_SMA']
+CE_FORMALISMS = ['iben_tutukov1984', 'webbink1984', 'dewi_tauris2000', 'demarco2011']
 
 def is_stable(data, criterion='J_div_Jdot_div_P', value=10, return_model_number=False):
     """
@@ -55,8 +57,7 @@ def is_stable(data, criterion='J_div_Jdot_div_P', value=10, return_model_number=
             stable = False
 
     else:
-        raise ValueError('Stability criterion not recognized. Use any of: Mdot, delta,' +\
-                         ' J_div_Jdot_div_P, M_div_Mdot_div_P  or R_div_SMA')
+        raise ValueError('Stability criterion not recognized. Use any of: ' + STABILITY_CRITERIA)
 
     if not stable:
         a = data['age'][s][0]
@@ -126,8 +127,7 @@ def apply_ce(data, profiles=None, ce_formalism='iben_tutukov1984', max_profile_d
                 af, M1_final = dewi_tauris2000(data, profile=profile, **kwargs)
 
     else:
-        raise ValueError('CE formalism not recognized, use one of: iben_tutukov1984, webbink1984,'
-                         'dewi_tauris2000 or demarco2011.')
+        raise ValueError('CE formalism not recognized, use one of: ' + CE_FORMALISMS)
 
     M2 = data['star_2_mass'][-1]
 

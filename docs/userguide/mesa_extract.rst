@@ -57,7 +57,7 @@ The setup file has to be structured in yaml format, and can be provided using th
     stability_criterion: J_div_Jdot_div_P
     stability_limit: 10
     ce_formalism: 'dewi_tauris2000'
-    ce_parameters: {'a_ce': 1, 'a_th': 0.5}
+    ce_parameters: {'a_ce': 0.3, 'a_th': 0.5}
     ce_profile_name: 'profile_1_jdotp10.0'
     parameters: []
     phase_flags: []
@@ -100,19 +100,91 @@ The setup file has to be structured in yaml format, and can be provided using th
 
     Which extra info parameters to extract from the models.
 
+Stability criteria
+------------------
+
+Current implemented stability criteria and how they are triggered are:
+
+- Mdot: lg_mstar_dot_1 > value
+- delta: mass_transfer_delta > value
+- J_div_Jdot_div_P: 10**log10_J_div_Jdot_div_P < value
+- M_div_Mdot_div_P: 10**log10_M_div_Mdot_div_P < value
+- R_div_SMA: star_1_radius / binary_separation > value
+
+An up to date list of all stability criteria can be obtained with:
+
+.. code-block:: python
+
+    from nnaps.mesa.common_envelope import STABILITY_CRITERIA
+    print(STABILITY_CRITERIA)
+
+CE formalisms
+-------------
+
+The different CE formalisms implemented in NNaPS-mesa are:
+
+- iben_tutukov1984: `Iben & Tutukov 1984, ApJ, 284, 719 <https://ui.adsabs.harvard.edu/abs/1984ApJ...284..719I/abstract>`_
+- webbink1984: `Webbink 1984, ApJ, 277, 355 <https://ui.adsabs.harvard.edu/abs/1984ApJ...277..355W/abstract>`_
+- dewi_tauris2000: `Dewi and Tauris 2000, A&A, 360, 1043 <https://ui.adsabs.harvard.edu/abs/2000A%26A...360.1043D/abstract>`_
+- demarco2011: `De Marco et al. 2011, MNRAS, 411, 2277 <https://ui.adsabs.harvard.edu/abs/2011MNRAS.411.2277D/abstract>`_
+
+An up to date list of all recognized CE formalisms can be obtained with:
+
+.. code-block:: python
+
+    from nnaps.mesa.common_envelope import CE_FORMALISMS
+    print(CE_FORMALISMS)
 
 Parameters
 ----------
 
-To extract useful information from a MESA model you are likely interested at parameter values at a certain moment in
+To extract useful information from a MESA model you are likely interested in parameter values at a certain moment in
 evolution, or during a certain evolutionary phase. *nnaps-mesa* allows you to easily extract parameters and apply
 aggregate functions on a parameter during a specified phase.
 
 A parameter to extract consists of 3 parts divided by a double underscore '__': the name of the parameter that you are
 interested in, the phase or exact point in time and potentially the function to apply. Not all three parts need to be
-present. Easiest way to demonstrate this is by example:
+present:
 
-star_1_mass__init        -> mass of the primary at the start of the run
-rl_1__max                -> max of the roche lobe size of the primary star
-age__HeCoreBurning__diff -> Difference in age between the start and end of the He core burning phase == duration of He core burning.
-T_effective__ML__min     -> The minimum of the effective temperature during the mass loss phase
+    <parameter_name>__<evolution_phase>__<function>
+
+Easiest way to demonstrate how this works is by example:
+
+- *star_1_mass__init*: mass of the primary at the start of the run.
+- *rl_1__max* : max of the roche lobe size of the primary star during the entire evolution.
+- *age__HeCoreBurning__diff*: Difference in age between the start and end of the He core burning phase or in other words: the duration of He core burning.
+- *T_effective__ML__min*: The minimum of the effective temperature during the mass loss phase.
+- *he_core_mass__HeShellBurning__avg*: average He core mass during the He shell burning phase.
+- *star_1_mass__ML__rate*: The average mass loss rate during the mass loss phase in Msol / yr.
+
+If you don't like the long name that a parameter can get using this formalism, you can provide the parameter as a tuple
+where the first item contains the parameter name following the formalism above, and the second the name that you want to
+use in the csv file. You only have to provide an alternative name for the parameters that you want to rename. In the
+yaml setup file this would look like:
+
+.. code-block:: yaml
+
+    ...
+    parameters:
+    - star_1_mass__init, M1_init
+    - rl_1__max
+    - age__HeCoreBurning__diff, HeCoreBurning_time
+    ...
+
+Evolution phases
+^^^^^^^^^^^^^^^^
+
+NNaPS MESA can recognize a lot of different evolution phases. A list of all phases is given in ???, together with what
+parameters the MESA track needs to contain to recognize the phase. If a phase you need is missing, please add it and do
+a pull request so that other NNaPS users can also benefit from your work.
+
+Functions
+^^^^^^^^^
+
+The different functions that NNaPS mesa recognizes are:
+
+- *max*: maximum
+- *min*: minimum
+- *avg*: average
+- *diff*: takes the difference between the end and start of the phase: diff = par_end - par_start
+- *rate*: calculates the difference over time: rate = (par_end - par_start) / (age_end-age_start). Uses age in years.

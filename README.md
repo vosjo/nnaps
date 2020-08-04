@@ -65,6 +65,9 @@ table:
 The produced csv file can be used to create a predictive model. See the documentation for details on the nnaps-mesa
 tool.
 
+If you would be looking for a simple tool to inspect a large grid of MESA models and their extracted parameters from
+your browser, have a look at: [Track Explorer](https://github.com/vosjo/trackExplorer)
+
 ## Simple predictor
 
 NNaPS requires a setup file or setup dictionary telling it what to do. The minimaly necessary setup includes a list 
