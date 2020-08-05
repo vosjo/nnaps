@@ -118,6 +118,8 @@ An up to date list of all stability criteria can be obtained with:
     from nnaps.mesa.common_envelope import STABILITY_CRITERIA
     print(STABILITY_CRITERIA)
 
+For more info on the stability criteria see: :doc:`mesa_common_envelope`
+
 CE formalisms
 -------------
 
@@ -134,6 +136,8 @@ An up to date list of all recognized CE formalisms can be obtained with:
 
     from nnaps.mesa.common_envelope import CE_FORMALISMS
     print(CE_FORMALISMS)
+
+For more info on the common envelope formalisms see: :doc:`mesa_common_envelope`
 
 Parameters
 ----------
