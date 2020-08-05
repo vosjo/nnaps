@@ -6,7 +6,8 @@ import pandas as pd
 from scipy import interpolate
 
 AGREGATE_FUNCTIONS = ['max', 'min', 'avg', 'diff', 'rate']
-EVOLUTION_PHASES = ['init', 'final', 'ML', 'MLstart', 'MLend', ]
+EVOLUTION_PHASES = ['init', 'final', 'ML', 'MLstart', 'MLend', 'CE', 'CEstart', 'CEend', 'HeIgnition',
+                    'HeCoreBurning', 'HeShellBurning', 'sdA', 'sdB', 'sdO', 'He-WD']
 
 #{ Load limits for core He burning
 
@@ -345,6 +346,8 @@ def He_WD(data):
     """
     Requires star to be on WD cooling track and have He core. Cooling track is selected to start when
     teff < 10000K and logg > 7, or when logg > 7.5 regardless of teff
+
+    Is triggered with 'He-WD'.
     """
 
     if np.max(data['log_g']) < 7.0:

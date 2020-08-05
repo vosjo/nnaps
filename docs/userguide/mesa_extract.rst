@@ -144,7 +144,7 @@ aggregate functions on a parameter during a specified phase.
 
 A parameter to extract consists of 3 parts divided by a double underscore '__': the name of the parameter that you are
 interested in, the phase or exact point in time and potentially the function to apply. Not all three parts need to be
-present:
+present, both the evolution_phase and/or the agregate_function can be omitted:
 
     <parameter_name>__<evolution_phase>__<agregate_function>
 

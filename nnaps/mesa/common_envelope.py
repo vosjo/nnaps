@@ -26,6 +26,9 @@ def is_stable(data, criterion='J_div_Jdot_div_P', value=10, return_model_number=
     a = data['age'][-1]
     m = data['model_number'][-1]
 
+    if criterion not in STABILITY_CRITERIA:
+        raise ValueError('Stability criterion not recognized. Use any of: ' + STABILITY_CRITERIA)
+
     if criterion == 'Mdot':
 
         if np.max(data['lg_mstar_dot_1']) > value:
@@ -56,8 +59,6 @@ def is_stable(data, criterion='J_div_Jdot_div_P', value=10, return_model_number=
             s = np.where(data['star_1_radius'] / data['binary_separation'] > value)
             stable = False
 
-    else:
-        raise ValueError('Stability criterion not recognized. Use any of: ' + STABILITY_CRITERIA)
 
     if not stable:
         a = data['age'][s][0]
@@ -92,6 +93,9 @@ def apply_ce(data, profiles=None, ce_formalism='iben_tutukov1984', max_profile_d
     :return: same dataset as provided with on the last line the parameters after the CE phase.
     """
 
+    if ce_formalism not in CE_FORMALISMS:
+        raise ValueError('CE formalism not recognized, use one of: ' + CE_FORMALISMS)
+
     if ce_formalism == 'iben_tutukov1984':
         af, M1_final = iben_tutukov1984(data, **kwargs)
 
@@ -125,9 +129,6 @@ def apply_ce(data, profiles=None, ce_formalism='iben_tutukov1984', max_profile_d
                 profile = profiles[profile_name.decode('UTF-8')]
 
                 af, M1_final = dewi_tauris2000(data, profile=profile, **kwargs)
-
-    else:
-        raise ValueError('CE formalism not recognized, use one of: ' + CE_FORMALISMS)
 
     M2 = data['star_2_mass'][-1]
 
@@ -237,10 +238,11 @@ def dewi_tauris2000(data, profile, a_ce=1, a_th=0.5, merge_when_core_reached=Tru
     https://ui.adsabs.harvard.edu/abs/1995MNRAS.272..800H/abstract
 
     data requires: star_2_mass, binary_separation
+
     profile requires: mass, logR, logP, logRho
 
     :param data: ndarray with model parameters
-    :param profile: profile for the integration of binding energy
+    :param profile: ndarray profile for the integration of binding energy
     :param a_ce: efficiency of ce
     :param a_th: efficiency of binding energy
     :param merge_when_core_reached: if True, the system is reported as a merger when the He core is reached in the
