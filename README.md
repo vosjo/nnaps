@@ -98,7 +98,7 @@ The entire process of fitting the data and predicting the targets of new data ca
 ```python
 from nnaps import predictors
     
-predictor = predictors.BPS_predictor(setup_file='setup.yaml')
+predictor = predictors.FCPredictor(setup_file='setup.yaml')
     
 predictor.fit(epochs=100)
 
@@ -154,7 +154,7 @@ Using the setup file a predictor can be constructed and fitted:
 ```python
 from nnaps import predictors
     
-predictor = predictors.BPS_predictor(setup_file='test_setup.yaml')
+predictor = predictors.FCPredictor(setup_file='test_setup.yaml')
     
 predictor.fit(epochs=100)
 ```    

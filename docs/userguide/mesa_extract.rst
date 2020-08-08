@@ -178,7 +178,7 @@ yaml setup file this would look like:
 Evolution phases
 ^^^^^^^^^^^^^^^^
 
-NNaPS MESA can recognize a many of different evolution phases:
+NNaPS MESA can recognize a many different evolution phases:
 
 - init
 - final
