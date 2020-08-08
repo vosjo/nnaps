@@ -256,10 +256,10 @@ regressors:
       loss: mean_squared_error
 classifiers:
    product: 
-      processor: OneHotEcoder
+      processor: OneHotEncoder
       loss: categorical_crossentropy
    binary_type:
-      processor: OneHotEcoder
+      processor: OneHotEncoder
       loss: categorical_crossentropy
 
 random_state: 42

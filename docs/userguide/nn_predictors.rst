@@ -1,0 +1,99 @@
+
+Predictors and setup
+====================
+
+Features, Targets and Preprocessing
+-----------------------------------
+
+.. code-block:: yaml
+
+    datafile: 'path_to_csv_file'
+
+    features:
+       feature_1:
+          processor: processor_1
+        ...
+    regressors:
+       target_regressor_1:
+          processor: processor_1
+          loss: loss_1
+        ...
+    classifiers:
+       target_classifier_1:
+          processor: processor_1
+          loss: loss_1
+        ...
+
+    random_state: 42
+    train_test_split: 0.2
+
+.. option:: datafile (str)
+
+    (Optional) The path to the csv file containing the training and testing data. If not provided, you need to provide
+    the training data as a Pandas DataFrame to the Predictor constructor.
+
+.. option:: features (list / dict)
+
+    The features to use in training. For each feature it is possible to provide a preprocessor by using the 'processor'
+    keyword. If no processor is provided a standard scaler is used.
+
+.. option:: regressors (list / dict)
+
+    A list of the target regressors that the model should fit. For each regressor you can provide a preprocessor with
+    the 'processor' keyword and a loss function with the 'loss' keyword. By default no preprocessing will take place.
+    If you don't want to include any regressors in the model, provide an empty list: [].
+
+.. option:: classifiers (list / dict)
+
+    A list of the target classifiers that the model should fit. For each classifier  you can provide a preprocessor with
+    the 'processor' keyword and a loss function with the 'loss' keyword. By default a OneHotEncoder is used as
+    preprocessor. If you don't want to include any classifiers in the model, provide an empty list: [].
+
+.. option:: random_state (int)
+
+    (Optional) Set the random state of numpy for the train/test split. Can be used for reproducibility.
+
+.. option:: train_test_split (float)
+
+    (Optional) The faction of the provided data to be used as test data. Defaults to 20%.
+
+
+XGB predictor
+-------------
+
+Setup
+^^^^^
+
+Methods
+^^^^^^^
+
+.. autoclass:: nnaps.predictors.XGBPredictor
+    :members:
+    :inherited-members:
+
+FC NN predictor
+---------------
+
+Setup
+^^^^^
+
+.. code-block:: yaml
+
+    model:
+       - {'layer':'Dense',   'args':[100], 'kwargs': {'activation':'relu', 'name':'FC_1'} }
+       - {'layer':'Dropout', 'args':[0.1], 'kwargs': {'name':'DO_1'} }
+       - {'layer':'Dense',   'args':[75],  'kwargs': {'activation':'relu', 'name':'FC_2'} }
+       - {'layer':'Dropout', 'args':[0.1], 'kwargs': {'name':'DO_2'} }
+       - {'layer':'Dense',   'args':[50],  'kwargs': {'activation':'relu', 'name':'FC_3'} }
+       - {'layer':'Dropout', 'args':[0.1], 'kwargs': {'name':'DO_3'} }
+
+    optimizer: 'adam'
+    optimizer_kwargs: {'learning_rate':0.001, 'beta_1':0.9, 'beta_2':0.999}
+    batch_size: 128
+
+Methods
+^^^^^^^
+
+.. autoclass:: nnaps.predictors.FCPredictor
+    :members:
+    :inherited-members:
