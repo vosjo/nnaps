@@ -5,6 +5,9 @@ Predictors and setup
 Features, Targets and Preprocessing
 -----------------------------------
 
+The features and targets are defined in the same way regardless of which model you choose. Their setup is defined as
+follows when using a yaml setup file. It is the same when providing them as a dictionary:
+
 .. code-block:: yaml
 
     datafile: 'path_to_csv_file'
@@ -56,6 +59,44 @@ Features, Targets and Preprocessing
 .. option:: train_test_split (float)
 
     (Optional) The faction of the provided data to be used as test data. Defaults to 20%.
+
+For each feature you can provide a preprocessor (scaler). If non is explicitly set, the default scaler will be used on
+the input parameters. When using the Tree based XGBoost method it is not necessary to scale the input parameters.
+
+For each target a preprocessor and a loss function can be defined. For the regressors there is by default no
+preprocessor defined, for the classifiers the default is the one hot encoder. The default regressor loss is 'mean
+square error' and the default classifier loss is 'categorical cross entropy'.
+
+The default preprocessors and loss functions can be obtained from defaults:
+
+.. code-block:: python
+
+    from nnaps import defaults
+
+    # default processors for features
+    defaults.default_scaler
+
+    # default processor for classifiers
+    defaults.default_encoder
+
+    # default regressor loss
+    defaults.default_regressor_loss
+
+    # default classifier loss
+    defaults.default_classifier_loss
+
+
+The recognized preprocessors are:
+
+- StandardScaler
+- RobustScaler
+- MinMaxScaler
+- MaxAbsScaler
+- OneHotEncoder
+- OrdinalEncoder
+
+The recognized loss functions are defined in keras.
+
 
 
 XGB predictor
