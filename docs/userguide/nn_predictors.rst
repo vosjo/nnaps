@@ -115,6 +115,10 @@ Methods
 FC NN predictor
 ---------------
 
+The FCPredictor consists of a fully connected neural network. You have a lot of freedom on how to define the network
+architecture, as long as it is a sequential network (can be interpreted by keras.Sequential. For a full description of
+the options, lets have a look at the setup file:
+
 Setup
 ^^^^^
 
@@ -131,6 +135,24 @@ Setup
     optimizer: 'adam'
     optimizer_kwargs: {'learning_rate':0.001, 'beta_1':0.9, 'beta_2':0.999}
     batch_size: 128
+
+.. option:: model (list)
+
+    The architecture of the model. The default architecture consists of 3 fully connected layers with 100, 75 and 50
+    nodes, interspaced by dropout regularization layers. The activation function is relu. For now the recognized layers
+    are 'Dense' and 'Dropout'.
+
+.. option:: optimizer (str)
+
+    The optimizer to use. Choose from 'sgd', 'adagrad', 'adadelta', 'rmsprop' or 'adam'.
+
+.. option:: optimizer_kwargs (str)
+
+    Any keywords to pass when creating the optimizer.
+
+.. option:: batch_size (int)
+
+    Batch size to use when training the model.
 
 Methods
 ^^^^^^^

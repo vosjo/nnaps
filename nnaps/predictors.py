@@ -115,6 +115,14 @@ class BasePredictor():
                                   "by subclasses")
 
     def score(self, data=None, regressor_metric='mean_absolute_error', classifier_metric='accuracy'):
+        """
+        Calculates the score of a model on the provided data.
+
+        :param data: The data on which to score the network (DataFrame)
+        :param regressor_metric: (optional) which metric to use for regressors
+        :param classifier_metric: (optional) which metric to use for classifiers.
+        :return: The scores
+        """
 
         if data is None:
             data = self.train_data
@@ -150,6 +158,8 @@ class BasePredictor():
         """
         prints the scores of the current model on the training and test data.
 
+        Uses the score function to calculate the scores.
+
         :param training_data: training data set to score, if None the stored one is used.
         :param test_data: set data set to score, is None the stored one is used.
         :return: None
@@ -172,6 +182,11 @@ class BasePredictor():
             print("{:12s}:  {:6.1f}%      {:6.1f}%".format(par, train_score[par] * 100., test_score[par] * 100.))
 
     def plot_confusion_matrix(self):
+        """
+        Plots the confusion matrix for every classifier included in the model
+
+        :return: nothing
+        """
 
         pdf_reports.plot_confusion_matrix(self)
 
