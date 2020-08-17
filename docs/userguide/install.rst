@@ -2,12 +2,18 @@
 Installation
 ============
 
-The simplest way to install NNaPS is using pip from the terminal. This will install NNaPS in the local folder.
+The simplest way to install NNaPS is using pip from the terminal. This will install the latest stable release.
 
 .. code-block:: bash
    
+   pip install nnaps
+
+If you want install the current development version you can also use pip:
+
+.. code-block:: bash
+
    pip install git+https://github.com/vosjo/nnaps.git#egg=nnaps
-   
+
 To uninstall NNaPS, run:
 
 .. code-block:: bash

@@ -19,7 +19,7 @@ install_requires = [
 ]
 
 setuptools.setup(
-    name="nnaps", # Replace with your own username
+    name="nnaps",
     version="0.0.1",
     author="Joris Vos",
     author_email="joris.vos@uv.cl",

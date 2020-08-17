@@ -1,3 +1,5 @@
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/nnaps)
+[![PyPI](https://img.shields.io/pypi/v/nnaps)](https://pypi.org/project/nnaps/)
 [![Documentation Status](https://readthedocs.org/projects/nnaps/badge/?version=latest)](https://nnaps.readthedocs.io/en/latest/?badge=latest)
 
 # Neural Network assisted Population Synthesis code
@@ -34,9 +36,9 @@ The detailed documentation is a work in progress, you can read the current versi
 
 ## Instalation instructions
 
-The simplest way to install NNaPS is using pip from the terminal. This will install NNaPS in the local folder.
+The simplest way to install the latest stable release of NNaPS is using pip.
 
-    pip install git+https://github.com/vosjo/nnaps.git#egg=nnaps
+    pip install nnaps
 
 To uninstall NNaPS, run:
 
