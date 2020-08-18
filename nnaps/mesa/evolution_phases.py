@@ -6,7 +6,7 @@ import pandas as pd
 from scipy import interpolate
 
 AGREGATE_FUNCTIONS = ['max', 'min', 'avg', 'diff', 'rate']
-EVOLUTION_PHASES = ['init', 'final', 'ML', 'MLstart', 'MLend', 'CE', 'CEstart', 'CEend', 'HeIgnition',
+EVOLUTION_PHASES = ['init', 'final', 'MS', 'ML', 'MLstart', 'MLend', 'CE', 'CEstart', 'CEend', 'HeIgnition',
                     'HeCoreBurning', 'HeShellBurning', 'sdA', 'sdB', 'sdO', 'He-WD']
 
 #{ Load limits for core He burning
@@ -267,6 +267,41 @@ def HeShellBurning(data, return_age=False):
     else:
         return np.where((data['age'] >= a1) & (data['age'] <= a2))
 
+def MS(data):
+    """
+    The Main sequence phase is defined as the phase where hydrogen burning takes place is the core.
+
+    Specifically this is defined as the time period starting when the majority of the energy is produced by nuclear
+    reactions, and ending when the core hydrogen runs out.
+
+    start: log_LH > 0.999 * log_L
+    end: center_h1 < 1e-12
+
+    Required history parameters:
+        - log_L
+        - log_LH
+        - center_h1
+
+    :param data: numpy ndarray containing the history of the system.
+    :return: selection where the history corresponds to the main sequence phase
+    """
+
+    if not any(data['log_LH'] / data['log_L'] > 0.999):
+        # MS is not reached
+        return None
+
+    a1 = data['age'][(data['log_LH'] / data['log_L'] > 0.999)][0]
+
+    if not any(data['center_h1'] < 1e-12):
+        a2 = data['age'][-1]
+    else:
+        a2 = data['age'][(data['center_h1'] < 1e-12)][0]
+
+    return np.where((data['age'] >= a1) & (data['age'] <= a2))
+
+def RGB(data):
+
+    pass
 
 def sdA(data):
     """
@@ -369,7 +404,9 @@ def He_WD(data):
     return np.where(data['age'] > a1)
 
 
-all_phases = {'init': init, 'final': final, 'MLstart': MLstart, 'MLend': MLend, 'ML': ML,
+all_phases = {'init': init, 'final': final,
+              'MS': MS,
+              'MLstart': MLstart, 'MLend': MLend, 'ML': ML,
               'CEstart': CEstart, 'CEend': CEend, 'CE': CE,
               'HeIgnition': HeIgnition, 'HeCoreBurning': HeCoreBurning, 'HeShellBurning': HeShellBurning,
               'sdA': sdA, 'sdB': sdB, 'sdO': sdO, 'He-WD': He_WD}

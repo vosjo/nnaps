@@ -52,7 +52,7 @@ class Test2H5:
 class TestExtract:
 
     def test_get_phases(self):
-        phase_names = ['init', 'final', 'MLstart', 'MLend', 'ML', 'CE', 'CEstart', 'CEend', 'HeIgnition',
+        phase_names = ['init', 'final', 'MS', 'MLstart', 'MLend', 'ML', 'CE', 'CEstart', 'CEend', 'HeIgnition',
                        'HeCoreBurning', 'HeShellBurning']
 
         # stable model without He ignition and struggles at the end
@@ -62,6 +62,8 @@ class TestExtract:
 
         assert data['model_number'][phases['init']][0] == 3
         assert data['model_number'][phases['final']][0] == 30000
+        assert data['model_number'][phases['MS']][0] == 27
+        assert data['model_number'][phases['MS']][-1] == 114
         assert data['model_number'][phases['MLstart']][0] == 933
         assert data['model_number'][phases['MLend']][0] == 30000
         assert data['model_number'][phases['ML']][0] == 933
