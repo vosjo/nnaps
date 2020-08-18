@@ -6,7 +6,7 @@ import pandas as pd
 from scipy import interpolate
 
 AGREGATE_FUNCTIONS = ['max', 'min', 'avg', 'diff', 'rate']
-EVOLUTION_PHASES = ['init', 'final', 'MS', 'ML', 'MLstart', 'MLend', 'CE', 'CEstart', 'CEend', 'HeIgnition',
+EVOLUTION_PHASES = ['init', 'final', 'MS', 'RGB', 'ML', 'MLstart', 'MLend', 'CE', 'CEstart', 'CEend', 'HeIgnition',
                     'HeCoreBurning', 'HeShellBurning', 'sdA', 'sdB', 'sdO', 'He-WD']
 
 #{ Load limits for core He burning
@@ -267,7 +267,8 @@ def HeShellBurning(data, return_age=False):
     else:
         return np.where((data['age'] >= a1) & (data['age'] <= a2))
 
-def MS(data):
+
+def MS(data, return_age=False):
     """
     The Main sequence phase is defined as the phase where hydrogen burning takes place is the core.
 
@@ -297,11 +298,49 @@ def MS(data):
     else:
         a2 = data['age'][(data['center_h1'] < 1e-12)][0]
 
-    return np.where((data['age'] >= a1) & (data['age'] <= a2))
+    if return_age:
+        return a1, a2
+    else:
+        return np.where((data['age'] >= a1) & (data['age'] <= a2))
 
-def RGB(data):
 
-    pass
+def RGB(data, return_age=False):
+    """
+    The red giant phase is defined as the phase starting at the end of the MS, and continuing until the either a
+    minimum in Teff or a maximum in luminosity is reached (whichever comes first) before He burning stars.
+
+    Specifically, the start is defined in the same way as the end of the MS phase, based on central hydrogen, and
+    the end is defined based on Teff and log_L before the central He fraction is reduced:
+
+    start: center_h1 < 1e-12
+    end: ( Teff == min(Teff) or log_L == max(log_L) ) and center_He >= center_He_TAMS - 0.01
+
+    Required history parameters:
+        - center_h1
+        - center_he4
+        - effective_T
+        - log_L
+
+    :param data: numpy ndarray containing the history of the system.
+    :return: selection where the history corresponds to the red giant phase
+    """
+
+    if not any(data['center_h1'] < 1e12):
+        # RGB phase never started
+        return None
+
+    a1 = data['age'][(data['center_h1'] < 1e-12)][0]
+
+    c_he_tams = data['center_he4'][(data['center_h1'] < 1e-12)][0]
+    drgb = data[data['center_he4'] >= c_he_tams - 0.01]
+
+    a2 = drgb['age'][(drgb['effective_T'] == np.min(drgb['effective_T'])) | (drgb['log_L'] == np.max(drgb['log_L']))][0]
+
+    if return_age:
+        return a1, a2
+    else:
+        return np.where((data['age'] >= a1) & (data['age'] <= a2))
+
 
 def sdA(data):
     """
@@ -405,7 +444,7 @@ def He_WD(data):
 
 
 all_phases = {'init': init, 'final': final,
-              'MS': MS,
+              'MS': MS, 'RGB': RGB,
               'MLstart': MLstart, 'MLend': MLend, 'ML': ML,
               'CEstart': CEstart, 'CEend': CEend, 'CE': CE,
               'HeIgnition': HeIgnition, 'HeCoreBurning': HeCoreBurning, 'HeShellBurning': HeShellBurning,

@@ -52,7 +52,7 @@ class Test2H5:
 class TestExtract:
 
     def test_get_phases(self):
-        phase_names = ['init', 'final', 'MS', 'MLstart', 'MLend', 'ML', 'CE', 'CEstart', 'CEend', 'HeIgnition',
+        phase_names = ['init', 'final', 'MS', 'RGB', 'MLstart', 'MLend', 'ML', 'CE', 'CEstart', 'CEend', 'HeIgnition',
                        'HeCoreBurning', 'HeShellBurning']
 
         # stable model without He ignition and struggles at the end
@@ -64,6 +64,8 @@ class TestExtract:
         assert data['model_number'][phases['final']][0] == 30000
         assert data['model_number'][phases['MS']][0] == 27
         assert data['model_number'][phases['MS']][-1] == 114
+        assert data['model_number'][phases['RGB']][0] == 114
+        assert data['model_number'][phases['RGB']][-1] == 948
         assert data['model_number'][phases['MLstart']][0] == 933
         assert data['model_number'][phases['MLend']][0] == 30000
         assert data['model_number'][phases['ML']][0] == 933
@@ -74,6 +76,8 @@ class TestExtract:
         data, _ = extract_mesa.read_history(base_path / 'test_data/M0.814_M0.512_P260.18_Z0.h5', return_profiles=False)
         phases = evolution_phases.get_all_phases(phase_names, data)
 
+        assert data['model_number'][phases['RGB']][0] == 111
+        assert data['model_number'][phases['RGB']][-1] == 6570
         assert data['model_number'][phases['ML']][0] == 1290
         assert data['model_number'][phases['ML']][-1] == 7281
         assert phases['HeIgnition'] is None
