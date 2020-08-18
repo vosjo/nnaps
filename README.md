@@ -1,6 +1,7 @@
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/nnaps)
 [![PyPI](https://img.shields.io/pypi/v/nnaps)](https://pypi.org/project/nnaps/)
 [![Documentation Status](https://readthedocs.org/projects/nnaps/badge/?version=latest)](https://nnaps.readthedocs.io/en/latest/?badge=latest)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3988965.svg)](https://doi.org/10.5281/zenodo.3988965)
 
 # Neural Network assisted Population Synthesis code
 
@@ -46,6 +47,23 @@ To uninstall NNaPS, run:
     
 Warning: At the moment saving and loading of NN models requires scikit-learn version 0.22, newer or older version will 
 not work. This problem is being worked on.
+
+## Acknowledgements
+
+If you use NNaPS in a publication, please cite:
+
+```tex
+@software{nnaps,
+  author       = {{Vos}, Joris and {Bobrick}, Alexey and {Vu{\v{c}}kovi{\'c}}, Maja},
+  title        = {Neural Network assisted Population Synthesis},
+  month        = aug,
+  year         = 2020,
+  publisher    = {Zenodo},
+  version      = {0.0.1},
+  doi          = {10.5281/zenodo.3988965},
+  url          = {https://doi.org/10.5281/zenodo.3988965}
+}
+``` 
 
 ## Compress and Extract a grid of MESA models
 
