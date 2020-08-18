@@ -1,6 +1,7 @@
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/nnaps)
 [![PyPI](https://img.shields.io/pypi/v/nnaps)](https://pypi.org/project/nnaps/)
 [![Documentation Status](https://readthedocs.org/projects/nnaps/badge/?version=latest)](https://nnaps.readthedocs.io/en/latest/?badge=latest)
+[![GitHub](https://img.shields.io/github/license/vosjo/nnaps)](https://github.com/vosjo/nnaps/blob/master/LICENSE)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3988965.svg)](https://doi.org/10.5281/zenodo.3988965)
 
 # Neural Network assisted Population Synthesis code
