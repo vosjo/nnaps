@@ -27,7 +27,7 @@ def is_stable(data, criterion='J_div_Jdot_div_P', value=10, return_model_number=
     m = data['model_number'][-1]
 
     if criterion not in STABILITY_CRITERIA:
-        raise ValueError('Stability criterion not recognized. Use any of: ' + STABILITY_CRITERIA)
+        raise ValueError('Stability criterion not recognized. Use any of: ' + str(STABILITY_CRITERIA))
 
     if criterion == 'Mdot':
 
@@ -94,7 +94,7 @@ def apply_ce(data, profiles=None, ce_formalism='iben_tutukov1984', max_profile_d
     """
 
     if ce_formalism not in CE_FORMALISMS:
-        raise ValueError('CE formalism not recognized, use one of: ' + CE_FORMALISMS)
+        raise ValueError('CE formalism not recognized, use one of: ' + str(CE_FORMALISMS))
 
     if ce_formalism == 'iben_tutukov1984':
         af, M1_final = iben_tutukov1984(data, **kwargs)

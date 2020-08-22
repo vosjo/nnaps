@@ -44,71 +44,73 @@ def read_history(objectname, return_profiles=False):
     column_names1 = [c for c in columns1]
 
     # SECONDARY
-    # now interpolate secondary data to match model numbers for binary history
-    dtypes = d2.dtype
-    y = d2.view(np.float64).reshape(-1, len(dtypes))
-    f = interp1d(d2['model_number'], y, axis=0, bounds_error=False, fill_value=0.0)
-    d2 = f(db['model_number'])
+    if d2 is not None:
+        # now interpolate secondary data to match model numbers for binary history
+        dtypes = d2.dtype
+        y = d2.view(np.float64).reshape(-1, len(dtypes))
+        f = interp1d(d2['model_number'], y, axis=0, bounds_error=False, fill_value=0.0)
+        d2 = f(db['model_number'])
 
-    # reconvert from array to recarray
-    d2 = [tuple(d) for d in d2]
-    d2 = np.array(d2, dtype=dtypes)
+        # reconvert from array to recarray
+        d2 = [tuple(d) for d in d2]
+        d2 = np.array(d2, dtype=dtypes)
 
-    # remove model_number as column from d1 and merge into 1 recarray
-    columns2 = list(d2.dtype.names)
-    columns2.remove('model_number')
-    column_names2 = [c+'_2' for c in columns2]
+        # remove model_number as column from d1 and merge into 1 recarray
+        columns2 = list(d2.dtype.names)
+        columns2.remove('model_number')
+        column_names2 = [c+'_2' for c in columns2]
 
     # create a new record array from the data (much faster than appending to an existing array)
     columnsdb = list(db.dtype.names)
-    data = np.core.records.fromarrays \
-        ([db[c] for c in columnsdb] + [d1[c] for c in columns1] + [d2[c] for c in columns2],
-                                      names=columnsdb + column_names1 + column_names2)
+
+    if d2 is not None:
+        all_data = [db[c] for c in columnsdb] + [d1[c] for c in columns1] + [d2[c] for c in columns2]
+        all_columns = columnsdb + column_names1 + column_names2
+    else:
+        all_data = [db[c] for c in columnsdb] + [d1[c] for c in columns1]
+        all_columns = columnsdb + column_names1
+
+    data = np.core.records.fromarrays(all_data, names=all_columns)
 
     fields = []
     fields_data = []
 
-    if not 'effective_T' in data.dtype.names:
+    if not 'effective_T' in all_columns and 'log_Teff' in all_columns:
         fields.append('effective_T')
         fields_data.append(10**data['log_Teff'])
-        # data = append_fields(data, ['effective_T'], [10**data['log_Teff']], usemask=False)
 
-    if not 'effective_T_2' in data.dtype.names:
+    if not 'effective_T_2' in all_columns and 'log_Teff_2' in all_columns:
         fields.append('effective_T_2')
         fields_data.append(10**data['log_Teff_2'])
-        # data = append_fields(data, ['effective_T_2'], [10**data['log_Teff_2']], usemask=False)
 
-    if not 'rl_overflow_1' in data.dtype.names:
+    if not 'rl_overflow_1' in all_columns and 'star_1_radius' in all_columns and 'rl_1' in all_columns:
         fields.append('rl_overflow_1')
         fields_data.append(data['star_1_radius'] / data['rl_1'])
-        # data = append_fields(data, ['rl_overflow_1'], [data['star_1_radius'] / data['rl_1']], usemask=False)
 
-    if not 'mass_ratio' in data.dtype.names:
+    if not 'mass_ratio' in all_columns and 'star_1_mass' in all_columns and 'star_2_mass' in all_columns:
         fields.append('mass_ratio')
         fields_data.append(data['star_1_mass'] / data['star_2_mass'])
-        # data = append_fields(data, ['mass_ratio'], [data['star_1_mass'] / data['star_2_mass']], usemask=False)
 
-    if not 'separation_au' in data.dtype.names:
+    if not 'separation_au' in all_columns and 'binary_separation' in all_columns:
         fields.append('separation_au')
         fields_data.append(data['binary_separation'] * 0.004649183820234682)
-        # data = append_fields(data, ['separation_au'], [data['binary_separation'] * 0.004649183820234682], usemask=False)
 
-    if not 'CE_phase' in data.dtype.names:
+    if not 'CE_phase' in all_columns and db is not None:
+        # only add when the model is binary
         fields.append('CE_phase')
         fields_data.append(np.zeros_like(data['model_number']))
-        # data = append_fields(data, ['CE_phase'], [np.zeros_like(data['model_number'])], usemask=False)
 
-    J_Jdot_P = (data['J_orb'] / np.abs(data['Jdot'])) / (data['period_days'] * 24.0 *60.0 *60.0)
-    J_Jdot_P = np.where((J_Jdot_P == 0 ), 99, np.log10(J_Jdot_P))
-    fields.append('log10_J_div_Jdot_div_P')
-    fields_data.append(J_Jdot_P)
-    # data = append_fields(data, ['log10_J_div_Jdot_div_P'], [J_Jdot_P], usemask=False)
+    if 'J_orb' in all_columns and 'Jdot' in all_columns and 'period_days' in all_columns:
+        J_Jdot_P = (data['J_orb'] / np.abs(data['Jdot'])) / (data['period_days'] * 24.0 *60.0 *60.0)
+        J_Jdot_P = np.where((J_Jdot_P == 0 ), 99, np.log10(J_Jdot_P))
+        fields.append('log10_J_div_Jdot_div_P')
+        fields_data.append(J_Jdot_P)
 
-    M_Mdot_P = (data['star_1_mass'] / 10 ** data['lg_mstar_dot_1']) / (data['period_days'] / 360)
-    M_Mdot_P = np.where((M_Mdot_P == 0), 99, np.log10(M_Mdot_P))
-    fields.append('log10_M_div_Mdot_div_P')
-    fields_data.append(M_Mdot_P)
-    # data = append_fields(data, ['log10_M_div_Mdot_div_P'], [M_Mdot_P], usemask=False)
+    if 'star_1_mass' in all_columns and 'lg_mstar_dot_1' in all_columns and 'period_days' in all_columns:
+        M_Mdot_P = (data['star_1_mass'] / 10 ** data['lg_mstar_dot_1']) / (data['period_days'] / 360)
+        M_Mdot_P = np.where((M_Mdot_P == 0), 99, np.log10(M_Mdot_P))
+        fields.append('log10_M_div_Mdot_div_P')
+        fields_data.append(M_Mdot_P)
 
     data = append_fields(data, fields, fields_data, usemask=False)
 
