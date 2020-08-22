@@ -54,7 +54,7 @@ not work. This problem is being worked on.
 If you use NNaPS in a publication, please cite:
 
 ```tex
-@software{nnaps,
+@misc{nnaps,
   author       = {{Vos}, Joris and {Bobrick}, Alexey and {Vu{\v{c}}kovi{\'c}}, Maja},
   title        = {Neural Network assisted Population Synthesis},
   month        = aug,
