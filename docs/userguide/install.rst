@@ -49,6 +49,6 @@ To do this, you'll need to install from the source (see :ref:`source` above) and
 .. code-block:: bash
 
     pip install -U pytest
-    pytest -v src/nnaps/tests
+    pytest -v nnaps/tests
 
 This might take a few minutes but you should not get any errors if all went well.
