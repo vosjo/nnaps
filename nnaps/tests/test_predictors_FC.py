@@ -89,10 +89,9 @@ class TestBPSPredictorSetup:
 
         assert len(predictor.train_data) + len(predictor.test_data) == len(data)
 
+    def test_make_from_saved_model(self, root_dir):
 
-    def test_make_from_saved_model(self):
-
-        predictor = predictors.FCPredictor(saved_model=base_path / 'test_model_FC.h5')
+        predictor = predictors.FCPredictor(saved_model=os.path.join(root_dir, 'test_model_FC.h5'))
 
         Xpars_ = ['M1', 'qinit', 'Pinit', 'FeHinit']
         Yregressors_ = ['Pfinal', 'qfinal']
@@ -261,13 +260,16 @@ class TestBPSPredictorTrainingPredicting:
             np.testing.assert_almost_equal(weights, weights_new)
 
 
-    def test_predict(self):
+    def test_predict(self, root_dir):
 
         # FIXME: for now only check that the predict function returns the correct format, don't check actual predictions
 
         data = pd.read_csv(base_path / 'BesanconGalactic_summary.txt').iloc[0:10]
 
-        predictor = predictors.FCPredictor(saved_model=base_path / 'test_model_FC.h5')
+        assert os.path.isfile(os.path.join(root_dir, 'test_model_FC.h5'))
+
+        model_path = os.path.join(root_dir, 'test_model_FC.h5')
+        predictor = predictors.FCPredictor(saved_model=model_path)
 
         res = predictor.predict(data=data)
 

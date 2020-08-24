@@ -17,6 +17,8 @@ class Test2H5:
 
     def test_read_mesa_output(self):
 
+        print('basepath: ', base_path)
+
         filename = base_path / 'test_data/M1.013_M0.331_P32.85_Z0.00155/LOGS/history1.data'
 
         _, data = read_mesa.read_mesa_output(filename=filename, only_first=False)
@@ -220,12 +222,14 @@ class TestExtract:
         assert res['HeCoreBurning'] is True
         assert res['He-WD'] is False
 
-    def test_extract_mesa(self):
+    def test_extract_mesa(self, root_dir):
 
         models = ['test_data/M0.789_M0.304_P20.58_Z0.h5',
                   'test_data/M0.814_M0.512_P260.18_Z0.h5',
                   'test_data/M1.276_M1.140_P333.11_Z0.h5'
                   ]
+        models = [os.path.join(root_dir, x) for x in models]
+
         models = pd.DataFrame(models, columns=['path'])
 
         parameters = [('star_1_mass__init', 'M1_init'),

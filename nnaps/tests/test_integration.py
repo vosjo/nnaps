@@ -13,11 +13,13 @@ def cleanup_files():
     if os.path.isfile('integration_test_model.h5'):
         os.remove('integration_test_model.h5')
 
+
 class TestIntegration:
 
-    def test_integration(self, cleanup_files):
+    def test_integration(self, cleanup_files, root_dir):
 
-        predictor = predictors.FCPredictor(setup_file='test_setup.yaml')
+        setup_file_path = os.path.join(root_dir, 'test_setup.yaml')
+        predictor = predictors.FCPredictor(setup_file=setup_file_path)
 
         predictor.fit(epochs=100, batch_size=128)
 
