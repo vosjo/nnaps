@@ -7,6 +7,9 @@ from pathlib import Path
 
 from nnaps.mesa import read_mesa, extract_mesa, defaults
 
+#Check Gooey for a very simple gui for nnaps-mesa
+from gooey import Gooey, GooeyParser
+# https://github.com/chriskiehl/Gooey
 
 def get_file_list(input_dirs):
 
@@ -19,6 +22,41 @@ def get_file_list(input_dirs):
     file_list = pd.DataFrame(data=files, columns=['path'])
 
     return file_list
+
+@Gooey(advanced=True,
+       required_cols=1,  # number of columns in the "Required" section
+       optional_cols=1,  # number of columns in the "Optional" section
+       )
+def main_gui():
+    parser = GooeyParser(description='NNaPS-mesa: Process MESA models')
+
+    subparsers = parser.add_subparsers()
+
+    compress_group = subparsers.add_parser('Compress', help='Compress a grid of MESA models')
+    compress_group.add_argument('input', default=None,
+                        help='Directory containing the MESA models to process', widget='DirChooser')
+    compress_group.add_argument('setup', default=None,
+                        help='The setup file containing necessary settings',
+                        widget='FileChooser')
+    compress_group.add_argument('output', default=None,
+                        help='The output directory to store the compressed models',
+                        widget='DirChooser')
+    compress_group.add_argument('--skip', dest='skip', default=False, action='store_true',
+                                help='skip models that have already been transformed to h5.')
+
+
+    extract_group = subparsers.add_parser("Extract",
+                                        help="Extract aggregate parameters from a grid of compressed MESA models")
+    extract_group.add_argument('-extract', dest='extract', default=None, nargs='*',
+                        help='Extract parameters from history files stored as h5')
+    extract_group.add_argument('setup', default=None,
+                        help='The setup file containing necessary info for the -2h5 and -extract option')
+    extract_group.add_argument('-o_extract', dest='extract_output', default=None,
+                        help='The output file or directory for the -2h5 and -extract functions')
+    args = parser.parse_args()
+
+    pass
+
 
 
 def main():
