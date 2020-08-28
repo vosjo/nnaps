@@ -82,8 +82,18 @@ def apply_ce(data, profiles=None, ce_formalism='iben_tutukov1984', max_profile_d
 
     for more details on each of the formalisms and which parameters are required, see the respective functions below.
 
-    all formalisms require: star_2_mass, he_core_mass
-    updates: star_1_mass, envelope_mass, period_days, binary_separation, mass_ratio, rl_1, rl_2
+    all formalisms require:
+    - star_2_mass
+    - he_core_mass
+
+    updates when available:
+    - star_1_mass
+    - envelope_mass
+    - period_days
+    - binary_separation
+    - mass_ratio
+    - rl_1
+    - rl_2
 
     :param data: ndarray with model parameters
     :param profiles: dictionary containing all available profiles for the model
@@ -164,7 +174,11 @@ def iben_tutukov1984(data, al=1):
     CE formalism from Iben & Tutukov 1984, ApJ, 284, 719
     https://ui.adsabs.harvard.edu/abs/1984ApJ...284..719I/abstract
 
-    requires: star_1_mass, star_2_mass, he_core_mass, binary_separation
+    requires:
+    - star_1_mass
+    - star_2_mass
+    - he_core_mass
+    - binary_separation
 
     :param data: ndarray with model parameters
     :param al: alpha CE, the efficiency parameter for the CE formalism
@@ -185,7 +199,12 @@ def webbink1984(data, al=1, lb=1):
     CE formalism from Webbink 1984, ApJ, 277, 355
     https://ui.adsabs.harvard.edu/abs/1984ApJ...277..355W/abstract
 
-    requires: star_1_mass, star_2_mass, he_core_mass, binary_separation, rl_1
+    requires:
+    - star_1_mass
+    - star_2_mass
+    - he_core_mass
+    - binary_separation
+    - rl_1
 
     :param data: ndarray with model parameters
     :param al: alpha CE, the efficiency parameter for the CE formalism
@@ -210,7 +229,12 @@ def demarco2011(data, al=1, lb=1):
     CE formalism from De Marco et al. 2011, MNRAS, 411, 2277
     https://ui.adsabs.harvard.edu/abs/2011MNRAS.411.2277D/abstract
 
-    requires: star_1_mass, star_2_mass, he_core_mass, binary_separation, rl_1
+    requires:
+    - star_1_mass
+    - star_2_mass
+    - he_core_mass
+    - binary_separation
+    - rl_1
 
     :param data: ndarray with model parameters
     :param al: alpha CE, the efficiency parameter for the CE formalism
@@ -237,9 +261,15 @@ def dewi_tauris2000(data, profile, a_ce=1, a_th=0.5, merge_when_core_reached=Tru
     https://ui.adsabs.harvard.edu/abs/2000A%26A...360.1043D/abstract
     https://ui.adsabs.harvard.edu/abs/1995MNRAS.272..800H/abstract
 
-    data requires: star_2_mass, binary_separation
+    data requires:
+    - star_2_mass
+    - binary_separation
 
-    profile requires: mass, logR, logP, logRho
+    profile requires:
+    - mass
+    - logR
+    - logP
+    - logRho
 
     :param data: ndarray with model parameters
     :param profile: ndarray profile for the integration of binding energy
