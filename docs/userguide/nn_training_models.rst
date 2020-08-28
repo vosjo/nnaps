@@ -94,3 +94,8 @@ chosen. Predicting new targets can be done with the predict function
 
     predictions = predictor.predict(new_data)
 
+
+Checking the results
+--------------------
+
+After training the model you will want to check the training process and the final score of the model.
