@@ -49,7 +49,10 @@ extensions = [
     'sphinx.ext.viewcode',
     "sphinx_rtd_theme",
 ]
-numpydoc_show_class_members = False
+# numpydoc_show_class_members = False
+
+autodoc_mock_imports = ["numpy"]
+# , "pandas", "keras", "scikit-learn", "pyyaml", "matplotlib", "bokeh", "tables", "astropy"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
