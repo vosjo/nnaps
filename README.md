@@ -168,7 +168,7 @@ classifiers:
    - binary_type
 ```
 
-#### Seting up the model and training
+#### Setting up the model and training
 
 Using the setup file a predictor can be constructed and fitted:
 
