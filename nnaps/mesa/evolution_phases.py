@@ -90,182 +90,12 @@ def decompose_parameter(par):
 
 def init(data):
     """
-    First evolution time point
+    First evolution time point, can be used to obtain the initial parameters of the run.
+
+    :param data: numpy ndarray containing the history of the system.
+    :return: selection of the first evolution point.
     """
     return ([0],)
-
-
-def final(data):
-    """
-    Last evolution time point
-    """
-    return ([data.shape[0]-1],)
-
-def ML(data, return_age=False):
-    """
-    Mass loss is defind as lg_mstar_dot_1 >= 10
-    """
-    if all(data['lg_mstar_dot_1'] < -10):
-        # no mass loss
-        return None
-
-    a1 = data['age'][data['lg_mstar_dot_1'] >= -10][0]
-
-    try:
-        # select the first point in time that the mass loss dips below -10 after it
-        # starts up. Necessary to deal with multiple mass loss phases.
-        a2 = data['age'][(data['age'] > a1) & (data['lg_mstar_dot_1'] < -10)][0]
-    except IndexError:
-        a2 = data['age'][-1]
-
-    if return_age:
-        return a1, a2
-    else:
-        return np.where((data['age'] >= a1) & (data['age'] <= a2))
-
-
-def MLstart(data, return_age=False):
-    """
-    First time lg_mstar_dot_1 reaches -10
-    """
-    ages = ML(data, return_age=True)
-    if ages is None:
-        return None
-    else:
-        a1, a2 = ages
-
-    s = np.where(data['age'] >= a1)
-
-    if return_age:
-        return a1
-    else:
-        return ([s[0][0]],)
-
-
-def MLend(data, return_age=False):
-    """
-    First time lg_mstar_dot_1 dips below -10 after starting mass loss
-    """
-    ages = ML(data, return_age=True)
-    if ages is None:
-        return None
-    else:
-        a1, a2 = ages
-
-    s = np.where(data['age'] <= a2)
-
-    if return_age:
-        return a2
-    else:
-        return ([s[0][-1]],)
-
-
-def CE(data):
-    """
-    CE phase as defined in the common_envelope settings.
-    """
-    if all(data['CE_phase'] == 0):
-        return None
-
-    return np.where(data['CE_phase'] == 1)
-
-
-def CEstart(data):
-    """
-    start of the CE phase as defined in the common_envelope settings.
-    """
-    s = CE(data)
-    if s is None:
-        return s
-
-    return ([s[0][0]],)
-
-
-def CEend(data):
-    """
-    end of the CE phase as defined in the common_envelope settings.
-    """
-    s = CE(data)
-    if s is None:
-        return s
-
-    return ([s[0][-1]],)
-
-
-def HeIgnition(data, return_age=False):
-    """
-    select He ignition as the point between LHe > 10 Lsol and the formation of the
-    carbon-oxigen core where the L output is at it's maximum. This is the He flash.
-    """
-    if np.all(data['log_LHe'] < 1):
-        # no He ignition
-        return None
-    a1 = data['age'][data['log_LHe'] > 1][0]
-
-    if np.all(data['c_core_mass']) < 0.01:
-        # model ignites He, but has problems modeling the core burning. He ignition can be returned.
-        a2 = data['age'][-1]
-    else:
-        a2 = data['age'][data['c_core_mass'] >= 0.01][0]
-
-    d = data[(data['age'] >= a1) & (data['age'] <= a2)]
-    s = np.where((data['log_LHe'] == np.max(d['log_LHe'])) & (data['age'] >= a1) & (data['age'] <= a2))
-
-    if return_age:
-        return data['age'][s][0]
-    else:
-        return s
-
-
-def HeCoreBurning(data, return_age=False):
-    """
-    He core burning is period between ignition of He and formation of CO core
-    """
-    if np.all(data['log_LHe'] < 1) or np.all(data['log_center_T'] < HeIgF(data['log_center_Rho'])):
-        # no He ignition or no core burning
-        return None
-    a1 = data['age'][data['log_center_T'] >= HeIgF(data['log_center_Rho'])][0]
-
-    if np.all(data['c_core_mass'] < 0.01):
-        # model ignites He, but has problems modeling the core burning. No core burning phase can be returned
-        return None
-
-    if return_age:
-        a2 = data['age'][(data['age'] >= a1) & (data['c_core_mass'] <= 0.01)][-1]
-        return a1, a2
-    else:
-        return np.where((data['age'] >= a1) & (data['c_core_mass'] <= 0.01))
-
-
-def HeShellBurning(data, return_age=False):
-    """
-    Shell burning is taken as the period between the formation of the CO core and the drop in He luminosity
-    """
-    if np.all(data['log_LHe'] < 1):
-        # no He ignition
-        return None
-
-    if np.all(data['c_core_mass'] < 0.01):
-        # no actual core He burning takes place, so no shell burning either.
-        return None
-
-    a1 = data['age'][data['c_core_mass'] >= 0.01][0]
-    LHe_burning = data['log_LHe'][data['age'] == a1][0]
-
-    if len(data['age'][(data['age'] > a1) & (data['log_LHe'] < LHe_burning / 2.)]) > 0:
-        a2 = data['age'][(data['age'] > a1) & (data['log_LHe'] < LHe_burning / 2.)][0]
-    else:
-        try:
-            # end of He shell burning when carbon core gets almost its final mass
-            a2 = data['age'][data['c_core_mass'] >= 0.98 * np.max(data['c_core_mass'])][0]
-        except Exception as e:
-            print(e)
-            a2 = data['age'][-1]
-
-    if return_age:
-        return a1, a2
-    else:
-        return np.where((data['age'] >= a1) & (data['age'] <= a2))
 
 
 def MS(data, return_age=False):
@@ -276,12 +106,14 @@ def MS(data, return_age=False):
     reactions, and ending when the core hydrogen runs out.
 
     start: log_LH > 0.999 * log_L
+
     end: center_h1 < 1e-12
 
     Required history parameters:
         - log_L
         - log_LH
         - center_h1
+        - age
 
     :param data: numpy ndarray containing the history of the system.
     :return: selection where the history corresponds to the main sequence phase
@@ -313,6 +145,7 @@ def RGB(data, return_age=False):
     the end is defined based on Teff and log_L before the central He fraction is reduced:
 
     start: center_h1 < 1e-12
+
     end: ( Teff == min(Teff) or log_L == max(log_L) ) and center_He >= center_He_TAMS - 0.01
 
     Required history parameters:
@@ -320,6 +153,7 @@ def RGB(data, return_age=False):
         - center_he4
         - effective_T
         - log_L
+        - age
 
     :param data: numpy ndarray containing the history of the system.
     :return: selection where the history corresponds to the red giant phase
@@ -342,11 +176,148 @@ def RGB(data, return_age=False):
         return np.where((data['age'] >= a1) & (data['age'] <= a2))
 
 
+def HeIgnition(data, return_age=False):
+    """
+    The moment of He ignition, as defined by a peak in the He luminosity. This is the first moment of He ignition,
+    but is not necessarily in the core as for low mass stars, He ignition occurs under degenerate conditions, and due
+    to neutrino cooling typically happens in a shell around the core.
+
+    Ignition is defined as the point with the maximum LHe between the first moment when LHe > 10 Lsol and the formation
+    of the carbon-oxigen core. This is the (first) He flash.
+
+    Required history parameters:
+        - log_LHe
+        - c_core_mass
+        - age
+
+    :param data: numpy ndarray containing the history of the system.
+    :return: selection where the history corresponds to the moment of He ignition
+    """
+    if np.all(data['log_LHe'] < 1):
+        # no He ignition
+        return None
+    a1 = data['age'][data['log_LHe'] > 1][0]
+
+    if np.all(data['c_core_mass']) < 0.01:
+        # model ignites He, but has problems modeling the core burning. He ignition can be returned.
+        a2 = data['age'][-1]
+    else:
+        a2 = data['age'][data['c_core_mass'] >= 0.01][0]
+
+    d = data[(data['age'] >= a1) & (data['age'] <= a2)]
+    s = np.where((data['log_LHe'] == np.max(d['log_LHe'])) & (data['age'] >= a1) & (data['age'] <= a2))
+
+    if return_age:
+        return data['age'][s][0]
+    else:
+        return s
+
+
+def HeCoreBurning(data, return_age=False):
+    """
+    He core burning is defined as the period between ignition of He and formation of CO core. He ignition is defined
+    the same way as in the HeIgnition function.
+
+    Ignition is defined as the point with the maximum LHe between the first moment when LHe > 10 Lsol and the formation
+    of the carbon-oxigen core. This is the (first) He flash.
+
+    CO core formation is defined as the point in time when the CO core reaches as mass of 0.01
+
+    If the center temperature and density are never in the range necessary for He fusion, there is no He core burning
+    phase and the function will return None.
+
+    Required history parameters:
+        - log_center_T
+        - log_center_Rho
+        - log_LHe
+        - c_core_mass
+        - age
+
+    :param data: numpy ndarray containing the history of the system.
+    :return: selection where the history corresponds to the He core burning phase
+    """
+    if np.all(data['log_LHe'] < 1) or np.all(data['log_center_T'] < HeIgF(data['log_center_Rho'])):
+        # no He ignition or no core burning
+        return None
+    a1 = data['age'][data['log_center_T'] >= HeIgF(data['log_center_Rho'])][0]
+
+    if np.all(data['c_core_mass'] < 0.01):
+        # model ignites He, but has problems modeling the core burning. No core burning phase can be returned
+        return None
+
+    if return_age:
+        a2 = data['age'][(data['age'] >= a1) & (data['c_core_mass'] <= 0.01)][-1]
+        return a1, a2
+    else:
+        return np.where((data['age'] >= a1) & (data['c_core_mass'] <= 0.01))
+
+
+def HeShellBurning(data, return_age=False):
+    """
+    The He shell burning phase is defined as the period in time between the formation of the CO core, and the final
+    drop in He luminosity indicating the end of He burning. This final drop is defined as the time when LHe drops
+    below half the LHe at the start of He shell burning.
+
+    If there is no CO core present at any time, there is no He shell burning phase, and the function will return None
+
+    start: CO core > 0.01 Msol
+
+    end: LHe < 1/2 * LHe[start of shell burning]
+
+    Required history parameters:
+        - log_LHe
+        - c_core_mass
+        - age
+
+    :param data: numpy ndarray containing the history of the system.
+    :return: selection where the history corresponds to the He shell burning phase
+    """
+    if np.all(data['log_LHe'] < 1):
+        # no He ignition
+        return None
+
+    if np.all(data['c_core_mass'] < 0.01):
+        # no actual core He burning takes place, so no shell burning either.
+        return None
+
+    a1 = data['age'][data['c_core_mass'] >= 0.01][0]
+    LHe_burning = data['log_LHe'][data['age'] == a1][0]
+
+    if len(data['age'][(data['age'] > a1) & (data['log_LHe'] < LHe_burning / 2.)]) > 0:
+        a2 = data['age'][(data['age'] > a1) & (data['log_LHe'] < LHe_burning / 2.)][0]
+    else:
+        try:
+            # end of He shell burning when carbon core gets almost its final mass
+            a2 = data['age'][data['c_core_mass'] >= 0.98 * np.max(data['c_core_mass'])][0]
+        except Exception as e:
+            print(e)
+            a2 = data['age'][-1]
+
+    if return_age:
+        return a1, a2
+    else:
+        return np.where((data['age'] >= a1) & (data['age'] <= a2))
+
+
 def sdA(data):
     """
-    The sdA phase requires core He burning and the average He core burning Teff between 15000 and 20000
+    This is the evolutionary definition of the sdA phase, which is defined as a core He burning phase where the star
+    looks spectroscopically as an sdA star. This is defined as Teff between 15000 and 20000 K.
 
-    If the star is an sdA, returns the part of the He core burning phase with 15000 <= teff < 20000
+    If the star does not have a core He burning phase as defined by HeCoreBurning, this function will return None.
+
+    NOTE: not to be confused with the spectroscopic definition of the sdA phase, which does NOT require He core burning.
+
+    Required history parameters:
+        - log_center_T
+        - log_center_Rho
+        - log_LHe
+        - c_core_mass
+        - log_Teff
+        - age
+
+    :param data: numpy ndarray containing the history of the system.
+    :return: selection where the history corresponds to the sdA phase
     """
     ages = HeCoreBurning(data, return_age=True)
 
@@ -369,9 +340,23 @@ def sdA(data):
 
 def sdB(data):
     """
-    The sdB phase requires core He burning and the average He core burning Teff between 20000 and 40000
+    This is the evolutionary definition of the sdB phase, which is defined as a core He burning phase where the star
+    looks spectroscopically as an sdB star. This is defined as Teff between 20000 and 40000 K.
 
-    If the star is an sdB, returns the part of the He core burning phase with 20000 <= teff < 40000
+    If the star does not have a core He burning phase as defined by HeCoreBurning, this function will return None.
+
+    NOTE: not to be confused with the spectroscopic definition of the sdB phase, which does NOT require He core burning.
+
+    Required history parameters:
+        - log_center_T
+        - log_center_Rho
+        - log_LHe
+        - c_core_mass
+        - log_Teff
+        - age
+
+    :param data: numpy ndarray containing the history of the system.
+    :return: selection where the history corresponds to the sdB phase
     """
     ages = HeCoreBurning(data, return_age=True)
 
@@ -394,9 +379,23 @@ def sdB(data):
 
 def sdO(data):
     """
-    sdO requires core He burning and the average He core burning Teff >= 40000
+    This is the evolutionary definition of the sdB phase, which is defined as a core He burning phase where the star
+    looks spectroscopically as an sdO star. This is defined as Teff higher than 40000 K.
 
-    If the star is an sdO, returns the part of the He core burning phase with teff >= 40000
+    If the star does not have a core He burning phase as defined by HeCoreBurning, this function will return None.
+
+    NOTE: not to be confused with the spectroscopic definition of the sdO phase, which does NOT require He core burning.
+
+    Required history parameters:
+        - log_center_T
+        - log_center_Rho
+        - log_LHe
+        - c_core_mass
+        - log_Teff
+        - age
+
+    :param data: numpy ndarray containing the history of the system.
+    :return: selection where the history corresponds to the sdO phase
     """
     ages = HeCoreBurning(data, return_age=True)
 
@@ -418,10 +417,21 @@ def sdO(data):
 
 def He_WD(data):
     """
-    Requires star to be on WD cooling track and have He core. Cooling track is selected to start when
-    teff < 10000K and logg > 7, or when logg > 7.5 regardless of teff
+    Defines the He White Dwarf phase, when the star is on the WD cooling track, but still has a He core.
 
-    Is triggered with 'He-WD'.
+    The WD cooling track is selected to start when Teff < 10000K and logg > 7, or when logg > 7.5 regardless of Teff
+
+    NOTE: Is triggered with 'He-WD'.
+
+    Required history parameters:
+        - log_LHe
+        - c_core_mass
+        - log_Teff
+        - log_g
+        - age
+
+    :param data: numpy ndarray containing the history of the system.
+    :return: selection where the history corresponds to the He-WD phase
     """
 
     if np.max(data['log_g']) < 7.0:
@@ -441,6 +451,142 @@ def He_WD(data):
         a1 = a1[0]
 
     return np.where(data['age'] > a1)
+
+
+def final(data):
+    """
+    Last evolution time point, can be used to obtain parameters at the very end of the run.
+
+    :param data: numpy ndarray containing the history of the system.
+    :return: selection of the last evolution point.
+    """
+    return ([data.shape[0]-1],)
+
+
+def ML(data, return_age=False):
+    """
+    The first occuring mass loss phase, where the mass loss phase is defined as the period in time when the primary is
+    losing mass at a rate of at least lg_mstar_dot_1 >= 10
+
+    NOTE: This phase only marks the first occuring mass loss phase.
+
+    Required history parameters:
+        - lg_mstar_dot_1
+        - age
+
+    :param data: numpy ndarray containing the history of the system.
+    :return: selection where the history corresponds to the first ML phase
+    """
+    if all(data['lg_mstar_dot_1'] < -10):
+        # no mass loss
+        return None
+
+    a1 = data['age'][data['lg_mstar_dot_1'] >= -10][0]
+
+    try:
+        # select the first point in time that the mass loss dips below -10 after it
+        # starts up. Necessary to deal with multiple mass loss phases.
+        a2 = data['age'][(data['age'] > a1) & (data['lg_mstar_dot_1'] < -10)][0]
+    except IndexError:
+        a2 = data['age'][-1]
+
+    if return_age:
+        return a1, a2
+    else:
+        return np.where((data['age'] >= a1) & (data['age'] <= a2))
+
+
+def MLstart(data, return_age=False):
+    """
+    The start of the first ML phase, defined as the moment in time when the donor star first reaches
+    lg_mstar_dot_1 >= 10
+
+    Required history parameters:
+        - lg_mstar_dot_1
+        - age
+
+    :param data: numpy ndarray containing the history of the system.
+    :return: selection where the history corresponds to the starting point of the first ML phase
+    """
+    ages = ML(data, return_age=True)
+    if ages is None:
+        return None
+    else:
+        a1, a2 = ages
+
+    s = np.where(data['age'] >= a1)
+
+    if return_age:
+        return a1
+    else:
+        return ([s[0][0]],)
+
+
+def MLend(data, return_age=False):
+    """
+    The end of the first mass loss phase, defined as the moment in time when lg_mstar_dot_1 dips below -10 after
+    starting mass loss.
+
+    Required history parameters:
+        - lg_mstar_dot_1
+        - age
+
+    :param data: numpy ndarray containing the history of the system.
+    :return: selection where the history corresponds to the end point of the first ML phase
+    """
+    ages = ML(data, return_age=True)
+    if ages is None:
+        return None
+    else:
+        a1, a2 = ages
+
+    s = np.where(data['age'] <= a2)
+
+    if return_age:
+        return a2
+    else:
+        return ([s[0][-1]],)
+
+
+def CE(data):
+    """
+    The CE phase as it is defined in the common_envelope settings.
+
+    :param data: numpy ndarray containing the history of the system.
+    :return: selection where the history corresponds to the CE phase
+    """
+    if all(data['CE_phase'] == 0):
+        return None
+
+    return np.where(data['CE_phase'] == 1)
+
+
+def CEstart(data):
+    """
+    start of the CE phase as defined in the common_envelope settings.
+
+    :param data: numpy ndarray containing the history of the system.
+    :return: selection where the history corresponds to the starting point of the CE phase
+    """
+    s = CE(data)
+    if s is None:
+        return s
+
+    return ([s[0][0]],)
+
+
+def CEend(data):
+    """
+    the end of the CE phase as defined in the common_envelope settings.
+
+    :param data: numpy ndarray containing the history of the system.
+    :return: selection where the history corresponds to the end point of the CE phase
+    """
+    s = CE(data)
+    if s is None:
+        return s
+
+    return ([s[0][-1]],)
 
 
 all_phases = {'init': init, 'final': final,
