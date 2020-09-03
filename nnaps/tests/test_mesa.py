@@ -57,6 +57,13 @@ class TestExtract:
         phase_names = ['init', 'final', 'MS', 'RGB', 'MLstart', 'MLend', 'ML', 'CE', 'CEstart', 'CEend', 'HeIgnition',
                        'HeCoreBurning', 'HeShellBurning']
 
+        # test checking if all parameters are available.
+        data, _ = extract_mesa.read_history(base_path / 'test_data/M0.789_M0.304_P20.58_Z0.h5', return_profiles=False)
+        data = data[['age', 'period_days']]
+
+        with pytest.raises(ValueError):
+             phases = evolution_phases.get_all_phases(['MS'], data)
+
         # stable model without He ignition and struggles at the end
         # age of the last 1470 time steps doesn't change!
         data, _ = extract_mesa.read_history(base_path / 'test_data/M0.789_M0.304_P20.58_Z0.h5', return_profiles=False)

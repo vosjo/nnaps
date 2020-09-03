@@ -88,6 +88,18 @@ def decompose_parameter(par):
 
 #{ Evolution Phases
 
+
+def _check_history_parameters(history, parameters, evol_phase='UK'):
+    missing_parameters = []
+    for par in parameters:
+        if not par in history.dtype.names:
+            missing_parameters.append(par)
+
+    if len(missing_parameters) > 0:
+        raise ValueError("""Evolution phase {} requires the following parameters {}, I could not find {} 
+                            in the provided history file.""".format(evol_phase, parameters, missing_parameters))
+
+
 def init(data):
     """
     First evolution time point, can be used to obtain the initial parameters of the run.
@@ -118,6 +130,8 @@ def MS(data, return_age=False):
     :param data: numpy ndarray containing the history of the system.
     :return: selection where the history corresponds to the main sequence phase
     """
+    required_parameters = ['log_L', 'log_LH', 'center_h1', 'age']
+    _check_history_parameters(data, required_parameters, evol_phase='MS')
 
     if not any(data['log_LH'] / data['log_L'] > 0.999):
         # MS is not reached
@@ -158,6 +172,8 @@ def RGB(data, return_age=False):
     :param data: numpy ndarray containing the history of the system.
     :return: selection where the history corresponds to the red giant phase
     """
+    required_parameters = ['log_L', 'center_h1', 'center_he4', 'effective_T', 'age']
+    _check_history_parameters(data, required_parameters, evol_phase='RGB')
 
     if not any(data['center_h1'] < 1e12):
         # RGB phase never started
@@ -193,6 +209,9 @@ def HeIgnition(data, return_age=False):
     :param data: numpy ndarray containing the history of the system.
     :return: selection where the history corresponds to the moment of He ignition
     """
+    required_parameters = ['log_LHe', 'c_core_mass', 'age']
+    _check_history_parameters(data, required_parameters, evol_phase='HeIgnition')
+
     if np.all(data['log_LHe'] < 1):
         # no He ignition
         return None
@@ -236,6 +255,9 @@ def HeCoreBurning(data, return_age=False):
     :param data: numpy ndarray containing the history of the system.
     :return: selection where the history corresponds to the He core burning phase
     """
+    required_parameters = ['log_center_T', 'log_center_Rho', 'log_LHe', 'c_core_mass', 'age']
+    _check_history_parameters(data, required_parameters, evol_phase='HeCoreBurning')
+
     if np.all(data['log_LHe'] < 1) or np.all(data['log_center_T'] < HeIgF(data['log_center_Rho'])):
         # no He ignition or no core burning
         return None
@@ -272,6 +294,9 @@ def HeShellBurning(data, return_age=False):
     :param data: numpy ndarray containing the history of the system.
     :return: selection where the history corresponds to the He shell burning phase
     """
+    required_parameters = [ 'log_LHe', 'c_core_mass', 'age']
+    _check_history_parameters(data, required_parameters, evol_phase='HeShellBurning')
+
     if np.all(data['log_LHe'] < 1):
         # no He ignition
         return None
@@ -319,6 +344,9 @@ def sdA(data):
     :param data: numpy ndarray containing the history of the system.
     :return: selection where the history corresponds to the sdA phase
     """
+    required_parameters = ['log_center_T', 'log_center_Rho', 'log_LHe', 'c_core_mass', 'log_Teff', 'age']
+    _check_history_parameters(data, required_parameters, evol_phase='sdA')
+
     ages = HeCoreBurning(data, return_age=True)
 
     # Core He Burning phase is required
@@ -358,6 +386,9 @@ def sdB(data):
     :param data: numpy ndarray containing the history of the system.
     :return: selection where the history corresponds to the sdB phase
     """
+    required_parameters = ['log_center_T', 'log_center_Rho', 'log_LHe', 'c_core_mass', 'log_Teff', 'age']
+    _check_history_parameters(data, required_parameters, evol_phase='sdB')
+
     ages = HeCoreBurning(data, return_age=True)
 
     # Core He Burning phase is required
@@ -397,6 +428,9 @@ def sdO(data):
     :param data: numpy ndarray containing the history of the system.
     :return: selection where the history corresponds to the sdO phase
     """
+    required_parameters = ['log_center_T', 'log_center_Rho', 'log_LHe', 'c_core_mass', 'log_Teff', 'age']
+    _check_history_parameters(data, required_parameters, evol_phase='sdO')
+
     ages = HeCoreBurning(data, return_age=True)
 
     # Core He Burning phase is required
@@ -433,6 +467,8 @@ def He_WD(data):
     :param data: numpy ndarray containing the history of the system.
     :return: selection where the history corresponds to the He-WD phase
     """
+    required_parameters = ['log_LHe', 'c_core_mass', 'log_Teff', 'log_g', 'age']
+    _check_history_parameters(data, required_parameters, evol_phase='He_WD')
 
     if np.max(data['log_g']) < 7.0:
         # no final WD yet
@@ -477,6 +513,9 @@ def ML(data, return_age=False):
     :param data: numpy ndarray containing the history of the system.
     :return: selection where the history corresponds to the first ML phase
     """
+    required_parameters = ['lg_mstar_dot_1', 'age']
+    _check_history_parameters(data, required_parameters, evol_phase='ML')
+
     if all(data['lg_mstar_dot_1'] < -10):
         # no mass loss
         return None
@@ -508,6 +547,9 @@ def MLstart(data, return_age=False):
     :param data: numpy ndarray containing the history of the system.
     :return: selection where the history corresponds to the starting point of the first ML phase
     """
+    required_parameters = ['lg_mstar_dot_1', 'age']
+    _check_history_parameters(data, required_parameters, evol_phase='MLstart')
+
     ages = ML(data, return_age=True)
     if ages is None:
         return None
@@ -534,6 +576,9 @@ def MLend(data, return_age=False):
     :param data: numpy ndarray containing the history of the system.
     :return: selection where the history corresponds to the end point of the first ML phase
     """
+    required_parameters = ['lg_mstar_dot_1', 'age']
+    _check_history_parameters(data, required_parameters, evol_phase='MLend')
+
     ages = ML(data, return_age=True)
     if ages is None:
         return None
