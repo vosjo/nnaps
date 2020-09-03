@@ -75,18 +75,20 @@ def apply_ce(data, profiles=None, ce_formalism='iben_tutukov1984', max_profile_d
     Function performs the ce ejection and updates some stellar and binary parameters
 
     Different CE formalisms are supported:
-    - iben_tutukov1984: Iben & Tutukov 1984, ApJ, 284, 719
-    - webbink1984: Webbink 1984, ApJ, 277, 355
-    - dewi_tauris2000: Dewi and Tauris 2000, A&A, 360, 1043
-    - demarco2011: De Marco et al. 2011, MNRAS, 411, 2277
 
-    for more details on each of the formalisms and which parameters are required, see the respective functions below.
+    - iben_tutukov1984:
+      `Iben & Tutukov 1984, ApJ, 284, 719 <https://ui.adsabs.harvard.edu/abs/1984ApJ...284..719I/abstract>`_
+    - webbink1984:
+      `Webbink 1984, ApJ, 277, 355 <https://ui.adsabs.harvard.edu/abs/1984ApJ...277..355W/abstract>`_
+    - dewi_tauris2000:
+      `Dewi and Tauris 2000, A&A, 360, 1043 <https://ui.adsabs.harvard.edu/abs/2000A%26A...360.1043D/abstract>`_
+    - demarco2011:
+      `De Marco et al. 2011, MNRAS, 411, 2277 <https://ui.adsabs.harvard.edu/abs/2011MNRAS.411.2277D/abstract>`_
 
-    all formalisms require:
-    - star_2_mass
-    - he_core_mass
+    for more details on each of the formalisms and which parameters are required, see their respective functions below.
 
     updates when available:
+
     - star_1_mass
     - envelope_mass
     - period_days
@@ -171,10 +173,11 @@ def apply_ce(data, profiles=None, ce_formalism='iben_tutukov1984', max_profile_d
 
 def iben_tutukov1984(data, al=1):
     """
-    CE formalism from Iben & Tutukov 1984, ApJ, 284, 719
-    https://ui.adsabs.harvard.edu/abs/1984ApJ...284..719I/abstract
+    CE formalism from
+    `Iben & Tutukov 1984, ApJ, 284, 719 <https://ui.adsabs.harvard.edu/abs/1984ApJ...284..719I/abstract>`_
 
     requires:
+
     - star_1_mass
     - star_2_mass
     - he_core_mass
@@ -196,10 +199,11 @@ def iben_tutukov1984(data, al=1):
 
 def webbink1984(data, al=1, lb=1):
     """
-    CE formalism from Webbink 1984, ApJ, 277, 355
-    https://ui.adsabs.harvard.edu/abs/1984ApJ...277..355W/abstract
+    CE formalism from
+    `Webbink 1984, ApJ, 277, 355 <https://ui.adsabs.harvard.edu/abs/1984ApJ...277..355W/abstract>`_
 
     requires:
+
     - star_1_mass
     - star_2_mass
     - he_core_mass
@@ -226,10 +230,11 @@ def webbink1984(data, al=1, lb=1):
 
 def demarco2011(data, al=1, lb=1):
     """
-    CE formalism from De Marco et al. 2011, MNRAS, 411, 2277
-    https://ui.adsabs.harvard.edu/abs/2011MNRAS.411.2277D/abstract
+    CE formalism from
+    `De Marco et al. 2011, MNRAS, 411, 2277 <https://ui.adsabs.harvard.edu/abs/2011MNRAS.411.2277D/abstract>`_
 
     requires:
+
     - star_1_mass
     - star_2_mass
     - he_core_mass
@@ -256,16 +261,19 @@ def demarco2011(data, al=1, lb=1):
 
 def dewi_tauris2000(data, profile, a_ce=1, a_th=0.5, merge_when_core_reached=True):
     """
-    CE formalism presented in Dewi and Tauris 2000, A&A, 360, 1043 based on the idea of obtaining the binding energy by
-    integrating the stellar profile from Han et al 1995
-    https://ui.adsabs.harvard.edu/abs/2000A%26A...360.1043D/abstract
-    https://ui.adsabs.harvard.edu/abs/1995MNRAS.272..800H/abstract
+    CE formalism presented in
+    `Dewi and Tauris 2000, A&A, 360, 1043 <https://ui.adsabs.harvard.edu/abs/2000A%26A...360.1043D/abstract>`_
+    based on the idea of obtaining the binding energy by integrating the stellar profile from
+    `Han et al 1995, MNRAS, 272, 800 <https://ui.adsabs.harvard.edu/abs/1995MNRAS.272..800H/abstract>`_
+
 
     data requires:
+
     - star_2_mass
     - binary_separation
 
     profile requires:
+
     - mass
     - logR
     - logP
