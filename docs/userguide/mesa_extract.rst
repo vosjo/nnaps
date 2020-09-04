@@ -206,6 +206,22 @@ An up to date list of all recognized phases can be obtained with:
     from nnaps.mesa.evolution_phases import EVOLUTION_PHASES
     print(EVOLUTION_PHASES)
 
+Phase flags
+^^^^^^^^^^^
+The evolution phase can also be used as 'phase flags'. In that case NNaPS will check if the systems goes though
+a phase or not. For each phase included in the :option:`phase_flags` option, NNaPS will add a column to the resulting
+csv file containing True if that model had that phase, or False otherwise. You can use this to easily detect which
+systems undergo which phases.
+
+Example, if you want to check if your system becomes an sdB or a He-WD you can add:
+
+.. code-block:: yaml
+
+    ...
+    phase_flags:
+    - sdB
+    - He-WD
+    ...
 
 Agregate functions
 ^^^^^^^^^^^^^^^^^^
