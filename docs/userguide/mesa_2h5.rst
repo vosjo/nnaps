@@ -168,3 +168,17 @@ The setup file has to be structured in yaml format, and can be provided using th
 .. option:: profile_pattern (str)
 
     The pattern of the profiles to include. Will only be used when :option:`profile_files` is empty or not included.
+
+Reading compressed files
+------------------------
+
+NNaPS provides two methods to easily read the compressed files. The :func:`~nnaps.mesa.fileio.read_hdf5` function will read any
+hdf5 formatted file and return the content as a python dictionary, while the :func:`~nnaps.mesa.fileio.read_compressed_track` reads
+hdf5 files created by NNaPS and returns the result in a more directly usable way. :func:`~nnaps.mesa.fileio.read_compressed_track`
+returns the combined stellar and binary history in one array, dealing automatically with inequalities in time steps in
+the different history files. It also returns a dictionary with other info, and if requested a dictionary containing
+the profiles.
+
+.. automodule:: nnaps.mesa.fileio
+   :members: read_hdf5, read_compressed_track
+

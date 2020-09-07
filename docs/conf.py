@@ -51,7 +51,7 @@ extensions = [
 ]
 # numpydoc_show_class_members = False
 
-autodoc_mock_imports = ["numpy", "pandas", "yaml", "keras", "sklearn", "scipy", "tables"]
+autodoc_mock_imports = ["numpy", "pandas", "yaml", "keras", "sklearn", "scipy", "tables", 'h5py']
 # , "pandas", "keras", "scikit-learn", "pyyaml", "matplotlib", "bokeh", "tables", "astropy"]
 
 # Add any paths that contain templates here, relative to this directory.
