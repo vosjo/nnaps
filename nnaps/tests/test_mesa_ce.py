@@ -4,7 +4,7 @@ from pathlib import Path
 
 import numpy as np
 
-from nnaps.mesa import extract_mesa, common_envelope
+from nnaps.mesa import extract_mesa, common_envelope, fileio
 
 base_path = Path(__file__).parent
 
@@ -12,7 +12,7 @@ base_path = Path(__file__).parent
 # that need it in this test module.
 @pytest.fixture(scope='module')
 def data():
-    data, _, profiles = extract_mesa.read_history(base_path / 'test_data/M1.080_M0.502_P192.67_Z0.01129.h5'
+    data, _, profiles = fileio.read_compressed_track(base_path / 'test_data/M1.080_M0.502_P192.67_Z0.01129.h5'
                                                   , return_profiles=True)
 
     stable, ce_age = common_envelope.is_stable(data, criterion='Mdot', value=-2)
@@ -21,7 +21,7 @@ def data():
 
 
 def test_is_stable():
-    data, _ = extract_mesa.read_history(base_path / 'test_data/M1.205_M0.413_P505.12_Z0.h5')
+    data, _ = fileio.read_compressed_track(base_path / 'test_data/M1.205_M0.413_P505.12_Z0.h5')
 
     stable, ce_age, ce_mn = common_envelope.is_stable(data, criterion='Mdot', value=-3, return_model_number=True)
     assert stable is False
@@ -53,7 +53,7 @@ def test_is_stable():
 
 
 def test_apply_ce():
-    data, _ = extract_mesa.read_history(base_path / 'test_data/M1.205_M0.413_P505.12_Z0.h5')
+    data, _ = fileio.read_compressed_track(base_path / 'test_data/M1.205_M0.413_P505.12_Z0.h5')
     stable, ce_age = common_envelope.is_stable(data, criterion='J_div_Jdot_div_P', value=10)
     data = data[data['age'] <= ce_age]
 
@@ -71,7 +71,7 @@ def test_apply_ce():
     assert data['CE_phase'][-2] == 1
     assert data['CE_phase'][-3] == 0
 
-    data, _, profiles = extract_mesa.read_history(base_path / 'test_data/M1.080_M0.502_P192.67_Z0.01129.h5'
+    data, _, profiles = fileio.read_compressed_track(base_path / 'test_data/M1.080_M0.502_P192.67_Z0.01129.h5'
                                                   , return_profiles=True)
     stable, ce_age = common_envelope.is_stable(data, criterion='Mdot', value=-2)
     data = data[data['age'] <= ce_age]
@@ -87,7 +87,7 @@ def test_apply_ce():
 
 
 def test_dewi_tauris2000(data):
-    data, _, profiles = extract_mesa.read_history(base_path / 'test_data/M1.080_M0.502_P192.67_Z0.01129.h5'
+    data, _, profiles = fileio.read_compressed_track(base_path / 'test_data/M1.080_M0.502_P192.67_Z0.01129.h5'
                                                   , return_profiles=True)
 
     stable, ce_age = common_envelope.is_stable(data, criterion='Mdot', value=-2)

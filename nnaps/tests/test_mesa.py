@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 import pylab as pl
 
-from nnaps.mesa import read_mesa, extract_mesa, evolution_phases
+from nnaps.mesa import read_mesa, extract_mesa, evolution_phases, fileio
 
 from pathlib import Path
 base_path = Path(__file__).parent
@@ -58,7 +58,7 @@ class TestExtract:
                        'HeCoreBurning', 'HeShellBurning']
 
         # test checking if all parameters are available.
-        data, _ = extract_mesa.read_history(base_path / 'test_data/M0.789_M0.304_P20.58_Z0.h5', return_profiles=False)
+        data, _ = fileio.read_compressed_track(base_path / 'test_data/M0.789_M0.304_P20.58_Z0.h5', return_profiles=False)
         data = data[['age', 'period_days']]
 
         with pytest.raises(ValueError):
@@ -66,7 +66,7 @@ class TestExtract:
 
         # stable model without He ignition and struggles at the end
         # age of the last 1470 time steps doesn't change!
-        data, _ = extract_mesa.read_history(base_path / 'test_data/M0.789_M0.304_P20.58_Z0.h5', return_profiles=False)
+        data, _ = fileio.read_compressed_track(base_path / 'test_data/M0.789_M0.304_P20.58_Z0.h5', return_profiles=False)
         phases = evolution_phases.get_all_phases(phase_names, data)
 
         assert data['model_number'][phases['init']][0] == 3
@@ -82,7 +82,7 @@ class TestExtract:
         assert phases['HeIgnition'] is None
 
         # stable model without He ignition
-        data, _ = extract_mesa.read_history(base_path / 'test_data/M0.814_M0.512_P260.18_Z0.h5', return_profiles=False)
+        data, _ = fileio.read_compressed_track(base_path / 'test_data/M0.814_M0.512_P260.18_Z0.h5', return_profiles=False)
         phases = evolution_phases.get_all_phases(phase_names, data)
 
         assert data['model_number'][phases['RGB']][0] == 111
@@ -94,7 +94,7 @@ class TestExtract:
         assert phases['HeShellBurning'] is None
 
         # stable model with degenerate He ignition but issues in the He burning phase, and a double ML phase
-        data, _ = extract_mesa.read_history(base_path / 'test_data/M1.125_M0.973_P428.86_Z0.h5', return_profiles=False)
+        data, _ = fileio.read_compressed_track(base_path / 'test_data/M1.125_M0.973_P428.86_Z0.h5', return_profiles=False)
         phases = evolution_phases.get_all_phases(phase_names, data)
 
         assert data['model_number'][phases['ML']][0] == 2556
@@ -107,7 +107,7 @@ class TestExtract:
         assert phases['CEend'] is None
 
         # CE model
-        data, _ = extract_mesa.read_history(base_path / 'test_data/M1.205_M0.413_P505.12_Z0.h5', return_profiles=False)
+        data, _ = fileio.read_compressed_track(base_path / 'test_data/M1.205_M0.413_P505.12_Z0.h5', return_profiles=False)
         data = data[data['model_number'] <= 12111]
         data['CE_phase'][-1] = 1
         data['CE_phase'][-2] = 1
@@ -124,7 +124,7 @@ class TestExtract:
         assert phases['HeShellBurning'] is None
 
         # HB star with core and shell He burning
-        data, _ = extract_mesa.read_history(base_path / 'test_data/M1.276_M1.140_P333.11_Z0.h5', return_profiles=False)
+        data, _ = fileio.read_compressed_track(base_path / 'test_data/M1.276_M1.140_P333.11_Z0.h5', return_profiles=False)
         phases = evolution_phases.get_all_phases(phase_names, data)
 
         assert data['model_number'][phases['ML']][0] == 2031
@@ -136,7 +136,7 @@ class TestExtract:
         assert data['model_number'][phases['HeShellBurning']][-1] == 14268
 
         # sdB star with core and shell He burning
-        data, _ = extract_mesa.read_history(base_path / 'test_data/M1.269_M1.229_P133.46_Z0.00320.h5',
+        data, _ = fileio.read_compressed_track(base_path / 'test_data/M1.269_M1.229_P133.46_Z0.00320.h5',
                                             return_profiles=False)
         phases = evolution_phases.get_all_phases(['sdA', 'sdB', 'sdO'], data)
 
@@ -196,7 +196,7 @@ class TestExtract:
         #TODO: improve this test case and add more checks
 
         # HB star with core and shell He burning
-        data, _ = extract_mesa.read_history(base_path / 'test_data/M1.276_M1.140_P333.11_Z0.h5')
+        data, _ = fileio.read_compressed_track(base_path / 'test_data/M1.276_M1.140_P333.11_Z0.h5')
 
         parameters = ['star_1_mass__init', 'period_days__final', 'rl_1__max', 'rl_1__HeIgnition', 'age__ML__diff',
                       'he_core_mass__ML__rate', 'star_1_mass__lg_mstar_dot_1_max']

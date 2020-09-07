@@ -1,6 +1,7 @@
 import os
 import h5py
 
+import numpy as np
 from numpy.lib.recfunctions import append_fields
 
 from scipy.interpolate import interp1d
