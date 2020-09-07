@@ -331,7 +331,8 @@ def sdA(data):
 
     If the star does not have a core He burning phase as defined by HeCoreBurning, this function will return None.
 
-    NOTE: not to be confused with the spectroscopic definition of the sdA phase, which does NOT require He core burning.
+    .. note::
+        Not to be confused with the spectroscopic definition of the sdA phase, which does NOT require He core burning.
 
     Required history parameters:
         - log_center_T
@@ -373,7 +374,8 @@ def sdB(data):
 
     If the star does not have a core He burning phase as defined by HeCoreBurning, this function will return None.
 
-    NOTE: not to be confused with the spectroscopic definition of the sdB phase, which does NOT require He core burning.
+    .. note::
+        Not to be confused with the spectroscopic definition of the sdB phase, which does NOT require He core burning.
 
     Required history parameters:
         - log_center_T
@@ -415,7 +417,8 @@ def sdO(data):
 
     If the star does not have a core He burning phase as defined by HeCoreBurning, this function will return None.
 
-    NOTE: not to be confused with the spectroscopic definition of the sdO phase, which does NOT require He core burning.
+    .. note::
+        Not to be confused with the spectroscopic definition of the sdO phase, which does NOT require He core burning.
 
     Required history parameters:
         - log_center_T
@@ -455,7 +458,8 @@ def He_WD(data):
 
     The WD cooling track is selected to start when Teff < 10000K and logg > 7, or when logg > 7.5 regardless of Teff
 
-    NOTE: Is triggered with 'He-WD'.
+    .. note::
+        Is triggered with 'He-WD'.
 
     Required history parameters:
         - log_LHe
@@ -504,7 +508,8 @@ def ML(data, return_age=False):
     The first occuring mass loss phase, where the mass loss phase is defined as the period in time when the primary is
     losing mass at a rate of at least lg_mstar_dot_1 >= 10
 
-    NOTE: This phase only marks the first occuring mass loss phase.
+    .. note::
+        This phase only marks the first occuring mass loss phase.
 
     Required history parameters:
         - lg_mstar_dot_1
