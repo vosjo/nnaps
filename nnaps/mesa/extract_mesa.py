@@ -131,7 +131,11 @@ def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_li
             data = data[data['age'] <= ce_age]
 
             if ce_profile_name is not None:
-                profiles = profiles[model['ce_profile_name']]
+                try:
+                    profiles = profiles[model['ce_profile_name']]
+                except Exception:
+                    # todo: deal correctly with the missing profile!
+                    print('CE: profile missing')
             data = common_envelope.apply_ce(data, profiles=profiles, ce_formalism=model['ce_formalism'],
                                             **model['ce_parameters'])
 
