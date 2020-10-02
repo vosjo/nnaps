@@ -70,6 +70,13 @@ def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_li
     columns = ['path', 'stability'] + extra_names + column_names + phase_flags
     results = []
 
+    # check if the same extraction parameters are used for all models, or if specific parameters are already
+    # provided in the files list
+    for setup_par in ['stability_criterion', 'stability_limit', 'ce_formalism', 'ce_profile_name']:
+        if setup_par not in file_list.columns:
+            file_list[setup_par] = locals()[setup_par]
+    file_list['ce_parameters'] = [ce_parameters for i in file_list['path']]
+
     for i, model in file_list.iterrows():
 
         if verbose:
@@ -84,7 +91,8 @@ def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_li
             continue
 
         # 2: check for stability and cut data at start of CE
-        stable, ce_age = common_envelope.is_stable(data, criterion=stability_criterion, value=stability_limit)
+        stable, ce_age = common_envelope.is_stable(data, criterion=model['stability_criterion'],
+                                                   value=model['stability_limit'])
         stability = 'stable'
 
         if not stable:
@@ -93,8 +101,9 @@ def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_li
             data = data[data['age'] <= ce_age]
 
             if ce_profile_name is not None:
-                profiles = profiles[ce_profile_name]
-            data = common_envelope.apply_ce(data, profiles=profiles, ce_formalism=ce_formalism, **ce_parameters)
+                profiles = profiles[model['ce_profile_name']]
+            data = common_envelope.apply_ce(data, profiles=profiles, ce_formalism=model['ce_formalism'],
+                                            **model['ce_parameters'])
 
             # check if CE is ejected or if the system is a merger or a contact binary
             s = np.where((data['star_2_radius'] >= 0.99 * data['rl_2']) &

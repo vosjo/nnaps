@@ -8,15 +8,36 @@ from pathlib import Path
 from nnaps.mesa import read_mesa, extract_mesa, defaults
 
 
-def get_file_list(input_dirs):
+def get_file_list(input_list):
+    """
+    Function that returns a list of all models that should be extracted. Input can be a list of directories, a csv file
+    containing the path to all models, or a list of csv files containing the path to the models to include.
 
-    files = []
+    If the input is given as csv files, each csv file should at least contain 1 column named 'path' containing the
+    path to the MESA model to process. The csv file can also contain columns with extra parameters that can be relevant
+    during the model extraction.
 
-    for input_dir in input_dirs:
-        files_ = glob.glob(str(Path(input_dir, '*')))
-        files += files_
+    :param input_list: list of input directories or csv files
+    :return: pandas dataframe containing the path to all models to process
+    """
 
-    file_list = pd.DataFrame(data=files, columns=['path'])
+    # differentiate between csv files and directories
+    if os.path.isdir(input_list[0]):
+        files = []
+        for input_dir in input_list:
+            files_ = glob.glob(str(Path(input_dir, '*')))
+            files += files_
+
+        file_list = pd.DataFrame(data=files, columns=['path'])
+
+    else:
+        # all inputs are csv files
+        files = []
+        for input_file in input_list:
+            d = pd.read_csv(input_file)
+            files.append(d)
+
+        file_list = pd.concat(files)
 
     return file_list
 
@@ -104,7 +125,7 @@ def main():
             else:
                 output = setup['output']
 
-        # check which intput directories to use
+        # check which input directories to use
         if 'input' in setup and len(args.extract) == 0:
             file_list = get_file_list(setup['input'])
         else:
