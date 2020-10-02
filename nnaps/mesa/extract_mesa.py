@@ -74,7 +74,8 @@ def process_file_list(file_list, **kwargs):
 
 def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_limit=10,
                  ce_formalism='iben_tutukov1984', ce_parameters={'al':1}, ce_profile_name=None,
-                 parameters=[], phase_flags=[], extra_info_parameters=[], verbose=False,**kwargs):
+                 parameters=[], phase_flags=[], extra_info_parameters=[], add_setup_pars_to_result=True, verbose=False,
+                 **kwargs):
 
     parameters_, column_names = [], []
     for parameter in parameters:
@@ -97,6 +98,8 @@ def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_li
     extra_info_parameters = extra_parameters_
 
     columns = ['path', 'stability'] + extra_names + column_names + phase_flags
+    if add_setup_pars_to_result:
+        columns += ['stability_criterion', 'stability_limit', 'ce_profile_name', 'ce_formalism', 'ce_parameters']
     results = []
 
     # check if the same extraction parameters are used for all models, or if specific parameters are already
@@ -157,7 +160,13 @@ def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_li
         extracted_pars = extract_parameters(data, parameters, phase_flags)
         pars += extracted_pars
 
-        # 7: todo: check for some possible errors and flag them
+        # 7: Add the extraction setup parameters if requested
+        if add_setup_pars_to_result:
+            setup_pars = [model['stability_criterion'], model['stability_limit'], model['ce_profile_name'],
+                          model['ce_formalism'], model['ce_parameters']]
+            pars += setup_pars
+
+        # 8: todo: check for some possible errors and flag them
 
         results.append(pars)
 
