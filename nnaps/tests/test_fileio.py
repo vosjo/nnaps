@@ -115,8 +115,73 @@ class TestProcessorConversion:
         np.testing.assert_equal(data, inv_data, err_msg="data transformed by original and inverse transformed by" +
                                                         " loaded encoder does not equal original data.")
 
+# ----------------------------------------------------------------------------------------------------------------------
 
-class TestSafeLoadModel:
+@pytest.fixture(scope='function')
+def test_scaler():
+
+    def test_scaler_helper(scaler):
+
+        data = pd.DataFrame(np.random.randn(100, 4), columns=list('ABCD'))
+
+        scaler.fit(data)
+
+        processors = {'scaler': scaler}
+
+        processor_dict = fileio.processors2dict(processors)
+
+        try:
+            fileio.save('test_scaler.h5', processor_dict)
+            processor_dict_new = fileio.load('test_scaler.h5', unpack=False)
+        finally:
+            if os.path.isfile('test_scaler.h5'):
+                os.remove('test_scaler.h5')
+
+        processors_new = fileio.dict2processors(processor_dict_new)
+
+        scaler_new = processors_new['scaler']
+
+        scaled_data = scaler.transform(data)
+        scaled_data_new = scaler_new.transform(data)
+
+        assert np.all(scaled_data.nonzero()[0] == scaled_data_new.nonzero()[0]), \
+            "{}: loaded scaler does not transform the same as original scaler".format(scaler.__class__)
+        assert np.all(scaled_data.nonzero()[1] == scaled_data_new.nonzero()[1]), \
+            "{}: loaded scaler does not transform the same as original scaler".format(scaler.__class__)
+
+    return test_scaler_helper
+
+
+class TestSaveLoadScalers:
+
+    @pytest.mark.usefixtures("test_scaler")
+    def test_saveload_standardScaler(self, test_scaler):
+
+        scaler = preprocessing.StandardScaler()
+        test_scaler(scaler)
+
+    @pytest.mark.usefixtures("test_scaler")
+    def test_saveload_robustScaler(self, test_scaler):
+
+        scaler = preprocessing.RobustScaler()
+        test_scaler(scaler)
+
+    @pytest.mark.usefixtures("test_scaler")
+    def test_saveload_minMaxScaler(self, test_scaler):
+
+        scaler = preprocessing.MinMaxScaler()
+        test_scaler(scaler)
+
+    @pytest.mark.usefixtures("test_scaler")
+    def test_saveload_maxAbsScaler(self, test_scaler):
+
+        scaler = preprocessing.MaxAbsScaler()
+        test_scaler(scaler)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+class TestSaveLoadEncoders:
 
     def test_saveLoad_processors(self):
 
@@ -256,6 +321,9 @@ class TestSafeLoadModel:
         np.testing.assert_equal(data, inv_data,
                                 err_msg="data transformed by original and inverse transformed by loaded encoder" +
                                         " does not equal original data.")
+
+
+class TestSaveLoadModel:
 
     def test_saveload_model(self):
 

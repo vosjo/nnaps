@@ -276,7 +276,8 @@ def processors2dict(processors):
 
         elif processor.__class__ == preprocessing.StandardScaler:
             p = dict(preprocessor='StandardScaler',
-                     kwargs={'scale_': processor.scale_, 'mean_': processor.mean_, 'var_': processor.var_})
+                     kwargs={'scale_': processor.scale_, 'mean_': processor.mean_, 'var_': processor.var_,
+                             'n_features_in_': processor.n_features_in_})
 
         elif processor.__class__ == preprocessing.RobustScaler:
             p = dict(preprocessor='RobustScaler',
