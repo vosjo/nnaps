@@ -9,7 +9,7 @@ install_requires = [
     "pandas >= 0.25",
     "keras >= 2.3",
     "xgboost >= 0.9",
-    "scikit-learn == 0.22.1",
+    "scikit-learn >= 0.22.1",
     "pyyaml",
     "matplotlib",
     "bokeh",

@@ -45,9 +45,6 @@ The simplest way to install the latest stable release of NNaPS is using pip.
 To uninstall NNaPS, run:
 
     pip uninstall nnaps
-    
-Warning: At the moment saving and loading of NN models requires scikit-learn version 0.22, newer or older version will 
-not work. This problem is being worked on.
 
 ## Acknowledgements
 
