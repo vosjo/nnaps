@@ -174,12 +174,14 @@ class BasePredictor():
         test_score = self.score(test_data)
 
         # print the scores
-        print("Training results\n{:12s}  {}   {}".format('target', 'training score', 'test score'))
-        print("-----------------------------------------")
+        print("Training results\n{:12s}     {}  {}   {}".format('target', 'mean', 'training score', 'test score'))
+        print("--------------------------------------------------")
         for par in self.regressors:
-            print("{:12s}:  {:7.3f}      {:7.3f}".format(par, train_score[par], test_score[par]))
+            mean = training_data[par].mean()
+            print("{:12s}:  {:7.3f}      {:7.3f}      {:7.3f}".format(par, mean, train_score[par], test_score[par]))
         for par in self.classifiers:
-            print("{:12s}:  {:6.1f}%      {:6.1f}%".format(par, train_score[par] * 100., test_score[par] * 100.))
+            print("{:12s}:  {}      {:6.1f}%      {:6.1f}%".format(par, '-', train_score[par] * 100.,
+                                                                   test_score[par] * 100.))
 
     def plot_confusion_matrix(self):
         """
