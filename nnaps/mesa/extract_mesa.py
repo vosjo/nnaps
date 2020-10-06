@@ -43,7 +43,7 @@ def extract_parameters(data, parameters=[], phase_flags=[]):
     return result
 
 
-def process_file_list(file_list, **kwargs):
+def process_file_list(file_list, verbose=False, **kwargs):
     """
     Function that takes a list containing the paths of the mesa models to process, and potentially some relevant
     parameters necessary for the processing. Check if the setup parameters provided in the kwargs are included in
@@ -52,6 +52,7 @@ def process_file_list(file_list, **kwargs):
     if ce_parameters is included in the file_list, it will convert the provided ce_parameters to dictionary.
 
     :param file_list: Pandas DataFrame containing at least 1 column with the path of the MESA models to process
+    :param verbose: If True, print which parameters were added
     :param kwargs: all parameters that are required for processing the MESA models and their default values.
     :return: Pandas DataFrame containing the path to all models and the necessary parameters.
     """
@@ -62,10 +63,14 @@ def process_file_list(file_list, **kwargs):
     for setup_par in kwargs.keys():
         if setup_par not in file_list.columns:
             file_list[setup_par] = kwargs[setup_par]
+            if verbose:
+                print('Set default parameter: {} = {} to all models'.format(setup_par, kwargs[setup_par]))
 
     # ce_parameters is treated separately because it should be converted from string to dictionary if already included
     if ce_parameters is not None and 'ce_parameters' not in file_list.columns:
         file_list['ce_parameters'] = [ce_parameters for i in file_list['path']]
+        if verbose:
+            print('Set default parameter: ce_parameters = {} to all models'.format(ce_parameters))
     else:
         file_list['ce_parameters'] = [eval(p) for p in file_list['ce_parameters']]
 
@@ -105,7 +110,8 @@ def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_li
     # check if the same extraction parameters are used for all models, or if specific parameters are already
     # provided in the files list
     file_list = process_file_list(file_list, stability_criterion=stability_criterion, stability_limit=stability_limit,
-                 ce_formalism=ce_formalism, ce_parameters=ce_parameters, ce_profile_name=ce_profile_name)
+                 ce_formalism=ce_formalism, ce_parameters=ce_parameters, ce_profile_name=ce_profile_name,
+                 verbose=verbose)
 
     for i, model in file_list.iterrows():
 
