@@ -149,10 +149,75 @@ def MS(data, return_age=False):
     else:
         return np.where((data['age'] >= a1) & (data['age'] <= a2))
 
+def MSstart(data, return_age=False):
+    """
+    The Main sequence phase is defined as the phase where hydrogen burning takes place is the core. MSstart defines
+    first moment when the star enters the MS.
+
+    Specifically this is defined as the moment when the majority of the energy is produced by nuclear reactions:
+
+    start: log_LH >= 0.999 * log_L
+
+    Required history parameters:
+        - log_L
+        - log_LH
+        - center_h1
+        - age
+
+    :param data: numpy ndarray containing the history of the system.
+    :return: selection where the history corresponds to the main sequence phase
+    """
+    ages = MS(data, return_age=True)
+
+    if ages is None:
+        return None
+    else:
+        a1, a2 = ages
+
+    s = np.where(data['age'] >= a1)
+
+    if return_age:
+        return a1
+    else:
+        return ([s[0][0]],)
+
+
+def MSend(data, return_age=False):
+    """
+    The Main sequence phase is defined as the phase where hydrogen burning takes place is the core. MSend defines
+    last moment when the star is still considered to be on the MS.
+
+    Specifically this is defined when the core hydrogen runs out:
+
+    end: center_h1 <= 1e-12
+
+    Required history parameters:
+        - log_L
+        - log_LH
+        - center_h1
+        - age
+
+    :param data: numpy ndarray containing the history of the system.
+    :return: selection where the history corresponds to the main sequence phase
+    """
+    ages = MS(data, return_age=True)
+
+    if ages is None:
+        return None
+    else:
+        a1, a2 = ages
+
+    s = np.where(data['age'] <= a2)
+
+    if return_age:
+        return a2
+    else:
+        return ([s[0][-1]],)
+
 
 def RGB(data, return_age=False):
     """
-    The red giant phase is defined as the phase starting at the end of the MS, and continuing until the either a
+    The red giant phase is defined as the phase starting at the end of the MS, and continuing until either a
     minimum in Teff or a maximum in luminosity is reached (whichever comes first) before He burning stars.
 
     Specifically, the start is defined in the same way as the end of the MS phase, based on central hydrogen, and
@@ -190,6 +255,72 @@ def RGB(data, return_age=False):
         return a1, a2
     else:
         return np.where((data['age'] >= a1) & (data['age'] <= a2))
+
+
+def RGBstart(data, return_age=False):
+    """
+    The start of the red giant phase is defined as the moment that the central hydrogen runs out. This phase is
+    equivalent with the end of the MS phase:
+
+    start: center_h1 <= 1e-12
+
+    Required history parameters:
+        - center_h1
+        - center_he4
+        - effective_T
+        - log_L
+        - age
+
+    :param data: numpy ndarray containing the history of the system.
+    :return: selection where the history corresponds to the red giant phase
+    """
+    ages = RGB(data, return_age=True)
+
+    if ages is None:
+        return None
+    else:
+        a1, a2 = ages
+
+    s = np.where(data['age'] >= a1)
+
+    if return_age:
+        return a1
+    else:
+        return ([s[0][0]],)
+
+
+def RGBend(data, return_age=False):
+    """
+    The end of the red giant phase is defined as the moment when either a minimum in Teff or a maximum in luminosity is
+    reached (whichever comes first) before He burning stars.
+
+    Specifically, the end is defined based on Teff and log_L before the central He fraction is reduced:
+
+    end: ( Teff == min(Teff) or log_L == max(log_L) ) and center_He >= center_He_TAMS - 0.01
+
+    Required history parameters:
+        - center_h1
+        - center_he4
+        - effective_T
+        - log_L
+        - age
+
+    :param data: numpy ndarray containing the history of the system.
+    :return: selection where the history corresponds to the red giant phase
+    """
+    ages = RGB(data, return_age=True)
+
+    if ages is None:
+        return None
+    else:
+        a1, a2 = ages
+
+    s = np.where(data['age'] <= a2)
+
+    if return_age:
+        return a2
+    else:
+        return ([s[0][-1]],)
 
 
 def HeIgnition(data, return_age=False):
@@ -640,7 +771,8 @@ def CEend(data):
 
 
 all_phases = {'init': init, 'final': final,
-              'MS': MS, 'RGB': RGB,
+              'MS': MS, 'MSstart': MSstart, 'MSend': MSend,
+              'RGB': RGB, 'RGBstart': RGBstart, 'RGBend': RGBend,
               'MLstart': MLstart, 'MLend': MLend, 'ML': ML,
               'CEstart': CEstart, 'CEend': CEend, 'CE': CE,
               'HeIgnition': HeIgnition, 'HeCoreBurning': HeCoreBurning, 'HeShellBurning': HeShellBurning,

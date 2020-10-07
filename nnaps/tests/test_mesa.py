@@ -11,8 +11,6 @@ from pathlib import Path
 base_path = Path(__file__).parent
 
 
-
-
 class Test2H5:
 
     def test_read_mesa_output(self):

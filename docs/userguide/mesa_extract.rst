@@ -182,6 +182,12 @@ NNaPS MESA can recognize a many different evolution phases:
 
 - init
 - final
+- MS
+- MSstart
+- MSend
+- RGB
+- RGBstart
+- RGBend
 - ML
 - MLstart
 - MLend
