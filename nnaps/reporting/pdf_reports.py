@@ -43,6 +43,10 @@ def plot_training_history(predictor):
         pl.plot(history['epoch'], history[classifier+'_accuracy'], label='train', color='C0')
         pl.title(classifier)
 
+        # only first plot gets a legend, need to check again in case there are no regressors
+        if i == 0:
+            pl.legend(loc='best')
+
         # only place ylabels on each first plot in a row
         if (i+j) % ncol == 0:
             pl.ylabel('Accuracy')

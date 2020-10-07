@@ -2,10 +2,8 @@ import os
 
 import pytest
 import pandas as pd
-import numpy as np
-import pylab as pl
 
-from nnaps.mesa import read_mesa, extract_mesa, evolution_phases, fileio
+from nnaps.mesa import read_mesa
 
 from pathlib import Path
 base_path = Path(__file__).parent
@@ -14,8 +12,6 @@ base_path = Path(__file__).parent
 class Test2H5:
 
     def test_read_mesa_output(self):
-
-        print('basepath: ', base_path)
 
         filename = base_path / 'test_data/M1.013_M0.331_P32.85_Z0.00155/LOGS/history1.data'
 
@@ -26,7 +22,6 @@ class Test2H5:
         assert max(data['model_number']) == 30000
         assert len(data.dtype.names) == 53
         assert data.shape[0] == 10263
-
 
     def test_convert2hdf5(self):
 
