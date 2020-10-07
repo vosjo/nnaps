@@ -15,38 +15,47 @@ class TestProcessFileList:
 
     def test_process_file_list_parameters_included_in_filelist(self):
 
-        filelist = pd.DataFrame(data={'path': ['path'] * 20,
-                                      'stability_criterion': ['Mdot'] * 20,
-                                      'stability_limit': np.random.uniform(-3,0, 20),
-                                      'ce_parameters': ["{'alpha_ce':0.4}"] * 20})
+        file_list = pd.DataFrame(data={'path': ['path'] * 24,
+                                       'stability_criterion': ['Mdot'] * 24,
+                                       'stability_limit': np.random.uniform(-3, 0, 24),
+                                       'ce_formalism': ['iben1984'] * 24,
+                                       'ce_parameters': ["{'alpha_ce':0.3, 'alpha_th':0.3}"] * 24,
+                                       'ce_profile_name': ['Mdot_profile'] * 24,
+                                       })
 
-        ol = copy.deepcopy(filelist)
-        nl = extract_mesa.process_file_list(ol, verbose=False, stability_criterion='Jdot', stability_limit=10,
-                                            ce_parameters={'alpha_ce':0.6})
+        ol = copy.deepcopy(file_list)
+        nl = extract_mesa.process_file_list(ol, stability_criterion='Mdot', stability_limit=-2,
+                                            ce_formalism='Iben1984', ce_parameters={'alpha_ce': 0.5, 'alpha_th': 0.5},
+                                            ce_profile_name='Mdot_profile')
 
-        for par in ['path', 'stability_criterion', 'stability_limit']:
-            np.testing.assert_array_equal(filelist[par], nl[par])
+        for par in ['path', 'stability_criterion', 'stability_limit', 'ce_formalism', 'ce_profile_name']:
+            np.testing.assert_equal(file_list[par].values, nl[par].values)
 
-        assert type(nl['ce_parameters'][0]) == dict
-        assert nl['ce_parameters'][0] == {'alpha_ce':0.4}
+        assert type(nl['ce_parameters'][0]) == dict, "ce_parameters should be converted to a dictionary"
+        assert nl['ce_parameters'][0] == {'alpha_ce': 0.3, 'alpha_th': 0.3}, \
+            "ce_parameters dictionary not correctly converted!"
 
     def test_process_file_list_parameters_not_included_in_filelist(self):
 
-        filelist = pd.DataFrame(data={'path': ['path'] * 20})
+        file_list = pd.DataFrame(data={'path': ['path'] * 24,
+                                       'stability_criterion': ['Mdot'] * 24,
+                                       'stability_limit': np.random.uniform(-3, 0, 24),
+                                       'ce_profile_name': ['Mdot_profile'] * 24,
+                                       })
 
-        ol = copy.deepcopy(filelist)
-        nl = extract_mesa.process_file_list(ol, verbose=False, stability_criterion='Jdot', stability_limit=10,
-                                            ce_parameters={'alpha_ce':0.6})
+        ol = copy.deepcopy(file_list)
+        nl = extract_mesa.process_file_list(ol, stability_criterion='Mdot', stability_limit=-2,
+                                            ce_formalism='Iben1984', ce_parameters={'alpha_ce': 0.5, 'alpha_th': 0.5},
+                                            ce_profile_name='Mdot_profile')
 
-        for par in ['path', 'stability_criterion', 'stability_limit']:
-            assert par in nl.columns
+        for par in ['path', 'stability_criterion', 'stability_limit', 'ce_profile_name']:
+            np.testing.assert_equal(file_list[par].values, nl[par].values)
 
-        np.testing.assert_array_equal(nl['stability_criterion'], ['Jdot'] * 20)
+        assert 'ce_formalism' in nl.columns.values
+        np.testing.assert_equal(nl['ce_formalism'].values, np.array(['Iben1984'] * 24))
 
-        np.testing.assert_array_equal(nl['stability_limit'], [10] * 20)
-
-        assert type(nl['ce_parameters'][0]) == dict
-        assert nl['ce_parameters'][0] == {'alpha_ce':0.6}
+        assert 'ce_parameters' in nl.columns.values
+        assert nl['ce_parameters'][0] == {'alpha_ce': 0.5, 'alpha_th': 0.5}
 
 
 class TestEvolutionPhases:
@@ -154,8 +163,6 @@ class TestEvolutionPhases:
         assert a1 == pytest.approx(3232213210.6798477, abs=0.001)
         assert a2 == pytest.approx(3316814816.4952917, abs=0.001)
 
-class TestExtract:
-
     def test_decompose_parameter(self):
 
         pname, phase, func = evolution_phases.decompose_parameter('star_1_mass__init')
@@ -197,6 +204,8 @@ class TestExtract:
         assert pname == 'star_1_mass'
         assert phase == 'lg_mstar_dot_1_max'
         assert func.__name__ == 'avg_'
+
+class TestExtract:
 
     def test_extract_parameters(self):
         #TODO: improve this test case and add more checks
