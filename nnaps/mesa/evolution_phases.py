@@ -100,17 +100,38 @@ def _check_history_parameters(history, parameters, evol_phase='UK'):
                             in the provided history file.""".format(evol_phase, parameters, missing_parameters))
 
 
-def init(data):
+def _return_function(data, a1, a2, return_start=False, return_end=False, return_age=False):
     """
-    First evolution time point, can be used to obtain the initial parameters of the run.
+    Helper Function.
+    Returns the entire phase, the start or the end depending on the keywords. Written as a separate function as this
+    logic is the same for all phases.
 
-    :param data: numpy ndarray containing the history of the system.
-    :return: selection of the first evolution point.
+    return_start and return_end can't both be True
+
+    If both return_start and return_end are false, the entire phase is returned.
+
+    return_age can be combined with both return_start, return_end or for the entire phase.
     """
-    return ([0],)
+    if return_start:
+        if return_age:
+            return a1
+        else:
+            s = np.where(data['age'] >= a1)
+            return ([s[0][0]],)
+    elif return_end:
+        if return_age:
+            return a2
+        else:
+            s = np.where(data['age'] <= a2)
+            return ([s[0][-1]],)
+    else:
+        if return_age:
+            return a1, a2
+        else:
+            return np.where((data['age'] >= a1) & (data['age'] <= a2))
 
 
-def MS(data, return_age=False):
+def MS(data, return_age=False, return_start=False, return_end=False):
     """
     The Main sequence phase is defined as the phase where hydrogen burning takes place is the core.
 
@@ -144,10 +165,7 @@ def MS(data, return_age=False):
     else:
         a2 = data['age'][(data['center_h1'] < 1e-12)][0]
 
-    if return_age:
-        return a1, a2
-    else:
-        return np.where((data['age'] >= a1) & (data['age'] <= a2))
+    return _return_function(data, a1, a2, return_age=return_age, return_start=return_start, return_end=return_end)
 
 def MSstart(data, return_age=False):
     """
@@ -167,19 +185,7 @@ def MSstart(data, return_age=False):
     :param data: numpy ndarray containing the history of the system.
     :return: selection where the history corresponds to the main sequence phase
     """
-    ages = MS(data, return_age=True)
-
-    if ages is None:
-        return None
-    else:
-        a1, a2 = ages
-
-    s = np.where(data['age'] >= a1)
-
-    if return_age:
-        return a1
-    else:
-        return ([s[0][0]],)
+    return MS(data, return_age=return_age, return_start=True)
 
 
 def MSend(data, return_age=False):
@@ -200,22 +206,10 @@ def MSend(data, return_age=False):
     :param data: numpy ndarray containing the history of the system.
     :return: selection where the history corresponds to the main sequence phase
     """
-    ages = MS(data, return_age=True)
-
-    if ages is None:
-        return None
-    else:
-        a1, a2 = ages
-
-    s = np.where(data['age'] <= a2)
-
-    if return_age:
-        return a2
-    else:
-        return ([s[0][-1]],)
+    return MS(data, return_age=return_age, return_end=True)
 
 
-def RGB(data, return_age=False):
+def RGB(data, return_age=False, return_start=False, return_end=False):
     """
     The red giant phase is defined as the phase starting at the end of the MS, and continuing until either a
     minimum in Teff or a maximum in luminosity is reached (whichever comes first) before He burning stars.
@@ -251,10 +245,7 @@ def RGB(data, return_age=False):
 
     a2 = drgb['age'][(drgb['effective_T'] == np.min(drgb['effective_T'])) | (drgb['log_L'] == np.max(drgb['log_L']))][0]
 
-    if return_age:
-        return a1, a2
-    else:
-        return np.where((data['age'] >= a1) & (data['age'] <= a2))
+    return _return_function(data, a1, a2, return_age=return_age, return_start=return_start, return_end=return_end)
 
 
 def RGBstart(data, return_age=False):
@@ -274,19 +265,7 @@ def RGBstart(data, return_age=False):
     :param data: numpy ndarray containing the history of the system.
     :return: selection where the history corresponds to the red giant phase
     """
-    ages = RGB(data, return_age=True)
-
-    if ages is None:
-        return None
-    else:
-        a1, a2 = ages
-
-    s = np.where(data['age'] >= a1)
-
-    if return_age:
-        return a1
-    else:
-        return ([s[0][0]],)
+    return RGB(data, return_age=return_age, return_start=True)
 
 
 def RGBend(data, return_age=False):
@@ -308,19 +287,7 @@ def RGBend(data, return_age=False):
     :param data: numpy ndarray containing the history of the system.
     :return: selection where the history corresponds to the red giant phase
     """
-    ages = RGB(data, return_age=True)
-
-    if ages is None:
-        return None
-    else:
-        a1, a2 = ages
-
-    s = np.where(data['age'] <= a2)
-
-    if return_age:
-        return a2
-    else:
-        return ([s[0][-1]],)
+    return RGB(data, return_age=return_age, return_end=True)
 
 
 def HeIgnition(data, return_age=False):
@@ -363,7 +330,7 @@ def HeIgnition(data, return_age=False):
         return s
 
 
-def HeCoreBurning(data, return_age=False):
+def HeCoreBurning(data, return_age=False, return_start=False, return_end=False):
     """
     He core burning is defined as the period between ignition of He and formation of CO core. He ignition is defined
     the same way as in the HeIgnition function.
@@ -398,14 +365,12 @@ def HeCoreBurning(data, return_age=False):
         # model ignites He, but has problems modeling the core burning. No core burning phase can be returned
         return None
 
-    if return_age:
-        a2 = data['age'][(data['age'] >= a1) & (data['c_core_mass'] <= 0.01)][-1]
-        return a1, a2
-    else:
-        return np.where((data['age'] >= a1) & (data['c_core_mass'] <= 0.01))
+    a2 = data['age'][(data['age'] >= a1) & (data['c_core_mass'] <= 0.01)][-1]
+
+    return _return_function(data, a1, a2, return_age=return_age, return_start=return_start, return_end=return_end)
 
 
-def HeShellBurning(data, return_age=False):
+def HeShellBurning(data, return_age=False, return_start=False, return_end=False):
     """
     The He shell burning phase is defined as the period in time between the formation of the CO core, and the final
     drop in He luminosity indicating the end of He burning. This final drop is defined as the time when LHe drops
@@ -449,10 +414,7 @@ def HeShellBurning(data, return_age=False):
             print(e)
             a2 = data['age'][-1]
 
-    if return_age:
-        return a1, a2
-    else:
-        return np.where((data['age'] >= a1) & (data['age'] <= a2))
+    return _return_function(data, a1, a2, return_age=return_age, return_start=return_start, return_end=return_end)
 
 
 def sdA(data):
@@ -622,6 +584,16 @@ def He_WD(data):
         a1 = a1[0]
 
     return np.where(data['age'] > a1)
+
+
+def init(data):
+    """
+    First evolution time point, can be used to obtain the initial parameters of the run.
+
+    :param data: numpy ndarray containing the history of the system.
+    :return: selection of the first evolution point.
+    """
+    return ([0],)
 
 
 def final(data):
