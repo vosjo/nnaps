@@ -240,7 +240,7 @@ def RGB(data, return_age=False):
     required_parameters = ['log_L', 'center_h1', 'center_he4', 'effective_T', 'age']
     _check_history_parameters(data, required_parameters, evol_phase='RGB')
 
-    if not any(data['center_h1'] < 1e12):
+    if not any(data['center_h1'] < 1e-12):
         # RGB phase never started
         return None
 
