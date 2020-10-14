@@ -240,8 +240,9 @@ def RGB(data, return_age=False, return_start=False, return_end=False):
 
     a1 = data['age'][(data['center_h1'] < 1e-12)][0]
 
+    # select data between start RGB and start of He burning.
     c_he_tams = data['center_he4'][(data['center_h1'] < 1e-12)][0]
-    drgb = data[data['center_he4'] >= c_he_tams - 0.01]
+    drgb = data[(data['center_he4'] >= c_he_tams - 0.01) & (data['center_h1'] < 1e-12)]
 
     a2 = drgb['age'][(drgb['effective_T'] == np.min(drgb['effective_T'])) | (drgb['log_L'] == np.max(drgb['log_L']))][0]
 
@@ -586,6 +587,47 @@ def He_WD(data):
     return np.where(data['age'] > a1)
 
 
+def CO_WD(data):
+    """
+    Defines the He White Dwarf phase, when the star is on the WD cooling track, and has a CO core.
+
+    The WD cooling track is selected to start when Teff < 10000K and logg > 7, or when logg > 7.5 regardless of Teff
+
+    .. note::
+        Is triggered with 'CO-WD'.
+
+    Required history parameters:
+        - log_LHe
+        - c_core_mass
+        - log_Teff
+        - log_g
+        - age
+
+    :param data: numpy ndarray containing the history of the system.
+    :return: selection where the history corresponds to the He-WD phase
+    """
+    required_parameters = ['log_LHe', 'c_core_mass', 'log_Teff', 'log_g', 'age']
+    _check_history_parameters(data, required_parameters, evol_phase='He_WD')
+
+    if np.max(data['log_g']) < 7.0:
+        # no final WD yet
+        return None
+
+    if np.max(data['c_core_mass']) < 0.01:
+        # No He burning, so no CO core
+        return None
+
+    # select first point where teff < 10^4 and logg < 7
+    a1 = data['age'][((data['log_Teff'] < 4) & (data['log_g'] > 7)) | (data['log_g'] >= 7.5)]
+    if len(a1) == 0:
+        # WD doesn't start
+        return None
+    else:
+        a1 = a1[0]
+
+    return np.where(data['age'] > a1)
+
+
 def init(data):
     """
     First evolution time point, can be used to obtain the initial parameters of the run.
@@ -748,7 +790,7 @@ all_phases = {'init': init, 'final': final,
               'MLstart': MLstart, 'MLend': MLend, 'ML': ML,
               'CEstart': CEstart, 'CEend': CEend, 'CE': CE,
               'HeIgnition': HeIgnition, 'HeCoreBurning': HeCoreBurning, 'HeShellBurning': HeShellBurning,
-              'sdA': sdA, 'sdB': sdB, 'sdO': sdO, 'He-WD': He_WD}
+              'sdA': sdA, 'sdB': sdB, 'sdO': sdO, 'He-WD': He_WD, 'CO-WD': CO_WD}
 
 
 def get_custom_phase(phase, data):

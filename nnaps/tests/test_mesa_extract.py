@@ -60,6 +60,30 @@ class TestProcessFileList:
 
 class TestEvolutionPhases:
 
+    def test_return_function(self):
+        data = pd.DataFrame(data={'age': np.arange(0,10), 'M': np.random.normal(0,1,10)})
+        a1, a2 = 2, 4
+
+        result = evolution_phases._return_function(data, a1, a2, return_start=False, return_end=False, return_age=False)
+        np.testing.assert_array_equal(data['age'].values[result], np.array([2,3,4]))
+
+        result = evolution_phases._return_function(data, a1, a2, return_start=False, return_end=False, return_age=True)
+        assert len(result) == 2
+        assert result[0] == a1
+        assert result[1] == a2
+
+        result = evolution_phases._return_function(data, a1, a2, return_start=True, return_end=False, return_age=False)
+        np.testing.assert_array_equal(data['age'].values[result], np.array([2,]))
+
+        result = evolution_phases._return_function(data, a1, a2, return_start=True, return_end=False, return_age=True)
+        assert result == a1
+
+        result = evolution_phases._return_function(data, a1, a2, return_start=False, return_end=True, return_age=False)
+        np.testing.assert_array_equal(data['age'].values[result], np.array([4,]))
+
+        result = evolution_phases._return_function(data, a1, a2, return_start=False, return_end=True, return_age=True)
+        assert result == a2
+
     def test_get_phases(self):
         phase_names = ['init', 'final', 'MS', 'MSstart', 'MSend', 'RGB', 'RGBstart', 'RGBend', 'MLstart', 'MLend',
                        'ML', 'CE', 'CEstart', 'CEend', 'HeIgnition', 'HeCoreBurning', 'HeShellBurning']
