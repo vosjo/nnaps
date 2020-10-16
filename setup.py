@@ -20,7 +20,7 @@ install_requires = [
 
 setuptools.setup(
     name="nnaps",
-    version="0.0.6",
+    version="0.0.7",
     author="Joris Vos",
     author_email="joris.vos@uv.cl",
     description="Neural Network assisted Population Synthesis tools",
