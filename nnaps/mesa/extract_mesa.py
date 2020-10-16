@@ -67,7 +67,7 @@ def count_ml_phases(data):
             break
         ml_count += 1
 
-        # select the first point in time that the mass loss dips below -10 after it  starts up.
+        # select the first point in time that the mass loss dips below -10 after it starts up.
         try:
             a = ds['age'][(ds['age'] > a1) & (ds['lg_mstar_dot_1'] < -10)][0]
         except IndexError:
@@ -75,6 +75,8 @@ def count_ml_phases(data):
             break
 
         ds = ds[ds['age'] > a]
+        if len(ds) == 0:
+            break
 
     return ml_count
 
