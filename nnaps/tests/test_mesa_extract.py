@@ -249,6 +249,27 @@ class TestExtract:
         n_ml_phases = extract_mesa.count_ml_phases(data)
         assert n_ml_phases == 4
 
+    def test_check_error_flags(self):
+        # check no errors
+        data, _ = fileio.read_compressed_track(base_path /
+                            'test_data/error_models/M0.851_M0.305_P358.92_Z0.00129_no_problems.h5')
+        error_flags = extract_mesa.check_error_flags(data, 'log_g_upper_limit')
+        assert error_flags == []
+
+        # check max_model error
+        error_flags = extract_mesa.check_error_flags(data, 'max_model_number')
+        assert 0 in error_flags
+
+        # check accretor overflow error
+        error_flags = extract_mesa.check_error_flags(data, 'accretor_overflow_terminate')
+        assert 1 in error_flags
+
+        # check ML and He ignition error
+        data, _ = fileio.read_compressed_track(base_path /
+                            'test_data/error_models/M2.407_M0.432_P1.72_Z0.00706_He_ignition_problem.h5')
+        error_flags = extract_mesa.check_error_flags(data, '')
+        assert 2 in error_flags
+        assert 3 in error_flags
 
     def test_extract_parameters(self):
         #TODO: improve this test case and add more checks
@@ -321,7 +342,7 @@ class TestExtract:
                 assert p in results.columns
             for p in phase_flags:
                 assert p in results.columns
-            for p in ['path', 'stability', 'n_ML_phases']:
+            for p in ['path', 'stability', 'n_ML_phases', 'error_flags']:
                 assert p in results.columns
             assert len(results) == len(models)
 
