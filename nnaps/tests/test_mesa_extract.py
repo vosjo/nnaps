@@ -229,7 +229,26 @@ class TestEvolutionPhases:
         assert phase == 'lg_mstar_dot_1_max'
         assert func.__name__ == 'avg_'
 
+
 class TestExtract:
+
+    def test_count_ml_phases(self):
+
+        # 1 ML phase
+        data, _ = fileio.read_compressed_track(base_path / 'test_data/M0.789_M0.304_P20.58_Z0.h5')
+        n_ml_phases = extract_mesa.count_ml_phases(data)
+        assert n_ml_phases == 1
+
+        # 2 separate ML phases
+        data, _ = fileio.read_compressed_track(base_path / 'test_data/M2.341_M1.782_P8.01_Z0.01412.h5')
+        n_ml_phases = extract_mesa.count_ml_phases(data)
+        assert n_ml_phases == 2
+
+        # 4 separate ML phases
+        data, _ = fileio.read_compressed_track(base_path / 'test_data/M1.276_M1.140_P333.11_Z0.h5')
+        n_ml_phases = extract_mesa.count_ml_phases(data)
+        assert n_ml_phases == 4
+
 
     def test_extract_parameters(self):
         #TODO: improve this test case and add more checks
@@ -270,35 +289,41 @@ class TestExtract:
 
     def test_extract_mesa(self, root_dir):
 
-        models = ['test_data/M0.789_M0.304_P20.58_Z0.h5',
-                  'test_data/M0.814_M0.512_P260.18_Z0.h5',
-                  'test_data/M1.276_M1.140_P333.11_Z0.h5'
-                  ]
-        models = [os.path.join(root_dir, x) for x in models]
+            models = ['test_data/M0.789_M0.304_P20.58_Z0.h5',
+                      'test_data/M0.814_M0.512_P260.18_Z0.h5',
+                      'test_data/M1.276_M1.140_P333.11_Z0.h5',
+                      'test_data/M2.341_M1.782_P8.01_Z0.01412.h5',
+                      ]
+            models = [os.path.join(root_dir, x) for x in models]
 
-        models = pd.DataFrame(models, columns=['path'])
+            models = pd.DataFrame(models, columns=['path'])
 
-        parameters = [('star_1_mass__init', 'M1_init'),
-                      ('period_days__final', 'P_final'),
-                      'rl_1__max',
-                      'rl_1__HeIgnition',
-                      'age__ML__diff',
-                      'he_core_mass__ML__rate',
-                     ]
-        parameter_names = ['M1_init', 'P_final', 'rl_1__max', 'rl_1__HeIgnition', 'age__ML__diff', 'he_core_mass__ML__rate']
+            parameters = [('star_1_mass__init', 'M1_init'),
+                          ('period_days__final', 'P_final'),
+                          'rl_1__max',
+                          'rl_1__HeIgnition',
+                          'age__ML__diff',
+                          'he_core_mass__ML__rate',
+                          ]
+            parameter_names = ['M1_init', 'P_final', 'rl_1__max', 'rl_1__HeIgnition', 'age__ML__diff',
+                               'he_core_mass__ML__rate']
 
-        phase_flags = ['sdB', 'He-WD']
+            phase_flags = ['sdB', 'He-WD']
 
-        results = extract_mesa.extract_mesa(models, stability_criterion='J_div_Jdot_div_P', stability_limit=10,
-                                            parameters=parameters, phase_flags=phase_flags,
-                                            verbose=True)
+            results = extract_mesa.extract_mesa(models, stability_criterion='J_div_Jdot_div_P', stability_limit=10,
+                                                parameters=parameters, phase_flags=phase_flags,
+                                                verbose=True)
 
-        results.to_csv('test_results.csv', na_rep='nan')
+            # results.to_csv('test_results.csv', na_rep='nan')
 
-        # check dimensions and columns
-        for p in parameter_names:
-            assert p in results.columns
-        for p in phase_flags:
-            assert p in results.columns
-        assert 'stability' in results.columns
-        assert len(results) == len(models)
+            # check dimensions and columns
+            for p in parameter_names:
+                assert p in results.columns
+            for p in phase_flags:
+                assert p in results.columns
+            for p in ['path', 'stability', 'n_ML_phases']:
+                assert p in results.columns
+            assert len(results) == len(models)
+
+            assert results['n_ML_phases'][0] == 1
+            assert results['n_ML_phases'][3] == 2

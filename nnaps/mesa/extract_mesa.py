@@ -43,6 +43,42 @@ def extract_parameters(data, parameters=[], phase_flags=[]):
     return result
 
 
+def count_ml_phases(data):
+    """
+    Count how many separate mass loss phases take place during the evolution of this system.
+    A mass loss phase is defined as lg_mstar_dot_1 >= -10
+
+    :param data: numpy ndarray containing the history of the system.
+    :return: the number of mass loss phases
+    """
+    if all(data['lg_mstar_dot_1'] < -10):
+        # no mass loss
+        return 0
+
+    ds = data.copy()
+
+    ml_count = 0
+    a = 0
+    while a < ds['age'].max():
+        try:
+            a1 = ds['age'][ds['lg_mstar_dot_1'] >= -10][0]
+        except IndexError:
+            # no more new ML phases
+            break
+        ml_count += 1
+
+        # select the first point in time that the mass loss dips below -10 after it  starts up.
+        try:
+            a = ds['age'][(ds['age'] > a1) & (ds['lg_mstar_dot_1'] < -10)][0]
+        except IndexError:
+            # No more new ML phases
+            break
+
+        ds = ds[ds['age'] > a]
+
+    return ml_count
+
+
 def process_file_list(file_list, verbose=False, **kwargs):
     """
     Function that takes a list containing the paths of the mesa models to process, and potentially some relevant
@@ -102,7 +138,7 @@ def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_li
             extra_names.append(parameter.strip())
     extra_info_parameters = extra_parameters_
 
-    columns = ['path', 'stability'] + extra_names + column_names + phase_flags
+    columns = ['path', 'stability', 'n_ML_phases'] + extra_names + column_names + phase_flags
     if add_setup_pars_to_result:
         columns += ['stability_criterion', 'stability_limit', 'ce_profile_name', 'ce_formalism', 'ce_parameters']
     results = []
@@ -158,9 +194,9 @@ def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_li
             else:
                 stability = 'CE'
 
-        # 3: extract some standard parameters
+        # 3: extract some standard parameters: Path, stability and nr of ML phases.
         pars = [model['path'].split('/')[-1]]
-        pars += [stability]
+        pars += [stability, count_ml_phases(data)]
 
         # 4: add the extra info to the output
         for p in extra_info_parameters:
