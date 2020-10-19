@@ -650,32 +650,40 @@ def final(data):
 
 def ML(data, return_age=False):
     """
-    The first occuring mass loss phase, where the mass loss phase is defined as the period in time when the primary is
-    losing mass at a rate of at least lg_mstar_dot_1 >= 10
+    The first occurring mass loss phase, where the mass loss phase is defined as the period in time when the primary is
+    losing mass at a rate of at least lg_mstar_dot_1 >= 10.
+    This phase only marks mass loss due to RLOF. Mass loss due to winds is not taken into account when flagging a ML
+    phase. In practice, the mass loss rate due to RLOF is defined as:
+
+        lg_mass_loss_rate = log10( 10^lg_mstar_dot_1 - 10^lg_wind_mdot_1 )
 
     .. note::
-        This phase only marks the first occuring mass loss phase.
+        This phase only marks the first occurring mass loss phase.
 
     Required history parameters:
         - lg_mstar_dot_1
+        - lg_wind_mdot_1
         - age
 
     :param data: numpy ndarray containing the history of the system.
     :return: selection where the history corresponds to the first ML phase
     """
-    required_parameters = ['lg_mstar_dot_1', 'age']
+    required_parameters = ['lg_mstar_dot_1', 'lg_wind_mdot_1', 'age']
     _check_history_parameters(data, required_parameters, evol_phase='ML')
 
-    if all(data['lg_mstar_dot_1'] < -10):
+    # look only at the mass lost due to RLOF, not wind mass loss.
+    mass_loss = np.log10( 10**data['lg_mstar_dot_1'] - 10**data['lg_wind_mdot_1'] )
+
+    if all(mass_loss < -10):
         # no mass loss
         return None
 
-    a1 = data['age'][data['lg_mstar_dot_1'] >= -10][0]
+    a1 = data['age'][mass_loss >= -10][0]
 
     try:
         # select the first point in time that the mass loss dips below -10 after it
         # starts up. Necessary to deal with multiple mass loss phases.
-        a2 = data['age'][(data['age'] > a1) & (data['lg_mstar_dot_1'] < -10)][0]
+        a2 = data['age'][(data['age'] > a1) & (mass_loss < -10)][0]
     except IndexError:
         a2 = data['age'][-1]
 

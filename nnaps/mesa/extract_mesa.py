@@ -46,22 +46,29 @@ def extract_parameters(data, parameters=[], phase_flags=[]):
 def count_ml_phases(data):
     """
     Count how many separate mass loss phases take place during the evolution of this system.
-    A mass loss phase is defined as lg_mstar_dot_1 >= -10
+    A mass loss phase is defined as mass_loss_rate >= -10
+    The mass loss rate considered is only from RLOF, it is defined as:
+
+        mass_loss_rate = lg_mstar_dot_1 - lg_wind_mdot_1
 
     :param data: numpy ndarray containing the history of the system.
     :return: the number of mass loss phases
     """
-    if all(data['lg_mstar_dot_1'] < -10):
+
+    mass_loss = np.log10( 10**data['lg_mstar_dot_1'] - 10**data['lg_wind_mdot_1'] )
+
+    if all(mass_loss < -10):
         # no mass loss
         return 0
 
-    ds = data.copy()
+    ml = mass_loss.copy()
+    age = data['age'].copy()
 
     ml_count = 0
     a = 0
-    while a < ds['age'].max():
+    while a < age.max():
         try:
-            a1 = ds['age'][ds['lg_mstar_dot_1'] >= -10][0]
+            a1 = age[ml >= -10][0]
         except IndexError:
             # no more new ML phases
             break
@@ -69,13 +76,14 @@ def count_ml_phases(data):
 
         # select the first point in time that the mass loss dips below -10 after it starts up.
         try:
-            a = ds['age'][(ds['age'] > a1) & (ds['lg_mstar_dot_1'] < -10)][0]
+            a = age[(age > a1) & (ml < -10)][0]
         except IndexError:
             # No more new ML phases
             break
 
-        ds = ds[ds['age'] > a]
-        if len(ds) == 0:
+        ml = ml[age > a]
+        age = age[age > a]
+        if len(age) == 0:
             break
 
     return ml_count
