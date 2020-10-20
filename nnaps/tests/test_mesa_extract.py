@@ -84,6 +84,74 @@ class TestEvolutionPhases:
         result = evolution_phases._return_function(data, a1, a2, return_start=False, return_end=True, return_age=True)
         assert result == a2
 
+    def test_ml_phase(self):
+
+        # -- 1 Mass loss phase consisting of a long wind ml phase and a short RLOF phase --
+        data, _ = fileio.read_compressed_track(base_path / 'test_data/M0.814_M0.512_P260.18_Z0.h5',
+                                               return_profiles=False)
+
+        # test returned ages
+        a1, a2 = evolution_phases.ML(data, mltype='rlof', return_age=True)
+        assert a1 == pytest.approx(12316067393.354174, abs=0.001)
+        assert a2 == pytest.approx(12316911998.086807, abs=0.001)
+
+        a1, a2 = evolution_phases.ML(data, mltype='wind', return_age=True)
+        assert a1 == pytest.approx(12283352829.773027, abs=0.001)
+        assert a2 == pytest.approx(12316994026.181108, abs=0.001)
+
+        a1, a2 = evolution_phases.ML(data, mltype='total', return_age=True)
+        assert a1 == pytest.approx(12283352829.773027, abs=0.001)
+        assert a2 == pytest.approx(12316994026.181108, abs=0.001)
+
+        # check that ML returns same start and end as MLstart and MLend
+        a1_ml, a2_ml = evolution_phases.ML(data, mltype='rlof', return_age=True)
+        a1_start = evolution_phases.MLstart(data, mltype='rlof', return_age=True)
+        a2_end = evolution_phases.MLend(data, mltype='rlof', return_age=True)
+        assert a1_ml == a1_start
+        assert a2_ml == a2_end
+
+        s_ml = evolution_phases.ML(data, mltype='rlof', return_age=False)
+        s_start = evolution_phases.MLstart(data, mltype='rlof', return_age=False)
+        s_end = evolution_phases.MLend(data, mltype='rlof', return_age=False)
+        assert data['model_number'][s_ml][0] == data['model_number'][s_start][0]
+        assert data['model_number'][s_ml][-1] == data['model_number'][s_end][0]
+
+        # -- 4 Mass loss phases: first with both rlof and wind, the other 3 only wind --
+        data, _ = fileio.read_compressed_track(base_path / 'test_data/M1.276_M1.140_P333.11_Z0.h5',
+                                               return_profiles=False)
+
+        # test returned ages
+        a1, a2 = evolution_phases.ML(data, mltype='rlof', return_age=True)
+        assert a1 == pytest.approx(3461120558.9109983, abs=0.001)
+        assert a2 == pytest.approx(3462394022.0863924, abs=0.001)
+
+        a1, a2 = evolution_phases.ML(data, mltype='wind', return_age=True)
+        assert a1 == pytest.approx(3440285863.557928, abs=0.001)
+        assert a2 == pytest.approx(3462498981.825389, abs=0.001)
+
+        a1, a2 = evolution_phases.ML(data, mltype='total', return_age=True)
+        assert a1 == pytest.approx(3440285863.557928, abs=0.001)
+        assert a2 == pytest.approx(3462498981.825389, abs=0.001)
+
+
+        # -- 2 Mass loss phases both with wind and rlof mass loss --
+        data, _ = fileio.read_compressed_track(base_path / 'test_data/M2.341_M1.782_P8.01_Z0.01412.h5',
+                                               return_profiles=False)
+
+        # test returned ages
+        a1, a2 = evolution_phases.ML(data, mltype='rlof', return_age=True)
+        assert a1 == pytest.approx(607563161.616631, abs=0.001)
+        assert a2 == pytest.approx(617932607.0240884, abs=0.001)
+
+        a1, a2 = evolution_phases.ML(data, mltype='wind', return_age=True)
+        assert a1 == pytest.approx(612221727.4877452, abs=0.001)
+        assert a2 == pytest.approx(619258765.4160738, abs=0.001)
+
+        a1, a2 = evolution_phases.ML(data, mltype='total', return_age=True)
+        assert a1 == pytest.approx(607563161.616631, abs=0.001)
+        assert a2 == pytest.approx(619258765.4160738, abs=0.001)
+
+
     def test_get_phases(self):
         phase_names = ['init', 'final', 'MS', 'MSstart', 'MSend', 'RGB', 'RGBstart', 'RGBend', 'MLstart', 'MLend',
                        'ML', 'CE', 'CEstart', 'CEend', 'HeIgnition', 'HeCoreBurning', 'HeShellBurning']

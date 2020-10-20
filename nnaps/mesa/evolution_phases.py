@@ -648,7 +648,7 @@ def final(data):
     return ([data.shape[0]-1],)
 
 
-def ML(data, return_age=False):
+def ML(data, mltype='rlof', return_start=False, return_end=False, return_age=False):
     """
     The first occurring mass loss phase, where the mass loss phase is defined as the period in time when the primary is
     losing mass at a rate of at least lg_mstar_dot_1 >= 10.
@@ -666,13 +666,19 @@ def ML(data, return_age=False):
         - age
 
     :param data: numpy ndarray containing the history of the system.
+    :param mltype: the type of mass loss to consider: 'rlof', 'wind', 'total'
     :return: selection where the history corresponds to the first ML phase
     """
     required_parameters = ['lg_mstar_dot_1', 'lg_wind_mdot_1', 'age']
     _check_history_parameters(data, required_parameters, evol_phase='ML')
 
     # look only at the mass lost due to RLOF, not wind mass loss.
-    mass_loss = np.log10( 10**data['lg_mstar_dot_1'] - 10**data['lg_wind_mdot_1'] )
+    if mltype == 'rlof':
+        mass_loss = np.log10( 10**data['lg_mstar_dot_1'] - 10**data['lg_wind_mdot_1'] )
+    elif mltype == 'wind':
+        mass_loss = data['lg_wind_mdot_1']
+    else:
+        mass_loss = data['lg_mstar_dot_1']
 
     if all(mass_loss < -10):
         # no mass loss
@@ -687,13 +693,10 @@ def ML(data, return_age=False):
     except IndexError:
         a2 = data['age'][-1]
 
-    if return_age:
-        return a1, a2
-    else:
-        return np.where((data['age'] >= a1) & (data['age'] <= a2))
+    return _return_function(data, a1, a2, return_age=return_age, return_start=return_start, return_end=return_end)
 
 
-def MLstart(data, return_age=False):
+def MLstart(data, mltype='rlof', return_age=False):
     """
     The start of the first ML phase, defined as the moment in time when the donor star first reaches
     lg_mstar_dot_1 >= 10
@@ -703,26 +706,13 @@ def MLstart(data, return_age=False):
         - age
 
     :param data: numpy ndarray containing the history of the system.
+    :param mltype: the type of mass loss to consider: 'rlof', 'wind', 'total'
     :return: selection where the history corresponds to the starting point of the first ML phase
     """
-    required_parameters = ['lg_mstar_dot_1', 'age']
-    _check_history_parameters(data, required_parameters, evol_phase='MLstart')
-
-    ages = ML(data, return_age=True)
-    if ages is None:
-        return None
-    else:
-        a1, a2 = ages
-
-    s = np.where(data['age'] >= a1)
-
-    if return_age:
-        return a1
-    else:
-        return ([s[0][0]],)
+    return ML(data, mltype=mltype, return_start=True, return_end=False, return_age=return_age)
 
 
-def MLend(data, return_age=False):
+def MLend(data, mltype='rlof', return_age=False):
     """
     The end of the first mass loss phase, defined as the moment in time when lg_mstar_dot_1 dips below -10 after
     starting mass loss.
@@ -732,23 +722,10 @@ def MLend(data, return_age=False):
         - age
 
     :param data: numpy ndarray containing the history of the system.
+    :param mltype: the type of mass loss to consider: 'rlof', 'wind', 'total'
     :return: selection where the history corresponds to the end point of the first ML phase
     """
-    required_parameters = ['lg_mstar_dot_1', 'age']
-    _check_history_parameters(data, required_parameters, evol_phase='MLend')
-
-    ages = ML(data, return_age=True)
-    if ages is None:
-        return None
-    else:
-        a1, a2 = ages
-
-    s = np.where(data['age'] <= a2)
-
-    if return_age:
-        return a2
-    else:
-        return ([s[0][-1]],)
+    return ML(data, mltype=mltype, return_start=False, return_end=True, return_age=return_age)
 
 
 def CE(data):
