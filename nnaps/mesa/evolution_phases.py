@@ -89,15 +89,34 @@ def decompose_parameter(par):
 #{ Evolution Phases
 
 
-def _check_history_parameters(history, parameters, evol_phase='UK'):
+def _check_history_parameters(history, parameters, evol_phase='UK', raise_error=True):
+    """
+    Check if all parameters are present in the evolution history of the model. Throws an error if this is not the case
+    if raise_error is set to True. Otherwise the function will return True if all parameters are present, and False
+    otherwise.
+    Default behaviour is to raise a ValueError if a parameter is missing.
+
+    :param history: the evolution history of the system
+    :type history: numpy ndarray
+    :param parameters: parameters that should be included
+    :type parameters: list of strings
+    :param evol_phase: the name of the phase that is doing the checking, used in the error message
+    :type evol_phase: str
+    :param raise_error: if true, raise an error, else return True if all parameters are present, False otherwise
+    :type raise_error: bool
+    :return: True if all parameters are present, False otherwise
+    :rtype: bool
+    """
     missing_parameters = []
     for par in parameters:
         if not par in history.dtype.names:
             missing_parameters.append(par)
 
-    if len(missing_parameters) > 0:
+    if len(missing_parameters) > 0 and raise_error:
         raise ValueError("""Evolution phase {} requires the following parameters {}, I could not find {} 
                             in the provided history file.""".format(evol_phase, parameters, missing_parameters))
+
+    return len(missing_parameters) == 0
 
 
 def _return_function(data, a1, a2, return_start=False, return_end=False, return_age=False):
@@ -298,7 +317,7 @@ def HeIgnition(data, return_age=False):
     to neutrino cooling typically happens in a shell around the core.
 
     Ignition is defined as the point with the maximum LHe between the first moment when LHe > 10 Lsol and the formation
-    of the carbon-oxigen core. This is the (first) He flash.
+    of the carbon-oxygen core. This is the (first) He flash.
 
     Required history parameters:
         - log_LHe
@@ -316,7 +335,7 @@ def HeIgnition(data, return_age=False):
         return None
     a1 = data['age'][data['log_LHe'] > 1][0]
 
-    if np.all(data['c_core_mass']) < 0.01:
+    if np.all(data['c_core_mass'] < 0.01):
         # model ignites He, but has problems modeling the core burning. He ignition can be returned.
         a2 = data['age'][-1]
     else:

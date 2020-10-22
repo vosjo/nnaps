@@ -3,7 +3,7 @@ import numpy as np
 
 import pandas as pd
 
-from nnaps.mesa import fileio, common_envelope, evolution_phases
+from nnaps.mesa import fileio, common_envelope, evolution_phases, evolution_errors
 
 def extract_parameters(data, parameters=[], phase_flags=[]):
 
@@ -87,46 +87,6 @@ def count_ml_phases(data):
             break
 
     return ml_count
-
-
-def check_error_flags(data, termination_code):
-    """
-    Check for some possible errors in the model and report them.
-
-    Errors that are checked are:
-
-        0: MESA stopped because of max model number
-        1: MESA stopped because the accretor is overflowing it's Roche-lobe
-        2: The mass loss phase ends before the evolution end. (To check if mass loss didn't cause mesa to crash).
-        3: Potential problem with He ignition
-
-    :param data: history data
-    :param extracted_parameters: list of already extracted parameters
-    :return: list of integers with error codes
-    """
-
-    error_codes = []
-
-    # Check termination_code
-    if termination_code == 'max_model_number':
-        error_codes.append(0)
-    if termination_code == 'accretor_overflow_terminate':
-        error_codes.append(1)
-
-    # Check if Mass loss ends before the end of the evolution
-    if data['lg_mstar_dot_1'][-1] > -10:
-        error_codes.append(2)
-
-    # Check if there is a ramp-up to He ignition, but no actual ignition. Check the last 2000 points
-    d = data[ data['age'] > data[data['log_LHe'] > -50]['age'][0] ]
-    if len(d) > 5000:
-        log_LHe = d['log_LHe'][-5000:]
-        log_LHe_avg = np.average(log_LHe)
-        if (log_LHe > log_LHe_avg-0.5).all() and (log_LHe < log_LHe_avg+0.5).all() \
-                and log_LHe_avg > -50 and log_LHe_avg > data['log_LHe'][0]:
-            error_codes.append(3)
-
-    return error_codes
 
 
 def process_file_list(file_list, verbose=False, **kwargs):
@@ -264,7 +224,7 @@ def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_li
             pars += setup_pars
 
         # 8: todo: check for some possible errors and flag them
-        error_flags = check_error_flags(data, extra_info['termination_code'])
+        error_flags = evolution_errors.check_error_flags(data, extra_info['termination_code'])
         pars.append(error_flags)
 
         results.append(pars)
