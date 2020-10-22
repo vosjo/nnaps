@@ -53,6 +53,7 @@ that you are interested in. You can make a model predicting those observables in
     userguide/mesa_extract
     userguide/mesa_common_envelope
     userguide/mesa_evolution_phases
+    userguide/mesa_evolution_errors
     userguide/nn_training_models
     userguide/nn_predictors
     userguide/reports

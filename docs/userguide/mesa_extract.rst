@@ -264,3 +264,20 @@ the mass loss will reach its maximum, you can define a parameter as follows:
 The first part, *he_core_mass*, defines the parameter that you want the value of. The second part, *lg_mstar_dot_1_max*,
 defines the point in time you want to use. In this case that time point is defined as when *lg_mstar_dot_1* reaches its
 maximum value.
+
+
+Error checks
+------------
+
+NNaPS will preform a few error checks on the evolution model and flag possible issues using error flags. This doesn't
+necessarily mean that the model is wrong, but can be used to point towards possible issues if you get unexpected
+results. Right now there are 5 different error checks performed:
+
+- stopping criteria: max model number reached.
+- stopping criteria: companion roche lobe overflow detected.
+- mass loss error: if the model is still undergoing mass loss when the evolution ends.
+- He ignition error: if the model tries to ignite He, but fails to do so.
+- He core burning error: if the model starts He core burning, but doesn't finish it.
+
+More details about the error flags and what parameters are necessary to check them are given in:
+:doc:`mesa_evolution_errors`

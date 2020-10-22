@@ -16,7 +16,6 @@ def mass_loss_error(history):
     :param history: the evolution history of the system.
     :type history: numpy ndarray
     :return: True if there is a mass loss error, else False
-    :rtype: boolean
     """
 
     required_parameters = ['lg_mstar_dot_1', 'lg_wind_mdot_1']
@@ -42,7 +41,6 @@ def he_ignition_error(history):
     :param history: the evolution history of the system.
     :type history: numpy ndarray
     :return: True if there is a He ignition error, else False
-    :rtype: boolean
     """
     required_parameters = ['age', 'log_LHe', 'log_center_T', 'log_center_Rho']
     if not _check_history_parameters(history, required_parameters, evol_phase='He ignition error', raise_error=False):
@@ -78,7 +76,6 @@ def he_core_burning_error(history):
     :param history: the evolution history of the system.
     :type history: numpy ndarray
     :return: True if there is a He core burning error, else False
-    :rtype: boolean
     """
     required_parameters = ['c_core_mass', 'log_center_T', 'log_center_Rho']
     if not _check_history_parameters(history, required_parameters, evol_phase='He ignition error', raise_error=False):
@@ -94,20 +91,22 @@ def check_error_flags(history, termination_code):
     """
     Check for some possible errors in the model and report them.
 
-    Errors that are checked are and there codes:
+    Errors that are checked and there codes:
 
-        1: MESA stopped because of max model number
-        2: MESA stopped because the accretor is overflowing it's Roche-lobe
-        3: The mass loss phase doesnt end. (To check if mass loss didn't cause mesa to crash).
-        4: Potential problem with He ignition: He ramps up and doesnt ignite, or He ignites but there is no core burning
-        5: He core burning starts, but there is no formation of a CO core
+        1. MESA stopped because of max model number
+        2. MESA stopped because the accretor is overflowing it's Roche-lobe
+        3. The mass loss phase doesn't end, to check if mass loss didn't cause mesa to crash:
+           :func:`~nnaps.mesa.evolution_errors.mass_loss_error`
+        4. Potential problem with He ignition: He ramps up and doesnt ignite, or He ignites but there is no core
+           burning: :func:`~nnaps.mesa.evolution_errors.he_ignition_error`
+        5. He core burning starts, but there is no formation of a CO core:
+           :func:`~nnaps.mesa.evolution_errors.he_core_burning_error`
 
 
     :param history: the evolution history of the system
     :type history: numpy ndarray
     :param termination_code: the termination code of the mesa model
     :type termination_code: str
-    :param extracted_parameters: list of already extracted parameters
     :return: list of integers with error codes
     """
 
