@@ -66,6 +66,12 @@ that you are interested in. You can make a model predicting those observables in
     tutorials/observables
     tutorials/tracks
 
+.. toctree::
+    :maxdepth: 1
+    :caption: Programmer Reference
+
+    api/mesa_api
+    api/predictor_api
 
 * :ref:`genindex`
 * :ref:`modindex`
