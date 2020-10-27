@@ -157,7 +157,7 @@ def MS(data, return_age=False, return_start=False, return_end=False):
     Specifically this is defined as the time period starting when the majority of the energy is produced by nuclear
     reactions, and ending when the core hydrogen runs out.
 
-    start: log_LH > 0.999 * log_L
+    start: 10^log_LH > 0.999 * 10^log_L
 
     end: center_h1 < 1e-12
 
@@ -173,11 +173,11 @@ def MS(data, return_age=False, return_start=False, return_end=False):
     required_parameters = ['log_L', 'log_LH', 'center_h1', 'age']
     _check_history_parameters(data, required_parameters, evol_phase='MS')
 
-    if not any(data['log_LH'] / data['log_L'] > 0.999):
+    if not any(10**data['log_LH'] / 10**data['log_L'] > 0.999):
         # MS is not reached
         return None
 
-    a1 = data['age'][(data['log_LH'] / data['log_L'] > 0.999)][0]
+    a1 = data['age'][(10**data['log_LH'] / 10**data['log_L'] > 0.999)][0]
 
     if not any(data['center_h1'] < 1e-12):
         a2 = data['age'][-1]
@@ -352,11 +352,10 @@ def HeIgnition(data, return_age=False):
 
 def HeCoreBurning(data, return_age=False, return_start=False, return_end=False):
     """
-    He core burning is defined as the period between ignition of He and formation of CO core. He ignition is defined
-    the same way as in the HeIgnition function.
+    He core burning is defined as the period between ignition of He and formation of CO core.
 
-    Ignition is defined as the point with the maximum LHe between the first moment when LHe > 10 Lsol and the formation
-    of the carbon-oxigen core. This is the (first) He flash.
+    He ignition in the core is defined as the first moment when both the temperature and density in the core are
+    sufficiently high to allow He burning. NNaPS uses the same conditions to define the ignition criteria as MESA.
 
     CO core formation is defined as the point in time when the CO core reaches as mass of 0.01
 
@@ -670,7 +669,7 @@ def final(data):
 def ML(data, mltype='rlof', return_start=False, return_end=False, return_age=False):
     """
     The first occurring mass loss phase, where the mass loss phase is defined as the period in time when the primary is
-    losing mass at a rate of at least lg_mstar_dot_1 >= 10.
+    losing mass at a rate of at least log(Mdot) >= -10.
     This phase only marks mass loss due to RLOF. Mass loss due to winds is not taken into account when flagging a ML
     phase. In practice, the mass loss rate due to RLOF is defined as:
 
