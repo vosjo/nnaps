@@ -24,6 +24,9 @@ If you want to check a model against one of those stability criteria you can use
 .. automodule:: nnaps.mesa.common_envelope
    :members: is_stable
 
+
+.. _common_envelope:
+
 Common Envelope
 ---------------
 
