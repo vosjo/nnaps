@@ -88,14 +88,13 @@ def apply_ce(data, profiles=None, ce_formalism='iben_tutukov1984', max_profile_d
     for more details on each of the formalisms and which parameters are required, see their respective functions below.
 
     updates when available:
-
-    - star_1_mass
-    - envelope_mass
-    - period_days
-    - binary_separation
-    - mass_ratio
-    - rl_1
-    - rl_2
+        - star_1_mass
+        - envelope_mass
+        - period_days
+        - binary_separation
+        - mass_ratio
+        - rl_1
+        - rl_2
 
     :param data: ndarray with model parameters
     :param profiles: dictionary containing all available profiles for the model
@@ -171,95 +170,92 @@ def apply_ce(data, profiles=None, ce_formalism='iben_tutukov1984', max_profile_d
     return data
 
 
-def iben_tutukov1984(data, al=1):
+def iben_tutukov1984(history, al=1):
     """
     CE formalism from
     `Iben & Tutukov 1984, ApJ, 284, 719 <https://ui.adsabs.harvard.edu/abs/1984ApJ...284..719I/abstract>`_
 
-    requires:
+    Required history parameters:
+        - star_1_mass
+        - star_2_mass
+        - he_core_mass
+        - binary_separation
 
-    - star_1_mass
-    - star_2_mass
-    - he_core_mass
-    - binary_separation
-
-    :param data: ndarray with model parameters
+    :param history: ndarray with model parameters
     :param al: alpha CE, the efficiency parameter for the CE formalism
     :return: final separation, final primary mass
     """
-    M1 = data['star_1_mass'][-1]
-    M2 = data['star_2_mass'][-1]
-    Mc = data['he_core_mass'][-1]
-    a = data['binary_separation'][-1]
+    M1 = history['star_1_mass'][-1]
+    M2 = history['star_2_mass'][-1]
+    Mc = history['he_core_mass'][-1]
+    a = history['binary_separation'][-1]
 
     af = al * (Mc * M2) / (M1 ** 2) * a
 
     return af, Mc
 
 
-def webbink1984(data, al=1, lb=1):
+def webbink1984(history, al=1, lb=1):
     """
     CE formalism from
     `Webbink 1984, ApJ, 277, 355 <https://ui.adsabs.harvard.edu/abs/1984ApJ...277..355W/abstract>`_
 
-    requires:
+    Required history parameters:
+        - star_1_mass
+        - star_2_mass
+        - he_core_mass
+        - binary_separation
+        - rl_1
 
-    - star_1_mass
-    - star_2_mass
-    - he_core_mass
-    - binary_separation
-    - rl_1
-
-    :param data: ndarray with model parameters
+    :param history: ndarray with model parameters
     :param al: alpha CE, the efficiency parameter for the CE formalism
     :param lb: lambda CE, the mass distribution factor of the primary envelope: lambda * Rl = the effective
                mass-weighted mean radius of the envelope at the start of CE.
     :return: final separation, final primary mass
     """
-    M1 = data['star_1_mass'][-1] # Msun
-    M2 = data['star_2_mass'][-1] # Msun
-    Mc = data['he_core_mass'][-1] # Msun
+    M1 = history['star_1_mass'][-1] # Msun
+    M2 = history['star_2_mass'][-1] # Msun
+    Mc = history['he_core_mass'][-1] # Msun
     Me = M1 - Mc # Msun
-    a = data['binary_separation'][-1] # Rsun
-    Rl = data['rl_1'][-1]  # Rsun
+    a = history['binary_separation'][-1] # Rsun
+    Rl = history['rl_1'][-1]  # Rsun
 
     af = (a * al * lb * Rl * Mc * M2) / (2 * a * M1 * Me + al * lb * Rl * M1 * M2)
 
     return af, Mc
 
 
-def demarco2011(data, al=1, lb=1):
+def demarco2011(history, al=1, lb=1):
     """
     CE formalism from
     `De Marco et al. 2011, MNRAS, 411, 2277 <https://ui.adsabs.harvard.edu/abs/2011MNRAS.411.2277D/abstract>`_
 
-    requires:
+    Required history parameters:
+        - star_1_mass
+        - star_2_mass
+        - he_core_mass
+        - binary_separation
+        - rl_1
 
-    - star_1_mass
-    - star_2_mass
-    - he_core_mass
-    - binary_separation
-    - rl_1
-
-    :param data: ndarray with model parameters
+    :param history: ndarray with model parameters
     :param al: alpha CE, the efficiency parameter for the CE formalism
     :param lb: lambda CE, the mass distribution factor of the primary envelope: lambda * Rl = the effective
                mass-weighted mean radius of the envelope at the start of CE.
     :return: final separation, final primary mass
     """
-    M1 = data['star_1_mass'][-1] # Msun
-    M2 = data['star_2_mass'][-1] # Msun
-    Mc = data['he_core_mass'][-1] # Msun
+    M1 = history['star_1_mass'][-1] # Msun
+    M2 = history['star_2_mass'][-1] # Msun
+    Mc = history['he_core_mass'][-1] # Msun
     Me = M1 - Mc # Msun
-    a = data['binary_separation'][-1] # Rsun
-    Rl = data['rl_1'][-1]  # Rsun
+    a = history['binary_separation'][-1] # Rsun
+    Rl = history['rl_1'][-1]  # Rsun
 
     af = (a * al * lb * Rl * Mc * M2) / (Me * (Me / 2.0 + Mc) * a + al * lb * Rl * M1 * M2)
 
     return af, Mc
 
 
-def dewi_tauris2000(data, profile, a_ce=1, a_th=0.5, merge_when_core_reached=True):
+def dewi_tauris2000(history, profile, a_ce=1, a_th=0.5, merge_when_core_reached=True):
     """
     CE formalism presented in
     `Dewi and Tauris 2000, A&A, 360, 1043 <https://ui.adsabs.harvard.edu/abs/2000A%26A...360.1043D/abstract>`_
@@ -267,19 +263,17 @@ def dewi_tauris2000(data, profile, a_ce=1, a_th=0.5, merge_when_core_reached=Tru
     `Han et al 1995, MNRAS, 272, 800 <https://ui.adsabs.harvard.edu/abs/1995MNRAS.272..800H/abstract>`_
 
 
-    data requires:
+    Required history parameters:
+        - star_2_mass
+        - binary_separation
 
-    - star_2_mass
-    - binary_separation
+    Required profile parameters:
+        - mass
+        - logR
+        - logP
+        - logRho
 
-    profile requires:
-
-    - mass
-    - logR
-    - logP
-    - logRho
-
-    :param data: ndarray with model parameters
+    :param history: ndarray with model parameters
     :param profile: ndarray profile for the integration of binding energy
     :param a_ce: efficiency of ce
     :param a_th: efficiency of binding energy
@@ -298,9 +292,9 @@ def dewi_tauris2000(data, profile, a_ce=1, a_th=0.5, merge_when_core_reached=Tru
                  0.0253245 * (Xi ** 15) + 0.00734239 * (Xi ** 16) - 0.000780009 * (Xi ** 17)
         return (pow(10, ResPre))
 
-    M2 = data['star_2_mass'][-1]  # Msun
-    Mc = data['he_core_mass'][-1]  # Msun
-    a = data['binary_separation'][-1]  # Rsun
+    M2 = history['star_2_mass'][-1]  # Msun
+    Mc = history['he_core_mass'][-1]  # Msun
+    a = history['binary_separation'][-1]  # Rsun
     G = 2944.643655  # Rsun^3/Msun/days^2
 
     star_outside_rl = True
