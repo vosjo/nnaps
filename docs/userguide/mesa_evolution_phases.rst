@@ -170,6 +170,8 @@ different subdwarfs are defined as:
     - sdB: 20000 - 40000 K
     - sdO: > 40000 K
 
+More information can be found in the review paper: `Heber, U. 2016, PASP, 128 <https://ui.adsabs.harvard.edu/abs/2016PASP..128h2001H/abstract>`_
+
 Required history parameters:
     - log_center_T
     - log_center_Rho
@@ -177,6 +179,11 @@ Required history parameters:
     - c_core_mass
     - log_Teff
     - age
+
+In the figure below three different subdwarfs are shown. The first two originate from low mass progenitors, while the
+last originates from a 4 solar mass progenitor.
+
+.. image:: figures/subdwarfs.svg
 
 .. _wd:
 
