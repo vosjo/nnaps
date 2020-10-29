@@ -63,7 +63,7 @@ that you are interested in. You can make a model predicting those observables in
     :caption: Tutorials
 
     tutorials/quickstart
-    tutorials/observables
+    tutorials/period_mass_ratio_models
     tutorials/tracks
 
 .. toctree::
