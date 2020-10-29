@@ -10,7 +10,7 @@ sphinx:
   configuration: docs/conf.py
 
 conda:
-  file: docs/readthedocs-environment.yml
+  environment: docs/readthedocs-environment.yml
 
 # Build documentation with MkDocs
 #mkdocs:
