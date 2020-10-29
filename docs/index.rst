@@ -64,7 +64,6 @@ that you are interested in. You can make a model predicting those observables in
 
     tutorials/quickstart
     tutorials/period_mass_ratio_models
-    tutorials/tracks
 
 .. toctree::
     :maxdepth: 1

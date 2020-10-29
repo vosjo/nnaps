@@ -1,3 +1,0 @@
- 
-Predicting stellar tracks
-=========================

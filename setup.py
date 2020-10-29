@@ -16,6 +16,7 @@ install_requires = [
     "tables",
     "six",
     "astropy",
+    "nbsphinx",
 ]
 
 setuptools.setup(
