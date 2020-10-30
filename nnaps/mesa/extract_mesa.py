@@ -43,19 +43,29 @@ def extract_parameters(data, parameters=[], phase_flags=[]):
     return result
 
 
-def count_ml_phases(data):
+def count_ml_phases(data, mltype='rlof'):
     """
     Count how many separate mass loss phases take place during the evolution of this system.
     A mass loss phase is defined as mass_loss_rate >= -10
-    The mass loss rate considered is only from RLOF, it is defined as:
+    The mass loss rate considered is by default from RLOF, and it is defined as:
 
         mass_loss_rate = lg_mstar_dot_1 - lg_wind_mdot_1
 
+    You can specify if you want the rlof mass loss rate, the wind mass loss rate or the total mass loss rate using the
+    'mltype' option.
+
     :param data: numpy ndarray containing the history of the system.
+    :param mltype: the type of mass loss to consider: 'rlof', 'wind', 'total'
     :return: the number of mass loss phases
     """
 
-    mass_loss = np.log10( 10**data['lg_mstar_dot_1'] - 10**data['lg_wind_mdot_1'] )
+    # look only at the mass lost due to RLOF, not wind mass loss.
+    if mltype == 'rlof':
+        mass_loss = np.log10(10 ** data['lg_mstar_dot_1'] - 10 ** data['lg_wind_mdot_1'])
+    elif mltype == 'wind':
+        mass_loss = data['lg_wind_mdot_1']
+    else:
+        mass_loss = data['lg_mstar_dot_1']
 
     if all(mass_loss < -10):
         # no mass loss
