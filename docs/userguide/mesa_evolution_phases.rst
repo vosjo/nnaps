@@ -208,17 +208,95 @@ Required history parameters:
 Mass loss
 ---------
 
-The first occurring mass loss phase, where the mass loss phase is defined as the period in time when the primary is
-losing mass at a rate of at least log(Mdot) >= -10.
-This phase only marks mass loss due to RLOF. Mass loss due to winds is not taken into account when flagging a ML
-phase. In practice, the mass loss rate due to RLOF is defined as:
+This phase marks the first occurring mass loss phase, which is defined as the period in time when the mass loss rate of
+the primary exceeds log(Mdot) >= -10. When using this phase in the nnaps-mesa extract command, it will automatically
+assume that mass loss due to RLOF is requested. In that case, the mass loss rate that is evaluated is defined as:
 
     lg_mass_loss_rate = log10( 10^lg_mstar_dot_1 - 10^lg_wind_mdot_1 )
+
+    log10(lg_mass_loss_rate) >= -10
 
 Required history parameters:
         - lg_mstar_dot_1
         - lg_wind_mdot_1
         - age
+
+There can be a significant difference in the start and end of a mass loss phase depending on if total mass loss is
+considered, or if only mass loss due to winds or RLOF is considered. When using the api directly, you can differ between
+the three possibilities by calling the :func:`~nnaps.mesa.evolution_phases.ML`,
+:func:`~nnaps.mesa.evolution_phases.MLstart` or :func:`~nnaps.mesa.evolution_phases.MLend` functions directly. They
+accept an extra keyword to indicate which mass loss is requested.
+
+.. code-block:: python
+
+    import pylab as pl
+    from nnaps.mesa import evolution_phases
+    from nnaps.mesa.fileio import read_compressed_track
+
+    # Read the compressed history file of a MESA model in the test suite
+    history, _ = read_compressed_track('../nnaps/tests/test_data/M2.341_M1.782_P8.01_Z0.01412.h5')
+
+    # Get the range for the first ML phase based on RLOF and wind mass loss
+    MLrlof = evolution_phases.ML(history, mltype='rlof')
+    MLwind = evolution_phases.ML(history, mltype='wind')
+
+    # plot everything
+    pl.figure(figsize=(15,6))
+
+    lg_rlof_mdot_1 = np.log10(10**history['lg_mstar_dot_1'] - 10**history['lg_wind_mdot_1'])
+
+    pl.plot(history['model_number'], history['lg_wind_mdot_1'], label='Wind', color='C1', ls='-')
+    pl.plot(history['model_number'], lg_rlof_mdot_1, label='RLOF', color='g', ls='-')
+    pl.plot(history['model_number'], history['lg_mstar_dot_1'], label='Total', color='C0', lw=3, ls=':')
+
+    pl.axhline(y=-10, ls='--', color='k')
+
+    pl.axvline(x=history[MLrlof]['model_number'][0], color='g', ls=':', lw=2)
+    pl.axvline(x=history[MLrlof]['model_number'][-1], color='g', ls=':', lw=2)
+
+    pl.axvline(x=history[MLwind]['model_number'][0], color='C1', ls=':', lw=2)
+    pl.axvline(x=history[MLwind]['model_number'][-1], color='C1', ls=':', lw=2)
+
+    pl.legend(loc='best')
+
+    pl.ylim([-14, -3])
+    pl.xlim([0, 2500])
+
+    pl.xlabel('Model number', size=14)
+    pl.ylabel('log(Mdot) [Msol / yr]', size=14)
+
+.. image:: figures/mass_loss.svg
+
+
+Calculating the number of mass loss phases
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+At the moment nnaps-mesa extract only provides support for using the first mass loss phase as an evolutionary phase, and
+only uses the RLOF mass loss phase. As is visible in the image above, there are ofter evolution models that will have
+more than one mass loss phase. As a temporary solution nnaps-mesa will calculate the number of mass loss phases that
+your model goes through and store it in the 'n_ML_phases' parameters. The api function used for this is:
+:func:`~nnaps.mesa.extract_mesa.count_ml_phases`
+
+When applied on the model used above, it should return 2, regardless of the mltype as for all of RLOF, wind and total
+mass loss, there are 2 separate mass loss phases.
+
+.. code-block:: python
+
+    from nnaps.mesa.extract_mesa import count_ml_phases
+
+    n_rlof = count_ml_phases(history, mltype='rlof')
+    n_wind = count_ml_phases(history, mltype='wind')
+    n_total = count_ml_phases(history, mltype='total')
+
+    print('# RLOF phases: ', n_rlof)
+    print('# wind phases: ', n_wind)
+    print('# total phases: ', n_total)
+
+.. code-block:: none
+
+    # RLOF phases: 2
+    # wind phases: 2
+    # total phases: 2
 
 .. _ce:
 
