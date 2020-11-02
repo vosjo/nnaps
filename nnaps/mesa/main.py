@@ -5,7 +5,7 @@ import pandas as pd
 
 from pathlib import Path
 
-from nnaps.mesa import read_mesa, extract_mesa, defaults
+from nnaps.mesa import compress_mesa, extract_mesa, defaults
 
 
 def get_file_list(input_list):
@@ -97,7 +97,7 @@ def main():
             if len(args.toh5) > 1:
                 setup['input_path_prefix'] = args.toh5[1]
 
-        read_mesa.convert2hdf5(model_list, output_path=args.output, **setup, skip_existing=args.skip, verbose=True)
+        compress_mesa.convert2hdf5(model_list, output_path=args.output, **setup, skip_existing=args.skip, verbose=True)
 
         print("--> {}".format(args.output))
 
