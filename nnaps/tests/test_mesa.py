@@ -3,7 +3,7 @@ import os
 import pytest
 import pandas as pd
 
-from nnaps.mesa import read_mesa
+from nnaps.mesa import compress_mesa
 
 from pathlib import Path
 base_path = Path(__file__).parent
@@ -15,7 +15,7 @@ class Test2H5:
 
         filename = base_path / 'test_data/M1.013_M0.331_P32.85_Z0.00155/LOGS/history1.data'
 
-        _, data = read_mesa.read_mesa_output(filename=filename, only_first=False)
+        _, data = compress_mesa.read_mesa_output(filename=filename, only_first=False)
 
         assert 'model_number' in data.dtype.names
         assert min(data['model_number']) == 1
@@ -31,13 +31,13 @@ class Test2H5:
         modellist = pd.DataFrame(data=data, columns=columns)
 
         try:
-            read_mesa.convert2hdf5(modellist, star_columns=None, binary_columns=None, add_stopping_condition=True,
-                                   skip_existing=False,
-                                   input_path_kw='path', input_path_prefix=base_path / 'test_data',
-                                   star1_history_file='LOGS/history1.data', star2_history_file='LOGS/history2.data',
-                                   binary_history_file='LOGS/binary_history.data', log_file='log.txt',
-                                   profile_files='all', profiles_path='LOGS', profile_pattern='profile_*.data',
-                                   output_path=base_path / 'test_data/hdf5')
+            compress_mesa.convert2hdf5(modellist, star_columns=None, binary_columns=None, add_stopping_condition=True,
+                                       skip_existing=False,
+                                       input_path_kw='path', input_path_prefix=base_path / 'test_data',
+                                       star1_history_file='LOGS/history1.data', star2_history_file='LOGS/history2.data',
+                                       binary_history_file='LOGS/binary_history.data', log_file='log.txt',
+                                       profile_files='all', profiles_path='LOGS', profile_pattern='profile_*.data',
+                                       output_path=base_path / 'test_data/hdf5')
 
             assert os.path.isfile(base_path / 'test_data/hdf5/M1.013_M0.331_P32.85_Z0.00155.h5')
         finally:

@@ -4,6 +4,10 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+version = {}
+with open("nnaps/version.py") as fp:
+    exec(fp.read(), version)
+
 install_requires = [
     "numpy",
     "pandas >= 0.25",
@@ -20,7 +24,7 @@ install_requires = [
 
 setuptools.setup(
     name="nnaps",
-    version="0.0.7",
+    version=version['__version__'],
     author="Joris Vos",
     author_email="joris.vos@uv.cl",
     description="Neural Network assisted Population Synthesis tools",
