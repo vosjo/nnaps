@@ -3,7 +3,7 @@ import os
 import pytest
 import pandas as pd
 
-from nnaps.mesa import compress_mesa
+from nnaps.mesa import compress_mesa, fileio
 
 from pathlib import Path
 base_path = Path(__file__).parent
@@ -40,6 +40,21 @@ class Test2H5:
                                        output_path=base_path / 'test_data/hdf5')
 
             assert os.path.isfile(base_path / 'test_data/hdf5/M1.013_M0.331_P32.85_Z0.00155.h5')
+
+            data = fileio.read_hdf5(base_path / 'test_data/hdf5/M1.013_M0.331_P32.85_Z0.00155.h5')
+
+            assert 'history' in data
+            assert 'star1' in data['history']
+            assert 'star2' in data['history']
+            assert 'binary' in data['history']
+
+            assert 'extra_info' in data
+            assert 'nnaps-version' in data['extra_info']
+            assert 'termination_code' in data['extra_info']
+
+            assert 'profile_legend' in data
+            assert 'profiles' in data
+
         finally:
             os.remove(base_path / 'test_data/hdf5/M1.013_M0.331_P32.85_Z0.00155.h5')
             os.rmdir(base_path / 'test_data/hdf5/')

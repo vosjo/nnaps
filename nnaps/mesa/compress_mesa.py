@@ -7,8 +7,8 @@ import numpy as np
 # that is difficult to work with afterwards.
 from numpy.lib import recfunctions as rf
 
-from . import fileio
-
+from nnaps.mesa import fileio
+from nnaps import __version__
 
 def read_mesa_output(filename=None, only_first=False):
     """
@@ -135,6 +135,9 @@ def convert2hdf5(modellist, star_columns=None, binary_columns=None, profile_colu
                     termination_code = line.split()[-1]
 
         extra_info['termination_code'] = termination_code
+
+        # store the nnaps-version in the output data.
+        extra_info['nnaps-version'] = __version__
 
         data['extra_info'] = extra_info
 
