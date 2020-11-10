@@ -133,30 +133,61 @@ def process_file_list(file_list, verbose=False, **kwargs):
     return file_list
 
 
-def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_limit=10,
-                 ce_formalism='iben_tutukov1984', ce_parameters={'al':1}, ce_profile_name=None,
-                 parameters=[], phase_flags=[], extra_info_parameters=[], add_setup_pars_to_result=True, verbose=False,
-                 **kwargs):
+def _process_parameter_names(parameters, ml_phases):
+    """
+    Run over the parameters are extract parameter and column name. This function deals with figuring out if a
+    requested parameter also has a user defined output name, and in the case that it is a parameters that involves ML,
+    it will add it for every ML phase that is requested.
+
+    .. note::
+        Function for internal use!
+
+    :param parameters: list of tuples or strings containing the parameters to extract.
+    :type parameters: list
+    :param ml_phases: number of mass loss phases to extract.
+    :type ml_phases: int
+    :return: parameters, column_names: the parameters to extract with extra ML parameters added, and the columnn names
+             matching those parameters.
+    """
+
+    def add_ml(parname, ml_phases):
+        if 'ML__' in parname:
+            results = [parname.replace('ML__', 'ML' + str(i + 1) + '__') for i in range(ml_phases)]
+        elif '__ML' in parname:
+            results = [parname.replace('__ML', '__ML'+str(i+1)) for i in range(ml_phases)]
+        else:
+            results = [parname + str(i+1) for i in range(ml_phases)]
+        return results
 
     parameters_, column_names = [], []
     for parameter in parameters:
         if type(parameter) == tuple:
-            parameters_.append(parameter[0])
-            column_names.append(parameter[1].strip())
+            # deal separately with ML phases as these can be multiplied for multiple ML phases
+            if ml_phases > 0 and ('ML__' in parameter[0] or '__ML' in parameter[0]):
+                parameters_ += add_ml(parameter[0], ml_phases)
+                column_names += add_ml(parameter[1].strip(), ml_phases)
+            else:
+                parameters_.append(parameter[0])
+                column_names.append(parameter[1].strip())
         else:
-            parameters_.append(parameter)
-            column_names.append(parameter.strip())
-    parameters = parameters_
+            if ml_phases > 0 and ('ML__' in parameter or '__ML' in parameter):
+                parameters_ += add_ml(parameter, ml_phases)
+                column_names += add_ml(parameter.strip(), ml_phases)
+            else:
+                parameters_.append(parameter)
+                column_names.append(parameter.strip())
 
-    extra_parameters_, extra_names = [], []
-    for parameter in extra_info_parameters:
-        if type(parameter) == tuple:
-            extra_parameters_.append(parameter[0])
-            extra_names.append(parameter[1].strip())
-        else:
-            extra_parameters_.append(parameter)
-            extra_names.append(parameter.strip())
-    extra_info_parameters = extra_parameters_
+    return parameters_, column_names
+
+
+def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_limit=10, ml_phases=0,
+                 ce_formalism='iben_tutukov1984', ce_parameters={'al':1}, ce_profile_name=None,
+                 parameters=[], phase_flags=[], extra_info_parameters=[], add_setup_pars_to_result=True, verbose=False,
+                 **kwargs):
+
+    parameters, column_names = _process_parameter_names(parameters, ml_phases)
+
+    extra_info_parameters, extra_names= _process_parameter_names(extra_info_parameters, 0)
 
     columns = ['path', 'stability', 'n_ML_phases'] + extra_names + column_names + phase_flags
     if add_setup_pars_to_result:

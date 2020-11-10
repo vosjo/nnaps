@@ -346,6 +346,40 @@ class TestExtract:
         n_ml_phases = extract_mesa.count_ml_phases(data)
         assert n_ml_phases == 1
 
+    def test_process_parameter_names(self):
+
+        parameters = ['star_1_mass__init', 'period_days__final', 'star_ML_mass__init', 'ML_age__ML__diff',
+                      'age__ML__diff', 'he_core_mass__ML__rate', 'star_1_mass__lg_mstar_dot_1_max']
+
+        pars, cols = extract_mesa._process_parameter_names(parameters, 0)
+        assert len(pars) == len(parameters)
+        assert len(cols) == len(parameters)
+        assert all([a == b for a, b in zip(pars, parameters)])
+        assert all([a == b for a, b in zip(cols, parameters)])
+
+        pars, cols = extract_mesa._process_parameter_names(parameters, 1)
+        assert len(pars) == len(parameters)
+        assert len(cols) == len(parameters)
+        assert 'star_ML_mass__init' in pars
+        assert 'star_ML1_mass__init' not in pars
+
+        assert 'ML1_age__ML__diff' not in pars
+        assert 'ML1_age__ML1__diff' not in pars
+        assert 'ML_age__ML1__diff' in pars
+
+        assert 'age__ML__diff' not in pars
+        assert 'age__ML1__diff' in pars
+        assert 'he_core_mass__ML__rate' not in pars
+        assert 'he_core_mass__ML1__rate' in pars
+
+        pars, cols = extract_mesa._process_parameter_names(parameters, 3)
+        assert len(pars) == 4 + 3*3
+        assert len(cols) == 4 + 3*3
+        assert 'age__ML__diff' not in pars
+        assert 'age__ML1__diff' in pars
+        assert 'age__ML2__diff' in pars
+        assert 'age__ML3__diff' in pars
+
     def test_extract_parameters(self):
         #TODO: improve this test case and add more checks
 
