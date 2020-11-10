@@ -180,7 +180,6 @@ class TestEvolutionPhases:
         assert a1 == pytest.approx(970323465.489477, abs=0.001)
         assert a2 == pytest.approx(976109951.0074742, abs=0.001)
 
-
     def test_get_phases(self):
         phase_names = ['init', 'final', 'MS', 'MSstart', 'MSend', 'RGB', 'RGBstart', 'RGBend', 'MLstart', 'MLend',
                        'ML', 'CE', 'CEstart', 'CEend', 'HeIgnition', 'HeCoreBurning', 'HeShellBurning']
@@ -283,6 +282,23 @@ class TestEvolutionPhases:
 
         assert a1 == pytest.approx(3232213210.6798477, abs=0.001)
         assert a2 == pytest.approx(3316814816.4952917, abs=0.001)
+
+    def test_get_all_phases_MLphase(self):
+
+        phase_names = ['ML1', 'ML2', 'ML3']
+
+        data, _ = fileio.read_compressed_track(base_path / 'test_data/M2.341_M1.782_P8.01_Z0.01412.h5',
+                                               return_profiles=False)
+        phases = evolution_phases.get_all_phases(phase_names, data)
+
+        assert phases['ML1'] is not None
+        assert phases['ML2'] is not None
+        assert phases['ML3'] is None
+
+        assert data['model_number'][phases['ML1']][0] == 132
+        assert data['model_number'][phases['ML1']][-1] == 678
+        assert data['model_number'][phases['ML2']][0] == 1821
+        assert data['model_number'][phases['ML2']][-1] == 2124
 
     def test_decompose_parameter(self):
 

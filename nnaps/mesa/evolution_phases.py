@@ -848,19 +848,30 @@ def get_custom_phase(phase, data):
     return np.where(data[par] == value)
 
 
-def get_all_phases(phases, data):
+def get_all_phases(phases, history):
 
     phases = set(phases)
     if None in phases:
         phases.remove(None)
 
+    if 'ML1' in phases:
+        ml_phases = ML(history, return_multiple=True)
+
     phase_selection = {}
 
     for phase in phases:
-        if phase not in all_phases:
-            phase_selection[phase] = get_custom_phase(phase, data)
+        if phase in all_phases:
+            phase_selection[phase] = all_phases[phase](history)
+        elif 'ML' in phase:
+            # extract the number of the ML phase from the name. Name is like ML#, e.g. ML2
+            n_ml = int(phase[-1])
+            if len(ml_phases) >= n_ml:
+                # take care of 1 indexing for ML phases instead of 0 indexing
+                phase_selection[phase] = ml_phases[n_ml - 1]
+            else:
+                phase_selection[phase] = None
         else:
-            phase_selection[phase] = all_phases[phase](data)
+            phase_selection[phase] = get_custom_phase(phase, history)
 
     return phase_selection
 
