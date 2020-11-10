@@ -145,7 +145,7 @@ def _return_function(data, a1, a2, return_start=False, return_end=False, return_
             return ([s[0][-1]],)
     else:
         if return_age:
-            return a1, a2
+            return (a1, a2)
         else:
             return np.where((data['age'] >= a1) & (data['age'] <= a2))
 
@@ -666,7 +666,7 @@ def final(data):
     return ([data.shape[0]-1],)
 
 
-def ML(data, mltype='rlof', return_start=False, return_end=False, return_age=False):
+def ML(data, mltype='rlof', return_start=False, return_end=False, return_age=False, return_multiple=False):
     """
     The first occurring mass loss phase, where the mass loss phase is defined as the period in time when the primary is
     losing mass at a rate of at least log(Mdot) >= -10.
@@ -694,27 +694,54 @@ def ML(data, mltype='rlof', return_start=False, return_end=False, return_age=Fal
     if mltype == 'rlof':
         mass_loss = np.log10( 10**data['lg_mstar_dot_1'] - 10**data['lg_wind_mdot_1'] )
     elif mltype == 'wind':
-        mass_loss = data['lg_wind_mdot_1']
+        mass_loss = data['lg_wind_mdot_1'].copy()
     else:
-        mass_loss = data['lg_mstar_dot_1']
+        mass_loss = data['lg_mstar_dot_1'].copy()
 
     if all(mass_loss < -10):
         # no mass loss
         return None
 
-    a1 = data['age'][mass_loss >= -10][0]
+    age = data['age'].copy()
 
-    try:
-        # select the first point in time that the mass loss dips below -10 after it
-        # starts up. Necessary to deal with multiple mass loss phases.
-        a2 = data['age'][(data['age'] > a1) & (mass_loss < -10)][0]
-    except IndexError:
-        a2 = data['age'][-1]
+    # run over history file, and measure all mass loss phases
+    result_ages = []
+    while True:
+        try:
+            a1 = age[mass_loss >= -10][0]
+        except IndexError:
+            # no more new ML phases
+            break
 
-    return _return_function(data, a1, a2, return_age=return_age, return_start=return_start, return_end=return_end)
+        try:
+            # select the first point in time that the mass loss dips below -10 after it
+            # starts up. Necessary to deal with multiple mass loss phases.
+            a2 = age[(age > a1) & (mass_loss < -10)][0]
+        except IndexError:
+            a2 = age[-1]
+
+        result_ages.append((a1, a2))
+
+        mass_loss = mass_loss[age > a2]
+        age = age[age > a2]
+        # stop loop if no more history remains, or if only 1 mass loss phase is requested.
+        if len(age) == 0 or not return_multiple:
+            break
+
+    if not return_multiple:
+        a1, a2 = result_ages[0]
+        return _return_function(data, a1, a2, return_age=return_age, return_start=return_start, return_end=return_end)
+
+    else:
+        results = []
+        for ages in result_ages:
+            a1, a2 = ages
+            results.append(_return_function(data, a1, a2, return_age=return_age,
+                                            return_start=return_start, return_end=return_end))
+        return results
 
 
-def MLstart(data, mltype='rlof', return_age=False):
+def MLstart(data, mltype='rlof', return_age=False, return_multiple=False):
     """
     The start of the first ML phase, defined as the moment in time when the donor star first reaches
     lg_mstar_dot_1 >= 10
@@ -727,10 +754,11 @@ def MLstart(data, mltype='rlof', return_age=False):
     :param mltype: the type of mass loss to consider: 'rlof', 'wind', 'total'
     :return: selection where the history corresponds to the starting point of the first ML phase
     """
-    return ML(data, mltype=mltype, return_start=True, return_end=False, return_age=return_age)
+    return ML(data, mltype=mltype, return_start=True, return_end=False,
+              return_age=return_age, return_multiple=return_multiple)
 
 
-def MLend(data, mltype='rlof', return_age=False):
+def MLend(data, mltype='rlof', return_age=False, return_multiple=False):
     """
     The end of the first mass loss phase, defined as the moment in time when lg_mstar_dot_1 dips below -10 after
     starting mass loss.
@@ -743,7 +771,8 @@ def MLend(data, mltype='rlof', return_age=False):
     :param mltype: the type of mass loss to consider: 'rlof', 'wind', 'total'
     :return: selection where the history corresponds to the end point of the first ML phase
     """
-    return ML(data, mltype=mltype, return_start=False, return_end=True, return_age=return_age)
+    return ML(data, mltype=mltype, return_start=False, return_end=True,
+              return_age=return_age, return_multiple=return_multiple)
 
 
 def CE(data):

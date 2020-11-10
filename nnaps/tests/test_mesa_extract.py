@@ -121,35 +121,64 @@ class TestEvolutionPhases:
                                                return_profiles=False)
 
         # test returned ages
-        a1, a2 = evolution_phases.ML(data, mltype='rlof', return_age=True)
+        ages = evolution_phases.ML(data, mltype='rlof', return_age=True, return_multiple=True)
+        assert len(ages) == 1
+        a1, a2 = ages[0]
         assert a1 == pytest.approx(3461120558.9109983, abs=0.001)
         assert a2 == pytest.approx(3462394022.0863924, abs=0.001)
 
-        a1, a2 = evolution_phases.ML(data, mltype='wind', return_age=True)
+        ages = evolution_phases.ML(data, mltype='wind', return_age=True, return_multiple=True)
+        assert len(ages) == 4
+        a1, a2 = ages[0]
         assert a1 == pytest.approx(3440285863.557928, abs=0.001)
         assert a2 == pytest.approx(3462498981.825389, abs=0.001)
 
-        a1, a2 = evolution_phases.ML(data, mltype='total', return_age=True)
-        assert a1 == pytest.approx(3440285863.557928, abs=0.001)
-        assert a2 == pytest.approx(3462498981.825389, abs=0.001)
+        ages = evolution_phases.ML(data, mltype='total', return_age=True, return_multiple=True)
+        assert len(ages) == 4
+        a1, a2 = ages[1]
+        assert a1 == pytest.approx(3462515931.0189767, abs=0.001)
+        assert a2 == pytest.approx(3463059499.121973, abs=0.001)
+        a1, a2 = ages[2]
+        assert a1 == pytest.approx(3572455931.1686773, abs=0.001)
+        assert a2 == pytest.approx(3576048979.7216263, abs=0.001)
+        a1, a2 = ages[3]
+        assert a1 == pytest.approx(3576114881.085102, abs=0.001)
+        assert a2 == pytest.approx(3576115123.911062, abs=0.001)
 
 
         # -- 2 Mass loss phases both with wind and rlof mass loss --
         data, _ = fileio.read_compressed_track(base_path / 'test_data/M2.341_M1.782_P8.01_Z0.01412.h5',
                                                return_profiles=False)
 
-        # test returned ages
-        a1, a2 = evolution_phases.ML(data, mltype='rlof', return_age=True)
+        # RLOF
+        ages = evolution_phases.ML(data, mltype='rlof', return_age=True, return_multiple=True)
+        assert len(ages) == 2
+        a1, a2 = ages[0]
         assert a1 == pytest.approx(607563161.616631, abs=0.001)
         assert a2 == pytest.approx(617932607.0240884, abs=0.001)
+        a1, a2 = ages[1]
+        assert a1 == pytest.approx(970323465.489477, abs=0.001)
+        assert a2 == pytest.approx(975582471.8171717, abs=0.001)
 
-        a1, a2 = evolution_phases.ML(data, mltype='wind', return_age=True)
+        # Wind
+        ages = evolution_phases.ML(data, mltype='wind', return_age=True, return_multiple=True)
+        assert len(ages) == 2
+        a1, a2 = ages[0]
         assert a1 == pytest.approx(612221727.4877452, abs=0.001)
         assert a2 == pytest.approx(619258765.4160738, abs=0.001)
+        a1, a2 = ages[1]
+        assert a1 == pytest.approx(971574716.1957985, abs=0.001)
+        assert a2 == pytest.approx(976109951.0074742, abs=0.001)
 
-        a1, a2 = evolution_phases.ML(data, mltype='total', return_age=True)
+        # Total
+        ages = evolution_phases.ML(data, mltype='total', return_age=True, return_multiple=True)
+        assert len(ages) == 2
+        a1, a2 = ages[0]
         assert a1 == pytest.approx(607563161.616631, abs=0.001)
         assert a2 == pytest.approx(619258765.4160738, abs=0.001)
+        a1, a2 = ages[1]
+        assert a1 == pytest.approx(970323465.489477, abs=0.001)
+        assert a2 == pytest.approx(976109951.0074742, abs=0.001)
 
 
     def test_get_phases(self):
@@ -170,9 +199,9 @@ class TestEvolutionPhases:
 
         assert data['model_number'][phases['init']][0] == 3
         assert data['model_number'][phases['final']][0] == 30000
-        assert data['model_number'][phases['MS']][0] == 27
+        assert data['model_number'][phases['MS']][0] == 3
         assert data['model_number'][phases['MS']][-1] == 114
-        assert data['model_number'][phases['MSstart']][0] == 27
+        assert data['model_number'][phases['MSstart']][0] == 3
         assert data['model_number'][phases['MSend']][0] == 114
         assert data['model_number'][phases['RGB']][0] == 114
         assert data['model_number'][phases['RGB']][-1] == 948
