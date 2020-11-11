@@ -5,14 +5,15 @@ import pandas as pd
 
 from nnaps.mesa import fileio, common_envelope, evolution_phases, evolution_errors
 
-def extract_parameters(data, parameters=[], phase_flags=[]):
+
+def extract_parameters(data, parameters=[], phase_flags=[], n_ml_phases=0):
 
     phases = []
     for parameter in parameters:
         pname, phase, func = evolution_phases.decompose_parameter(parameter)
         phases.append(phase)
     phases = phases + phase_flags
-    phases = evolution_phases.get_all_phases(phases, data)
+    phases = evolution_phases.get_all_phases(phases, data, n_ml_phases)
 
     result = []
 
@@ -24,6 +25,13 @@ def extract_parameters(data, parameters=[], phase_flags=[]):
             if phases[phase] is None:
                 # if the phase doesn't exist in the model, return nan value
                 value = np.nan
+            elif type(phases[phase]) == list:
+                # in this case the phase returns multiple hits which need to be returned as a list
+                value = []
+                for p in phases[phase]:
+                    d_ = data[p]
+                    value_ = func(d_, pname)
+                    value.append(value_)
             else:
                 d_ = data[phases[phase]]
                 value = func(d_, pname)
@@ -159,7 +167,7 @@ def _process_parameters(parameters):
     return parameters_, column_names
 
 
-def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_limit=10,
+def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_limit=10, n_ml_phases=0,
                  ce_formalism='iben_tutukov1984', ce_parameters={'al':1}, ce_profile_name=None,
                  parameters=[], phase_flags=[], extra_info_parameters=[], add_setup_pars_to_result=True, verbose=False,
                  **kwargs):
@@ -234,7 +242,7 @@ def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_li
             pars.append(extra_info[p])
 
         # 5: extract the requested parameters & 6: add the requested phase flags
-        extracted_pars = extract_parameters(data, parameters, phase_flags)
+        extracted_pars = extract_parameters(data, parameters, phase_flags, n_ml_phases=n_ml_phases)
         pars += extracted_pars
 
         # 7: Add the extraction setup parameters if requested

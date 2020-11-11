@@ -848,7 +848,7 @@ def get_custom_phase(phase, data):
     return np.where(data[par] == value)
 
 
-def get_all_phases(phases, data):
+def get_all_phases(phases, data, n_ml_phases=0):
 
     phases = set(phases)
     if None in phases:
@@ -860,7 +860,12 @@ def get_all_phases(phases, data):
         if phase not in all_phases:
             phase_selection[phase] = get_custom_phase(phase, data)
         else:
-            phase_selection[phase] = all_phases[phase](data)
+            if 'ML' in phase and n_ml_phases > 0:
+                # deal with multiple ML phases and store those as a list
+                selection = all_phases[phase](data, return_multiple=True)
+                phase_selection[phase] = selection[0:n_ml_phases]
+            else:
+                phase_selection[phase] = all_phases[phase](data)
 
     return phase_selection
 
