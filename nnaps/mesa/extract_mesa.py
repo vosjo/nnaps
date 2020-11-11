@@ -133,10 +133,19 @@ def process_file_list(file_list, verbose=False, **kwargs):
     return file_list
 
 
-def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_limit=10,
-                 ce_formalism='iben_tutukov1984', ce_parameters={'al':1}, ce_profile_name=None,
-                 parameters=[], phase_flags=[], extra_info_parameters=[], add_setup_pars_to_result=True, verbose=False,
-                 **kwargs):
+def _process_parameters(parameters):
+    """
+    Run over the parameters are extract parameter and column name. This function deals with figuring out if a
+    requested parameter also has a user defined output name.
+
+    .. note::
+        Function for internal use!
+
+    :param parameters: list of tuples or strings containing the parameters names
+    :type parameters: list
+    :return: parameters, column_names: the parameters to extract with extra ML parameters added, and the columnn names
+             matching those parameters.
+        """
 
     parameters_, column_names = [], []
     for parameter in parameters:
@@ -146,17 +155,18 @@ def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_li
         else:
             parameters_.append(parameter)
             column_names.append(parameter.strip())
-    parameters = parameters_
 
-    extra_parameters_, extra_names = [], []
-    for parameter in extra_info_parameters:
-        if type(parameter) == tuple:
-            extra_parameters_.append(parameter[0])
-            extra_names.append(parameter[1].strip())
-        else:
-            extra_parameters_.append(parameter)
-            extra_names.append(parameter.strip())
-    extra_info_parameters = extra_parameters_
+    return parameters_, column_names
+
+
+def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_limit=10,
+                 ce_formalism='iben_tutukov1984', ce_parameters={'al':1}, ce_profile_name=None,
+                 parameters=[], phase_flags=[], extra_info_parameters=[], add_setup_pars_to_result=True, verbose=False,
+                 **kwargs):
+
+    parameters, column_names = _process_parameters(parameters)
+
+    extra_info_parameters, extra_names = _process_parameters(extra_info_parameters)
 
     columns = ['path', 'stability', 'n_ML_phases'] + extra_names + column_names + phase_flags
     if add_setup_pars_to_result:
