@@ -3,9 +3,8 @@ import copy
 import pytest
 import pandas as pd
 import numpy as np
-import pylab as pl
 
-from nnaps.mesa import extract_mesa, evolution_phases, fileio
+from nnaps.mesa import extract_mesa, fileio
 
 
 class TestProcessFileList:
@@ -53,6 +52,48 @@ class TestProcessFileList:
 
         assert 'ce_parameters' in nl.columns.values
         assert nl['ce_parameters'][0] == {'alpha_ce': 0.5, 'alpha_th': 0.5}
+
+
+class TestExtractAux:
+
+    def test_process_parameters(parameters):
+
+        pass
+
+    def test_flatten_dataframe(self):
+
+        # check the flattening
+        df = pd.DataFrame(data={'a':[1,2,3,4],
+                                'b':[[], [1,2,3,4], [1,2,3], [1,2]]}
+                          )
+
+        df_new = extract_mesa._flatten_dataframe(df, 3)
+
+        assert 'b' not in df_new.columns.values
+        assert 'b_1' in df_new.columns.values
+        assert 'b_2' in df_new.columns.values
+        assert 'b_3' in df_new.columns.values
+        assert 'b_4' not in df_new.columns.values
+
+        assert df_new['b_1'].equals(pd.Series([np.nan, 1., 1., 1.]))
+        assert df_new['b_2'].equals(pd.Series([np.nan, 2., 2., 2.]))
+        assert df_new['b_3'].equals(pd.Series([np.nan, 3., 3., np.nan]))
+
+        # check the naming of the new columns
+        df = pd.DataFrame(data={'ML_teff_comp':[[], [1,2,3,4], [1,2,3], [1,2]],
+                                'MLstart_HeCoreMass':[[], [1,2,3,4], [1,2,3], [1,2]]}
+                          )
+
+        df_new = extract_mesa._flatten_dataframe(df, 3)
+
+        assert 'ML_teff_comp' not in df_new.columns.values
+        assert 'MLstart_HeCoreMass' not in df_new.columns.values
+        assert 'ML1_teff_comp' in df_new.columns.values
+        assert 'ML2_teff_comp' in df_new.columns.values
+        assert 'ML3_teff_comp' in df_new.columns.values
+        assert 'ML1start_HeCoreMass' in df_new.columns.values
+        assert 'ML2start_HeCoreMass' in df_new.columns.values
+        assert 'ML3start_HeCoreMass' in df_new.columns.values
 
 
 class TestExtract:

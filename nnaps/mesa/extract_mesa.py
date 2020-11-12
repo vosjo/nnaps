@@ -167,10 +167,33 @@ def _process_parameters(parameters):
     return parameters_, column_names
 
 
+def _flatten_dataframe(df, max_cols):
+
+    def get_new_col_name(colname, ind):
+        for phase in evolution_phases.EVOLUTION_PHASES:
+            if phase in colname:
+                return colname.replace(phase, phase + str(ind+1))
+        return colname + '_' + str(ind+1)
+
+    columns = df.columns.values
+
+    for ncol, col in enumerate(columns):
+        if type(df.loc[0, col]) == list:
+            # lists needs to be flattened
+            for i in range(max_cols):
+                data = df[col].apply(lambda x: x[i] if len(x) > i else np.nan)
+                new_col_name = get_new_col_name(col, i)
+                df.insert(ncol+i, new_col_name, data)
+
+            df.drop(columns=col, inplace=True)
+
+    return df
+
+
 def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_limit=10, n_ml_phases=0,
                  ce_formalism='iben_tutukov1984', ce_parameters={'al':1}, ce_profile_name=None,
                  parameters=[], phase_flags=[], extra_info_parameters=[], add_setup_pars_to_result=True, verbose=False,
-                 **kwargs):
+                 flatten_output=False, **kwargs):
 
     parameters, column_names = _process_parameters(parameters)
 
@@ -258,6 +281,11 @@ def extract_mesa(file_list, stability_criterion='J_div_Jdot_div_P', stability_li
         results.append(pars)
 
     results = pd.DataFrame(results, columns=columns)
+
+    if flatten_output:
+        # go over all columns. If a column contains a list instead of a value flatten that column
+        results = _flatten_dataframe(results, n_ml_phases)
+
     return results
 
 
