@@ -242,7 +242,7 @@ def read_compressed_track(filename, return_profiles=False):
         fields_data.append(J_Jdot_P)
 
     if 'star_1_mass' in all_columns and 'lg_mstar_dot_1' in all_columns and 'period_days' in all_columns:
-        M_Mdot_P = (data['star_1_mass'] / 10 ** data['lg_mstar_dot_1']) / (data['period_days'] / 360)
+        M_Mdot_P = (data['star_1_mass'] / 10 ** data['lg_mstar_dot_1']) / (data['period_days'] / 365)
         M_Mdot_P = np.where((M_Mdot_P == 0), 99, np.log10(M_Mdot_P))
         fields.append('log10_M_div_Mdot_div_P')
         fields_data.append(M_Mdot_P)
