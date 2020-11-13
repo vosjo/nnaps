@@ -56,7 +56,7 @@ def write2hdf5(data, filename, update=False, attr_types=[]):
                 print( 'Error while trying to write: {}, type: {}'.format(key, type(key)) )
                 raise(e)
 
-    hdf = h5py.File(filename)
+    hdf = h5py.File(filename, 'a')
     save_rec(data, hdf)
     hdf.close()
 
