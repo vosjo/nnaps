@@ -312,6 +312,12 @@ def RGBend(data, return_age=False):
 
 def HeIgnition(data, return_age=False):
     """
+    The moment of He ignition depends on the mass of the star. For stars with a degenerate core, which will ignite He
+    through flashes in a shell around the core, He ignition is based on the He luminosity. For stars that have a non
+    degenerate core, which ignite He quitely, He ignition is defined by the conditions in the core similarly to
+    how HeCoreBurning is defined.
+
+    **Degenerate ignition:**
     The moment of He ignition, as defined by a peak in the He luminosity. This is the first moment of He ignition,
     but is not necessarily in the core as for low mass stars, He ignition occurs under degenerate conditions, and due
     to neutrino cooling typically happens in a shell around the core.
@@ -319,7 +325,13 @@ def HeIgnition(data, return_age=False):
     Ignition is defined as the point with the maximum LHe between the first moment when LHe > 10 Lsol and the formation
     of the carbon-oxygen core. This is the (first) He flash.
 
+    **Non degenerate ignition:**
+    He ignition in the core is defined as the first moment when both the temperature and density in the core are
+    sufficiently high to allow He burning. NNaPS uses the same conditions to define the ignition criteria as MESA.
+
     Required history parameters:
+        - log_center_T
+        - log_center_Rho
         - log_LHe
         - c_core_mass
         - age
@@ -327,13 +339,25 @@ def HeIgnition(data, return_age=False):
     :param data: numpy ndarray containing the history of the system.
     :return: selection where the history corresponds to the moment of He ignition
     """
-    required_parameters = ['log_LHe', 'c_core_mass', 'age']
+    required_parameters = ['log_center_T', 'log_center_Rho', 'log_LHe', 'c_core_mass', 'age']
     _check_history_parameters(data, required_parameters, evol_phase='HeIgnition')
 
+    # check the time of max He luminosity which indicates the flash in degenerate igniters
     if np.all(data['log_LHe'] < 1):
         # no He ignition
         return None
-    a1 = data['age'][data['log_LHe'] > 1][0]
+    a1L = data['age'][data['log_LHe'] > 1][0]
+
+    # check when the core of the system passes the constraints for He ignition which will happen first in non
+    # degenerate igniters.
+    if np.all(data['log_center_T'] < HeIgF(data['log_center_Rho'])):
+        # no core ignition, set He ignition based on log_LHe
+        a1C = a1L
+    else:
+        a1C = data['age'][data['log_center_T'] >= HeIgF(data['log_center_Rho'])][0]
+
+    # pick whatever happens first as the time of He ignition.
+    a1 = min(a1L, a1C)
 
     if np.all(data['c_core_mass'] < 0.01):
         # model ignites He, but has problems modeling the core burning. He ignition can be returned.
