@@ -47,6 +47,9 @@ The exact function will then save the default parameters for each model to a csv
 Setup file
 ----------
 
+.. role:: yaml(code)
+   :language: yaml
+
 Using a setup file allows you to set different parameters for the extraction including the stability criterion,
 which parameters to extract and more.
 
@@ -59,9 +62,11 @@ The setup file has to be structured in yaml format, and can be provided using th
     ce_formalism: 'dewi_tauris2000'
     ce_parameters: {'a_ce': 0.3, 'a_th': 0.5}
     ce_profile_name: 'profile_1_jdotp10.0'
+    n_ml_phases: 0
     parameters: []
     phase_flags: []
     extra_info_parameters: []
+    flatten_output: false
 
 .. option:: stability_criterion (str)
 
@@ -87,6 +92,14 @@ The setup file has to be structured in yaml format, and can be provided using th
     If no name is specified, the profile with the model number closest to when the stability criterion is trip will be
     used.
 
+.. option:: n_ml_phases (int)
+
+    The number of ML phases that you want to include in the results. A stellar evolution model can have more than one
+    mass loss phase. If you want to extract parameters relevant to a mass loss phase, they can be extract for all of
+    those phases. With this option you can set how many mass loss phases you want to consider. NNAPS starts counting
+    from the earliest to the latest occurring phase, so 1 phase will return parameters for the first occurring phase.
+    See `Mass loss phases`_ for details.
+
 .. option:: parameters (list)
 
     Which parameters to extract from the models. See `Parameters`_ for an explanation on how to structure
@@ -99,6 +112,38 @@ The setup file has to be structured in yaml format, and can be provided using th
 .. option:: extra_info_parameters (list)
 
     Which extra info parameters to extract from the models.
+
+.. option:: flatten_output (bool)
+
+    This parameter defines how the output csv file will look. If you have parameters that can return more than one
+    value. For example, a mass loss parameter for a model with multiple mass loss phases. It will by default store these
+    values as a list inside a csv cell. By setting flatten_output to true, nnaps will store all values in separate
+    columns. Example:
+
+    :yaml:`n_ml_phases: 2` and :yaml:`flatten_output: false`
+
+    ================ ================ ======= ===========
+    ML__Period       ML__star_1_mass  M1_init n_ml_phases
+    ================ ================ ======= ===========
+    [100, 120]       [1.5, 0.9]       1.6     2
+    [200]            [2.3]            2.4     1
+    [300, 360, 420]  [1.9, 1.2]       2.0     3
+    NaN              NaN              0.7     0
+    ================ ================ ======= ===========
+
+    :yaml:`n_ml_phases: 2` and :yaml:`flatten_output: true`
+
+    ===========  ===========  ================  ================  =======  ===========
+    ML1__Period  ML2__Period  ML1__star_1_mass  ML2__star_1_mass  M1_init  n_ml_phases
+    ===========  ===========  ================  ================  =======  ===========
+    100          200          1.5               0.9               1.6      2
+    200          NaN          2.3               Nan               2.4      1
+    300          360          1.9               0.3               2.0      3
+    NaN          NaN          NaN               NaN               0.7      0
+    ===========  ===========  ================  ================  =======  ===========
+
+Mass loss phases
+----------------
 
 Stability criteria
 ------------------
