@@ -127,7 +127,7 @@ The setup file has to be structured in yaml format, and can be provided using th
     ================ ================ ======= ===========
     [100, 120]       [1.5, 0.9]       1.6     2
     [200]            [2.3]            2.4     1
-    [300, 360, 420]  [1.9, 1.2]       2.0     3
+    [300, 360]       [1.9, 1.2]       2.0     3
     NaN              NaN              0.7     0
     ================ ================ ======= ===========
 
@@ -144,6 +144,66 @@ The setup file has to be structured in yaml format, and can be provided using th
 
 Mass loss phases
 ----------------
+
+Stellar evolution models can have multiple mass loss phases. In NNaPS the mass loss phases are indicated with the ML
+phase keyword (see :ref:`ML<ml>`). Mass loss is defined as the period when the mass loss rate due to Roche-lobe overflow
+exceeds :math:`10^{-10} M_{\odot} yr^{-1}`.
+
+By default only the first mass loss phase is recognized. Any parameters defined using the mass loss phase will only
+return values for this first mass loss phase. NNaPS will also provide the parameter 'n_ml_phases' in the csv output that
+stores the total number of mass loss phases that are recognised in the model. This parameter is always included in the
+output.
+
+It is possible to derive parameters for more than one mass loss phase. This is done by setting the :option:`n_ml_phases`
+option in the yaml setup file. This option defines the maximum number of mass loss phases that you want to consider.
+If you want all of them, just set it to a very large number. Every parameter that you have defined in the setup file
+will be extracted for all mass loss phases that will be considered. There is no way to extract different parameters for
+different mass loss phases.
+
+By default n_ml_phases = 0. This mean that only 1 (not zero) mass loss phases will be included. If you don't want any
+mass loss related output, just don't ask for it.
+If you request more than one mass loss phase, the parameters extracted for the consecutive mass loss phases are stored
+as lists in the csv output file. The difference between n_ml_phases = 0 and n_ml_phases = 1 is related to how the
+output is written. For n_ml_phases = 0 the result is stored as a value, while for n_ml_phases = 1 the result is stored
+as a list with 1 value. If you want to have the values for different mass loss phases in separate columns you can  use
+the :option:`flatten_output` option.
+
+Some examples to illustrate this:
+
+:yaml:`n_ml_phases: 0` and :yaml:`flatten_output: false`
+
+================ ================ ======= ===========
+ML__Period       ML__star_1_mass  M1_init n_ml_phases
+================ ================ ======= ===========
+100              1.5              1.6     2
+200              2.3              2.4     1
+300              1.9              2.0     3
+NaN              NaN              0.7     0
+================ ================ ======= ===========
+
+:yaml:`n_ml_phases: 1` and :yaml:`flatten_output: false`
+
+================ ================ ======= ===========
+ML__Period       ML__star_1_mass  M1_init n_ml_phases
+================ ================ ======= ===========
+[100]            [1.5]            1.6     2
+[200]            [2.3]            2.4     1
+[300]            [1.9]            2.0     3
+NaN              NaN              0.7     0
+================ ================ ======= ===========
+
+:yaml:`n_ml_phases: 1` and :yaml:`flatten_output: true`
+
+================ ================ ======= ===========
+ML1__Period      ML1__star_1_mass M1_init n_ml_phases
+================ ================ ======= ===========
+100              1.5              1.6     2
+200              2.3              2.4     1
+300              1.9              2.0     3
+NaN              NaN              0.7     0
+================ ================ ======= ===========
+
+Notice that the column naming changed in the last example.
 
 Stability criteria
 ------------------
