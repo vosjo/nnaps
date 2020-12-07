@@ -89,7 +89,9 @@ def read_hdf5(filename):
                 res[name] = read_rec(grp)
             else:
                 # in case of dataset, read the value
-                res[name] = grp.value
+                # this used to be grp.value, but was changes in version 3.0 of h5py
+                # H5pyDeprecationWarning: dataset.value has been deprecated. Use dataset[()] instead.
+                res[name] = grp[()]
 
         # -- read all the attributes
         for name, atr in hdf.attrs.items():
