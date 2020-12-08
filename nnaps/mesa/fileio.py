@@ -17,15 +17,15 @@ def write2hdf5(data, filename, update=False, attr_types=[]):
     the same type: ['bla', 1, 24.5] will become ['bla', '1', '24.5']. Upt till now there
     is nothing in place to check this, or correct it when reading a hdf5 file.
 
-    @param data: the dictionary to write to file
-    @type data: dict
-    @param filename: the name of the hdf5 file to write to
-    @type filename: str
-    @param update: True if you want to update an existing file, False to overwrite
-    @type update: bool
-    @param attr_types: the data types that you want to save as an attribute instead of
+    :param data: the dictionary to write to file
+    :type data: dict
+    :param filename: the name of the hdf5 file to write to
+    :type filename: str
+    :param update: True if you want to update an existing file, False to overwrite
+    :type update: bool
+    :param attr_types: the data types that you want to save as an attribute instead of
                       a dataset. (standard everything is saved as dataset.)
-    @type attr_types: List of types
+    :type attr_types: List of types
     """
 
     if not update and os.path.isfile(filename):
@@ -110,8 +110,8 @@ def read_compressed_track(filename, return_profiles=False):
     """
     Function to read a compressed hdf5 model. It will automatically combine the evolution history of the stellar parts
     and the binary part in one numpy rec array, while correcting for potentially different model numbers in the
-    different history files. It will also return any extra information included by the mesa-2h5 command as a dictionary.
-    If :option:`return_profiles` is set to True, it will also return a dictionary containing all profiles together
+    different history files. It will also return any extra information included by the mesa compress command as a dictionary.
+    If **return_profiles** is set to True, it will also return a dictionary containing all profiles together
     with a dictionary mapping the different profile names to the model number at which they were created.
 
     **Combining history**:
@@ -128,7 +128,7 @@ def read_compressed_track(filename, return_profiles=False):
         the stability and CE phase determination later on.
 
     **Profiles**:
-        If profiles have to be returned (:option:`return_profiles = True`), they are returned in a dictionary. This
+        If profiles have to be returned (**return_profiles = True**), they are returned in a dictionary. This
         dictionary contains all profiles by name, and a legend called 'profile_legend'. This legend contains a mapping
         between all included profile names and the model number at which time they were taken.
 

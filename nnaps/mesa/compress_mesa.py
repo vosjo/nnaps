@@ -22,12 +22,12 @@ def read_mesa_output(filename=None, only_first=False):
 
     Function writen by Pieter DeGroote
 
-    @param filename: name of the log file
-    @type filename: str
-    @param only_first: read only the first model (or global parameters)
-    @type only_first: bool
-    @return: list of models in the data file (typically global parameters, local parameters)
-    @rtype: list of rec arrays
+    :param filename: name of the log file
+    :type filename: str
+    :param only_first: read only the first model (or global parameters)
+    :type only_first: bool
+    :return: list of models in the data file (typically global parameters, local parameters)
+    :rtype: list of rec arrays
     """
     models = []
     new_model = False
