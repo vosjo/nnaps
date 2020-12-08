@@ -25,5 +25,3 @@ If you want to detect all errors, the following parameters need to be included i
 - log_center_Rho
 - c_core_mass
 
-.. automodule:: nnaps.mesa.evolution_errors
-   :members: check_error_flags, mass_loss_error, he_ignition_error, he_core_burning_error

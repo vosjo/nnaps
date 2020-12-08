@@ -49,7 +49,7 @@ that you are interested in. You can make a model predicting those observables in
 
     userguide/install
     userguide/mesa
-    userguide/mesa_2h5
+    userguide/mesa_compress
     userguide/mesa_extract
     userguide/mesa_common_envelope
     userguide/mesa_evolution_phases

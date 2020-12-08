@@ -2,23 +2,23 @@
 MESA extract
 ============
 
-**nnaps-mesa** -extract <*model_directory*> -o <*output_file.csv*> [*options*]
+**nnaps-mesa** extract [*options*]
 
-.. program:: nnaps-mesa
+.. program:: nnaps-mesa extract
 
-.. option:: -extract model_directory
+.. option:: -i, -input (str) <input directory or csv file>
 
-    The extract option, used to extract model parameters from MESA models stored in hdf5 format.
+    A directory containing the compressed stellar evolution models to extract, or a csv file containing a list of all
+    models to extract and optionally individual extraction options for each model. The csv file needs to contain at
+    least one column with the path to the model called 'path'
 
-    **model_directory** mandatory argument. The directory containing all mesa models in hdf5 format.
+.. option:: -o, outputfile (str) <output file path>
 
-.. option:: -o output
+    The path to the csv file where you want the extracted parameters to be stored.
 
-    The name of the csv file where nnaps-mesa will write the extracted parameters for all models.
+.. option:: -s, -setup (str) <setup file path>
 
-.. option:: -setup setup_file
-
-    yaml file containing the detailed setup for the compression.
+    yaml file containing the settings the extract action.
 
     If not setup file is give, nnaps-mesa will look for one in the current directory or in the *<user>/.nnaps*
     directory. In that case the filename of the setup file needs to be *defaults_extract.yaml*.
@@ -33,7 +33,7 @@ and the filename to store the extracted parameters in:
 
 .. code-block:: bash
 
-    nnaps-mesa -extract <input folder> -o <output csv filename>
+    nnaps-mesa extract -i <input folder> -o <output csv filename>
 
 Using the default settings this will for each model:
 
@@ -53,7 +53,7 @@ Setup file
 Using a setup file allows you to set different parameters for the extraction including the stability criterion,
 which parameters to extract and more.
 
-The setup file has to be structured in yaml format, and can be provided using the *-setup* option.
+The setup file has to be structured in yaml format, and can be provided using the *-s, -setup* option.
 
 .. code-block:: yaml
 
@@ -386,3 +386,30 @@ results. Right now there are 5 different error checks performed:
 
 More details about the error flags and what parameters are necessary to check them are given in:
 :doc:`mesa_evolution_errors`
+
+Model dependent extraction setup
+--------------------------------
+
+There are cases where you will want to use different extraction setup for different models. This is supported in NNaPS.
+To use this feature you need to call **nnaps-mesa extract -i input** with as input a csv file instead of a directory.
+This csv file should contain the path to all the compressed models in one column, and the other columns should contain
+the setup parameters that differ between the models. More specifically these can be:
+
+- stability_criterion
+- stability_limit
+- ce_formalism
+- ce_parameters
+- ce_profile_name
+
+An example input file would look like:
+
+.. code-block::
+
+    path,              stability_criterion,  stability_limit,  ce_profile_name,      ce_formalism,     ce_parameters
+    folder/model1.h5,  J_div_Jdot_div_P,     3,                profile_1_jdotp3.0,   dewi_tauris2000,  {'a_ce': 0.1, 'a_th': 0.0}
+    folder/model2.h5,  J_div_Jdot_div_P,     10,               profile_1_jdotp10.0,  dewi_tauris2000,  {'a_ce': 0.1, 'a_th': 0.5}
+    folder/model3.h5,  J_div_Jdot_div_P,     1,                profile_1_jdotp1.0,   dewi_tauris2000,  {'a_ce': 0.9, 'a_th': 0.0}
+    folder/model4.h5,  J_div_Jdot_div_P,     3,                profile_1_jdotp3.0,   dewi_tauris2000,  {'a_ce': 0.9, 'a_th': 0.5}
+
+
+

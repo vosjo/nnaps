@@ -7,10 +7,10 @@ File IO
 .. automodule:: nnaps.mesa.fileio
     :members:
 
-Read MESA
----------
+Compress MESA
+-------------
 
-.. automodule:: nnaps.mesa.read_mesa
+.. automodule:: nnaps.mesa.compress_mesa
     :members:
 
 Extract MESA

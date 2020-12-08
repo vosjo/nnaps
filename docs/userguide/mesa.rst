@@ -10,77 +10,67 @@ Both tools run from the command line as follows:
 
 .. code-block:: bash
 
-    nnaps-mesa -2h5
-    nnaps-mesa -extract
+    nnaps-mesa compress
+    nnaps-mesa extract
 
-command line options
---------------------
+Compressing runs (compress)
+---------------------------
 
-**nnaps-mesa** mode <*(file_list)*> <*model_directory*> [*options*]
+The 'compress' tool collects all useful information from a MESA run and stores it in a hdf5 file. This has the advantage
+that a lot of disc space is saved. Especially when processing MESA runs on a laptop, this will be very useful. As a
+comparison. A typical MESA binary run with a low mass primary evolving to the He core burning phase takes up roughly
+22 Mb. After compression, the hdf5 file is only 1.4 Mb.
 
-.. program:: nnaps-mesa
+**nnaps-mesa** compress [*options*]
 
-.. option:: -2h5 (file_list.csv) model_directory
+.. program:: nnaps-mesa compress
 
-    The compress option, used to compress MESA models and store them in hdf5 format.
+.. option:: -i, -inputdir (str) <input directory path>
 
-    **file_list.csv** optional argument. A list of the models in csv format. Should at least contain  a column named
-    'path' with the folder name of the mesa models. The other columns can contain other information which will be stored
-    in the hdf5 file of the model.
+    The directory containing all mesa models. Each model in its own sub folder.
 
-    **model_directory** mandatory argument. The directory containing all mesa models. Each model in its own sub folder.
+.. option:: -f, -infofile (str) <info file path>
 
-.. option:: -extract model_directory
+    Path to a csv file containing a list of all the models that you want to extra, with potentially extra information
+    to add to the individual models. This file needs to contain at least 1 column with the name of the folder containing
+    the MESA model. This collumn needs to be called 'path'. Example of such a file:
 
-    The extract option, used to extract model parameters from MESA models stored in hdf5 format.
+    .. code-block:: bash
 
-    **model_directory** mandatory argument. The directory containing all mesa models in hdf5 format.
+        path,extra_info1, extra_info2
+        model_dir1,10,disk
+        model_dir2,20,halo
 
-.. option:: -setup setup_file
+.. option:: -o, -outputdir (str) <output directory path>
 
-    yaml file containing the settings for either the :option:`-2h5` or :option:`-extract` option.
+    The path to the directory where you want the compressed hdf5 MESA files to be stored.
+
+.. option:: -s, -setup (str) <setup file path>
+
+    yaml file containing the settings the compress action.
 
     If not setup file is give, nnaps-mesa will look for one in the current directory or in the *<user>/.nnaps*
-    directory. In that case the filename of the setup file needs to be *defaults_2h5.yaml* or *defaults_extract.yaml*
-    for respectively the :option:`-2h5` and :option:`-extract` option.
+    directory. In that case the filename of the setup file needs to be *defaults_compress.yaml*.
 
     If no setup file can be found anywhere, nnaps-mesa will use the defaults stored in the mesa.defaults module.
 
-.. option:: -o output
-
-    Where the output of either the :option:`-2h5` or :option:`-extract` option should be stored.
-
-    In the case of :option:`-2h5`: *output* should be the path to the directory where you want the hdf5 MESA files
-    to be stored.
-
-    In the case of :option:`-extract`: *output* is the name of the csv file where nnaps-mesa will write the extracted
-    parameters for all models.
-
 .. option:: --skip
 
-    Only relevant for the :option:`-2h5` option. When provided, nnaps-mesa will only compress models that are not yet
-    present in the output folder. Models that already have a compressed hdf5 version in the output folder will be
-    ignored.
+    When provided, nnaps-mesa will only compress models that are not yet present in the output folder. Models that
+    already have a compressed hdf5 version in the output folder will be ignored.
 
-Compressing runs (2h5)
-----------------------
-
-The '2h5' tool collects all useful information from a MESA run and stores it in a hdf5 file. This has the advantage that
-a lot of disc space is saved. Especially when processing MESA runs on a laptop, this will be very useful. As a
-comparison. A typical MESA binary run with a low mass primary evolving to the He core burning phase takes up roughly
-22 Mb. After compression, the hdf5 file is only 1.4 Mb.
 
 Basic usage
 ^^^^^^^^^^^
 
-The most simple way to use the 2h5 tool is to provide the folder where all MESA models are located, and the folder
+The most simple way to use the compress tool is to provide the folder where all MESA models are located, and the folder
 where you want the compressed files to be stored:
 
 .. code-block:: bash
 
-    nnaps-mesa -2h5 <input folder> -o <output folder>
+    nnaps-mesa compress -i <input folder> -o <output folder>
 
-2h5 will use standard settings assuming the following file structure for a MESA run:
+compress will use standard settings assuming the following file structure for a MESA run:
 
 ::
 
@@ -99,8 +89,8 @@ where you want the compressed files to be stored:
 
 The binary and stellar history files are located in the LOGS directory together with any potential profiles. The
 terminal output of the MESA run is stored in the log.txt file. By default the binary and stellar history will be
-compressed together with all profiles found. 2h5 will also extract the stopping condition from the terminal output if
-possible. The compressed hdf5 file has the following structure.
+compressed together with all profiles found. Compress will also extract the stopping condition from the terminal output
+if possible. The compressed hdf5 file has the following structure.
 
 ::
 
@@ -120,16 +110,39 @@ possible. The compressed hdf5 file has the following structure.
 profile_legend is an array containing the model_number when the profile is taken together with the profile name. Both
 for profiles and history files, only the actual data is saved, not the header info!
 
-For more options on 2h5 see :doc:`mesa_2h5`
+For more options on compressing models see :doc:`mesa_compress`
 
 
 Extracting parameters (extract)
 -------------------------------
 
 After compressing all the MESA models, it is time to extract some interesting parameters. This is done with the
-`nnaps-mesa -extract` command. Extract will load the MESA model, detect the stability of the model and apply a CE
+`nnaps-mesa extract` command. Extract will load the MESA model, detect the stability of the model and apply a CE
 ejection is requested and then extract overall parameters of the run. It can also detect which evolution phases the
 component go through during the model.
+
+**nnaps-mesa** extract [*options*]
+
+.. program:: nnaps-mesa extract
+
+.. option:: -i, -input (str) <input directory or csv file>
+
+    A directory containing the compressed stellar evolution models to extract, or a csv file containing a list of all
+    models to extract and optionally individual extraction options for each model. The csv file needs to contain at
+    least one column with the path to the model called 'path'
+
+.. option:: -o, outputfile (str) <output file path>
+
+    The path to the csv file where you want the extracted parameters to be stored.
+
+.. option:: -s, -setup (str) <setup file path>
+
+    yaml file containing the settings the extract action.
+
+    If not setup file is give, nnaps-mesa will look for one in the current directory or in the *<user>/.nnaps*
+    directory. In that case the filename of the setup file needs to be *defaults_extract.yaml*.
+
+    If no setup file can be found anywhere, nnaps-mesa will use the defaults stored in the mesa.defaults module.
 
 Basic usage
 ^^^^^^^^^^^
@@ -139,7 +152,7 @@ and the filename to store the extracted parameters in:
 
 .. code-block:: bash
 
-    nnaps-mesa -extract <input folder> -o <output csv filename>
+    nnaps-mesa extract -i <input folder> -o <output csv filename>
 
 Using the default settings this will for each model:
 
