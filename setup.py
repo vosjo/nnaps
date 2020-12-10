@@ -39,7 +39,7 @@ setuptools.setup(
         'console_scripts': ['nnaps-mesa=nnaps.mesa.main:main'],
     },
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
