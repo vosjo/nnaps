@@ -7,6 +7,8 @@ from sklearn import preprocessing
 from sklearn import utils, metrics
 from sklearn.model_selection import train_test_split
 
+from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegressor
+
 from keras.layers import Dense, Input, Dropout
 from keras.models import Model
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau
@@ -14,7 +16,7 @@ from keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from nnaps import fileio, defaults
 from nnaps.reporting import html_reports, pdf_reports
 
-from xgboost import XGBClassifier, XGBRegressor
+# from xgboost import XGBClassifier, XGBRegressor
 
 class BasePredictor():
 
@@ -268,7 +270,8 @@ class BasePredictor():
 
     #}
 
-class XGBPredictor(BasePredictor):
+
+class GBPredictor(BasePredictor):
 
     def __init__(self, setup=None, setup_file=None, saved_model=None, data=None):
         super().__init__()
@@ -342,10 +345,10 @@ class XGBPredictor(BasePredictor):
 
         models = {}
         for name in self.regressors:
-            models[name] = XGBRegressor()
+            models[name] = GradientBoostingRegressor()
 
         for name in self.classifiers:
-            models[name] = XGBClassifier()
+            models[name] = GradientBoostingClassifier()
 
         self.model = models
 

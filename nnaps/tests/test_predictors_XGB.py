@@ -24,7 +24,7 @@ def testpredictor():
         'classifiers': ['product']
     }
 
-    predictor = predictors.XGBPredictor(setup=setup)
+    predictor = predictors.GBPredictor(setup=setup)
 
     predictor.fit()
 
@@ -36,11 +36,11 @@ class TestXGBPredictorSetup:
 
         for name in ['Pfinal', 'qfinal']:
             assert name in testpredictor.model
-            assert testpredictor.model[name].__class__.__name__ == 'XGBRegressor'
+            assert testpredictor.model[name].__class__.__name__ == 'GradientBoostingRegressor'
 
         for name in ['product']:
             assert name in testpredictor.model
-            assert testpredictor.model[name].__class__.__name__ == 'XGBClassifier'
+            assert testpredictor.model[name].__class__.__name__ == 'GradientBoostingClassifier'
 
 
 class TestXGBPredictorTrainingPredicting:
@@ -59,7 +59,7 @@ class TestXGBPredictorSaveLoad:
 
         try:
             testpredictor.save_model('XGB_test_model.dat')
-            loadedpredictor = predictors.XGBPredictor(saved_model='XGB_test_model.dat')
+            loadedpredictor = predictors.GBPredictor(saved_model='XGB_test_model.dat')
         finally:
             os.remove('XGB_test_model.dat')
 
