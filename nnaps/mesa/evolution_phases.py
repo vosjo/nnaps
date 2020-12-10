@@ -314,7 +314,7 @@ def HeIgnition(data, return_age=False):
     """
     The moment of He ignition depends on the mass of the star. For stars with a degenerate core, which will ignite He
     through flashes in a shell around the core, He ignition is based on the He luminosity. For stars that have a non
-    degenerate core, which ignite He quitely, He ignition is defined by the conditions in the core similarly to
+    degenerate core, which ignite He quietly, He ignition is defined by the conditions in the core similarly to
     how HeCoreBurning is defined.
 
     **Degenerate ignition:**
@@ -346,18 +346,16 @@ def HeIgnition(data, return_age=False):
     if np.all(data['log_LHe'] < 1):
         # no He ignition
         return None
-    a1L = data['age'][data['log_LHe'] > 1][0]
 
-    # check when the core of the system passes the constraints for He ignition which will happen first in non
-    # degenerate igniters.
+    # -- get age of core He ignition
     if np.all(data['log_center_T'] < HeIgF(data['log_center_Rho'])):
         # no core ignition, set He ignition based on log_LHe
-        a1C = a1L
+        acore = np.inf
     else:
-        a1C = data['age'][data['log_center_T'] >= HeIgF(data['log_center_Rho'])][0]
+        acore = data['age'][data['log_center_T'] >= HeIgF(data['log_center_Rho'])][0]
 
-    # pick whatever happens first as the time of He ignition.
-    a1 = min(a1L, a1C)
+    # -- get the age of the LHe peak
+    a1 = data['age'][data['log_LHe'] > 1][0]
 
     if np.all(data['c_core_mass'] < 0.01):
         # model ignites He, but has problems modeling the core burning. He ignition can be returned.
@@ -366,12 +364,14 @@ def HeIgnition(data, return_age=False):
         a2 = data['age'][data['c_core_mass'] >= 0.01][0]
 
     d = data[(data['age'] >= a1) & (data['age'] <= a2)]
-    s = np.where((data['log_LHe'] == np.max(d['log_LHe'])) & (data['age'] >= a1) & (data['age'] <= a2))
+    apeak = data['age'][(data['log_LHe'] == np.max(d['log_LHe'])) & (data['age'] >= a1) & (data['age'] <= a2)][0]
+
+    aignition = min(acore, apeak)
 
     if return_age:
-        return data['age'][s][0]
+        return aignition
     else:
-        return s
+        return np.where((data['age'] == aignition))
 
 
 def HeCoreBurning(data, return_age=False, return_start=False, return_end=False):
