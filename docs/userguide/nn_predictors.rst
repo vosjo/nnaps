@@ -99,8 +99,8 @@ The recognized loss functions are defined in keras.
 
 
 
-XGB predictor
--------------
+Gradient boosted random forest predictor (GBPredictor)
+------------------------------------------------------
 
 Setup
 ^^^^^
@@ -108,12 +108,12 @@ Setup
 Methods
 ^^^^^^^
 
-.. autoclass:: nnaps.predictors.XGBPredictor
+.. autoclass:: nnaps.predictors.GBPredictor
     :members:
     :inherited-members:
 
-FC NN predictor
----------------
+Fully connected neural network predictor (FCPredictor)
+------------------------------------------------------
 
 The FCPredictor consists of a fully connected neural network. You have a lot of freedom on how to define the network
 architecture, as long as it is a sequential network (can be interpreted by keras.Sequential. For a full description of
