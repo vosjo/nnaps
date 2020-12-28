@@ -9,11 +9,13 @@ with open("nnaps/version.py") as fp:
     exec(fp.read(), version)
 
 install_requires = [
-    "numpy",
+    "numpy >= 1.19",
+    "scipy >= 1.3",
     "pandas >= 0.25",
     "keras >= 2.3",
     "scikit-learn >= 0.22.1",
-    "pyyaml",
+    "pyyaml >= 5.3",
+    "h5py >= 2.9",
     "matplotlib",
     "bokeh",
     "tables",

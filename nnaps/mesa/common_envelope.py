@@ -1,6 +1,5 @@
 
 import numpy as np
-from numpy.lib.recfunctions import append_fields
 
 STABILITY_CRITERIA = ['Mdot', 'delta', 'J_div_Jdot_div_P', 'M_div_Mdot_div_P', 'R_div_SMA']
 CE_FORMALISMS = ['iben_tutukov1984', 'webbink1984', 'dewi_tauris2000', 'demarco2011']
