@@ -16,6 +16,7 @@ from keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from nnaps import fileio, defaults
 from nnaps.reporting import html_reports, pdf_reports
 
+
 # from xgboost import XGBClassifier, XGBRegressor
 
 class BasePredictor():
@@ -77,7 +78,7 @@ class BasePredictor():
             data = Y
         else:
             # if there is only one parameter, make a list of it
-            if len(self.regressors+self.classifiers) == 1:
+            if len(self.regressors + self.classifiers) == 1:
                 data = [data]
 
         # the processors need a 2D array even though they only deal with one feature
@@ -142,7 +143,7 @@ class BasePredictor():
 
         return scores
 
-    #}
+    # }
 
     # ----------------------------------------------------------------------
 
@@ -268,7 +269,7 @@ class BasePredictor():
 
         self.processors = processors
 
-    #}
+    # }
 
 
 class GBPredictor(BasePredictor):
@@ -289,9 +290,10 @@ class GBPredictor(BasePredictor):
 
     def fit(self, data=None):
         """
-        Train the model
+        Train the model. No extra parameters are needed as the model has been setup up already.
 
-        :param data: data to be used for training (pandas DataFrame). Should contain features and targets
+        :param data: data to be used for training. Should contain features and targets
+        :type data: pandas DataFrame
         :return: Nothing
         """
 
@@ -306,17 +308,21 @@ class GBPredictor(BasePredictor):
 
         for name in self.regressors + self.classifiers:
             self.model[name].fit(X, Y[name].values)
-            print ("fitted model for {}".format(name))
-
+            print("fitted model for {}".format(name))
 
         self.print_score(training_data=data)
 
     def predict(self, data=None):
         """
-        Make predictions based on a trained model.
+        Predict the outcome of the provided data for the trained model. Requires the model to be fitted using the
+        fit function first.
 
-        :param data: the features that you want to use in the prediction. (pandas DataFrame)
-        :return: predicted targets for features
+        The order of the data is preserved.
+
+        :param data: the features that you want to use in the prediction.
+        :type data: pandas DataFrame
+        :return: predicted targets for provided features
+        :rtype: pandas DataFrame
         """
 
         if data is None:
@@ -325,14 +331,13 @@ class GBPredictor(BasePredictor):
         X = self._process_features(data)
 
         Y = {}
-        for name in self.regressors+self.classifiers:
+        for name in self.regressors + self.classifiers:
             Y[name] = self.model[name].predict(X)
         Y = pd.DataFrame(Y)
 
         res = self._process_targets(Y, inverse=True, return_df=True)
 
         return res
-
 
     # }
 
@@ -374,7 +379,8 @@ class GBPredictor(BasePredictor):
 
     def save_model(self, filename):
         """
-        Save a trained model to hdf5 file for later use
+        Save a trained model to a pickled file for later use.
+        Gradient boosted models can for now not be saved to hdf5 format.
         """
 
         fileio.safe_model(self.model, self.processors, self.features, self.regressors, self.classifiers,
@@ -382,7 +388,7 @@ class GBPredictor(BasePredictor):
 
     def load_model(self, filename):
         """
-        Load a model saved to hdf5 format
+        Load a model saved as a pickled file format
         """
 
         model, processors, features, regressors, classifiers, setup, history = fileio.load_model(filename)
@@ -398,7 +404,8 @@ class GBPredictor(BasePredictor):
         # load the data and split it in a training - test set.
         self._prepare_data()
 
-    #}
+    # }
+
 
 class FCPredictor(BasePredictor):
 
@@ -418,7 +425,6 @@ class FCPredictor(BasePredictor):
         elif not saved_model is None:
             self.load_model(saved_model)
 
-
     # { Learning and predicting
 
     def _append_to_history(self, history):
@@ -429,13 +435,13 @@ class FCPredictor(BasePredictor):
 
             if len(self.regressors) > 0:
                 hist_keys = ['mae', 'val_mae']
-                new_keys = [parname+'_mae', 'val_' +parname+'_mae']
+                new_keys = [parname + '_mae', 'val_' + parname + '_mae']
             else:
                 hist_keys = ['accuracy', 'val_accuracy']
-                new_keys = [parname+'_accuracy', 'val_' +parname+'_accuracy']
+                new_keys = [parname + '_accuracy', 'val_' + parname + '_accuracy']
 
             hist_keys += ['loss', 'val_loss']
-            new_keys += [parname+'_loss', 'val_'+parname+'_loss']
+            new_keys += [parname + '_loss', 'val_' + parname + '_loss']
             data = {k1: history[k2] for k1, k2 in zip(new_keys, hist_keys)}
 
         else:
@@ -537,7 +543,7 @@ class FCPredictor(BasePredictor):
     def plot_training_history(self):
         pdf_reports.plot_training_history(self)
 
-    #}
+    # }
 
     # ----------------------------------------------------------------------
 
@@ -547,6 +553,7 @@ class FCPredictor(BasePredictor):
         """
         Make a model based on information given in the setup
         """
+
         # TODO: still needs to add support for extra regressor and classifier layers after the main body of the model
 
         def get_layer(layer):

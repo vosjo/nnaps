@@ -30,7 +30,7 @@ def testpredictor():
 
     return predictor
 
-class TestXGBPredictorSetup:
+class TestGBPredictorSetup:
 
     def test_make_from_setup(self, testpredictor):
 
@@ -43,7 +43,7 @@ class TestXGBPredictorSetup:
             assert testpredictor.model[name].__class__.__name__ == 'GradientBoostingClassifier'
 
 
-class TestXGBPredictorTrainingPredicting:
+class TestGBPredictorTrainingPredicting:
 
     def test_train_model(self, testpredictor):
 
@@ -53,15 +53,15 @@ class TestXGBPredictorTrainingPredicting:
         assert 'qfinal' in res.columns
         assert 'product' in res.columns
 
-class TestXGBPredictorSaveLoad:
+class TestGBPredictorSaveLoad:
 
     def test_save_load(self, testpredictor):
 
         try:
-            testpredictor.save_model('XGB_test_model.dat')
-            loadedpredictor = predictors.GBPredictor(saved_model='XGB_test_model.dat')
+            testpredictor.save_model('GB_test_model.dat')
+            loadedpredictor = predictors.GBPredictor(saved_model='GB_test_model.dat')
         finally:
-            os.remove('XGB_test_model.dat')
+            os.remove('GB_test_model.dat')
 
         d1 = testpredictor.predict(testpredictor.test_data)
         d2 = loadedpredictor.predict(loadedpredictor.test_data)
