@@ -23,7 +23,7 @@ def testpredictor():
         'regressors': ['Pfinal', 'qfinal'],
         'classifiers': ['product']
     }
-    return predictors.XGBPredictor(setup=setup)
+    return predictors.GBPredictor(setup=setup)
 
 class TestBasePredictorTrainingPredicting:
     """
