@@ -10,6 +10,25 @@ from numpy.lib import recfunctions as rf
 from nnaps.mesa import fileio
 from nnaps import __version__
 
+def read_mesa_header(model):
+    """
+    process the MESA history files header.
+    This will require more work in the future to also deal with correct type conversions. Now everything is considered
+    a string. This is fine as the header is ignored by the rest of nnaps.
+
+    todo: implement converting of header values to the correct data types.
+
+    :param model: list of lists
+    :return: numpy array containing strings with the header info.
+    """
+    res = []
+    for line in model:
+        new_line = [l.replace('\"', '') for l in line]
+        res.append(new_line)
+
+    return np.array(res, str).T
+
+
 def read_mesa_output(filename=None, only_first=False):
     """
     Read star.log and .data files from MESA.
@@ -54,7 +73,7 @@ def read_mesa_output(filename=None, only_first=False):
                     try:
                         model = np.array(models[-1], float).T
                     except:
-                        model = np.array(models[-1], str).T
+                        model = read_mesa_header(models[-1])
                         
                     models[-1] = np.rec.fromarrays(model, names=header)
                     if only_first: break
