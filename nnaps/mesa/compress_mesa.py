@@ -55,7 +55,7 @@ def read_mesa_output(filename=None, only_first=False):
                         model = np.array(models[-1], float).T
                     except:
                         model = np.array(models[-1], str).T
-                    model = np.array(models[-1], float).T
+                        
                     models[-1] = np.rec.fromarrays(model, names=header)
                     if only_first: break
                 models.append([])
@@ -83,7 +83,6 @@ def read_mesa_output(filename=None, only_first=False):
             model = np.array(models[-1], float).T
 
         models[-1] = np.rec.fromarrays(model, names=header)
-
     return models
 
 
